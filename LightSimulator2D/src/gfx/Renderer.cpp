@@ -4,9 +4,22 @@
 #include "core/Window.h"
 #include "gfx/GLCore.h"
 
+static std::vector<Vertex> quadVertices = 
+{
+    {Vec2(-1.0,-1.0)   ,Vec2(0.0,0.0)},
+    {Vec2(1.0,-1.0)    ,Vec2(1.0,0.0)},
+    {Vec2(-1.0,1.0)    ,Vec2(0.0,1.0)},
+
+    {Vec2(-1.0,1.0)    ,Vec2(0.0,1.0)},
+    {Vec2(1.0,-1.0)    ,Vec2(1.0,0.0)},
+    {Vec2(1.0,1.0)     ,Vec2(1.0,1.0)}
+};
+
 Renderer::~Renderer()
 {
-
+    delete m_Shader;
+    delete m_QuadInput;
+    delete m_Texture;
 }
 
 void Renderer::Init(Window& window)
@@ -15,12 +28,7 @@ void Renderer::Init(Window& window)
     m_Shader = new Shader("main.vert", "main.frag");
     ASSERT(m_Shader->IsValid());
 
-    std::vector<Vertex> vertices = {
-        {Vec2(-1.0,-1.0),Vec2(0.0,0.0)},
-        {Vec2(0.0,1.0),Vec2(0.5,1.0)},
-        {Vec2(1.0,-1.0),Vec2(1.0,0.0)}
-    };
-    m_Triangle = new ShaderInput(vertices);
+    m_QuadInput = new ShaderInput(quadVertices);
     m_Texture = new Texture("res/Grass.jpg");
 }
 
@@ -50,10 +58,10 @@ bool Renderer::RenderIfNeeded()
 void Renderer::RenderFrame()
 {
     m_Shader->Bind();
-    m_Triangle->Bind();
+    m_QuadInput->Bind();
 
     m_Texture->Bind(0);
     m_Shader->SetUniform("u_Texture", 0);
 
-    GLFunctions::Draw(3);
+    GLFunctions::Draw(6);
 }
