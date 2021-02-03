@@ -1,10 +1,8 @@
 #include "Renderer.h"
 
-#include <glad/glad.h>
-
 #include "common.h"
 #include "core/Window.h"
-
+#include "gfx/GLCore.h"
 
 Renderer::~Renderer()
 {
@@ -13,8 +11,7 @@ Renderer::~Renderer()
 
 void Renderer::Init(Window& window)
 {
-    int glad_status = gladLoadGLLoader((GLADloadproc)window.GetProcessAddressHandle());
-    ASSERT(glad_status);
+    GLFunctions::InitGL(window.GetProcessAddressHandle());
 }
 
 void Renderer::Update(float dt)
