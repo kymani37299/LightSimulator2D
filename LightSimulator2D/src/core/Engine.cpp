@@ -3,6 +3,8 @@
 #include "common.h"
 #include <chrono>
 
+#include "input/Controller.h"
+
 void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     GameEngine::Get()->GetMainWindow()->KeyPressedCallback(window, key, scancode, action, mods);
@@ -31,13 +33,17 @@ GameEngine::~GameEngine()
 
 void GameEngine::Init()
 {
+    m_Window.SetInput(&m_Input);
     m_Renderer.Init(m_Window);
+    m_Controller = new PlayerController();
+    m_Controller->Init(&m_Input);
 }
 
 void GameEngine::EngineLoop()
 {
     m_Running = m_Window.Active();
     UpdateDT();
+    m_Controller->Update(m_DT);
     m_Renderer.Update(m_DT);
     if (m_Renderer.RenderIfNeeded())
     {

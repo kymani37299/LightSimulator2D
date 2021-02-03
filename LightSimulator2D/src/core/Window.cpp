@@ -1,6 +1,7 @@
 #include "Window.h"
 
 #include "common.h"
+#include "input/Input.h"
 
 static float timeAccumulator = 0.0001f;
 
@@ -69,24 +70,23 @@ void Window::SetCursorEnabled(bool value)
 
 void Window::KeyPressedCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	// TODO : Integrate input system
-	//if (m_Input)
-	//{
-	//	KeyState state = KeyState::Invalid;
-	//	switch (action)
-	//	{
-	//	case GLFW_PRESS:
-	//		state = KeyState::Pressed;
-	//		break;
-	//	case GLFW_REPEAT:
-	//		state = KeyState::Repeat;
-	//		break;
-	//	case GLFW_RELEASE:
-	//		state = KeyState::Released;
-	//		break;
-	//	default:
-	//		ASSERT_CHECK(0);
-	//	}
-	//	m_Input->OnKeyInput(key, state);
-	//}
+	if (m_Input)
+	{
+		KeyState state = KeyState::Invalid;
+		switch (action)
+		{
+		case GLFW_PRESS:
+			state = KeyState::Pressed;
+			break;
+		case GLFW_REPEAT:
+			state = KeyState::Repeat;
+			break;
+		case GLFW_RELEASE:
+			state = KeyState::Released;
+			break;
+		default:
+			ASSERT(0);
+		}
+		m_Input->OnKeyInput(key, state);
+	}
 }

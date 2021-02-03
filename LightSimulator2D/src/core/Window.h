@@ -3,6 +3,8 @@
 #include "common.h"
 #include <GLFW/glfw3.h>
 
+class Input;
+
 class Window
 {
 public:
@@ -25,11 +27,15 @@ public:
 	inline float GetFps() { return m_Fps; }
 	void KeyPressedCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
+	inline void SetInput(Input* input) { m_Input = input; }
+
 private:
 	void* m_ProcAddressHandle;
 	GLFWwindow* m_Window;
 
 	bool m_CursorEnabled;
 	float m_Fps = 0.0f;
+
+	Input* m_Input;
 };
 
