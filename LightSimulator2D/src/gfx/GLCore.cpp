@@ -151,10 +151,13 @@ void ShaderInput::Unbind()
 // ---------- Texture ------------------------
 // -------------------------------------------
 
-Texture::Texture(ImageData& data) :
-	m_Width(data.width),
-	m_Height(data.height)
+Texture::Texture(const std::string& path)
 {
+	ImageData* imageData = ImageUtil::LoadImage(path.c_str(), true);
+
+	m_Width = imageData->width;
+	m_Height = imageData->height;
+
 	GL_CALL(glGenTextures(1, &m_Handle));
 	GL_CALL(glBindTexture(GL_TEXTURE_2D, m_Handle));
 
@@ -163,8 +166,10 @@ Texture::Texture(ImageData& data) :
 	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
 	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 
-	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data.data));
+	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData->data));
 	GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
+
+	ImageUtil::FreeImage(imageData->data);
 }
 
 Texture::~Texture()
@@ -238,4 +243,15 @@ void Shader::Bind()
 void Shader::Unbind()
 {
 	GL_CALL(glUseProgram(0));
+}
+
+static int GetUniformLocation(GLHandle shader, const std::string& name)
+{
+	GL_CALL(int location = glGetUniformLocation(shader, name.c_str()));
+	return location;
+}
+
+template<> void Shader::SetUniform<int>(const std::string& key, int value) const
+{
+	GL_CALL(glUniform1i(GetUniformLocation(m_Handle, key), value));
 }

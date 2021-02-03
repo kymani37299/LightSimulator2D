@@ -2,9 +2,11 @@
 
 in vec2 UV;
 
+uniform sampler2D u_Texture;
+
 layout(location = 0) out vec4 FinalColor;
 
 void main()
 {
-	FinalColor = vec4(UV, 0.0, 1.0);
+	FinalColor = texture(u_Texture, UV);
 }

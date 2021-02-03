@@ -5,8 +5,6 @@
 
 #include "common.h"
 
-struct ImageData;
-
 struct Vertex
 {
 	// Note: When changing this update VAO from ShaderInput
@@ -40,7 +38,7 @@ private:
 class Texture
 {
 public:
-	Texture(ImageData& data);
+	Texture(const std::string& path);
 	~Texture();
 
 	void Bind(unsigned slot);
@@ -64,7 +62,7 @@ public:
 
 	inline bool IsValid() const { return m_Valid; }
 
-	template<typename T> void SetUniform(const std::string& key, T value);
+	template<typename T> void SetUniform(const std::string& key, T value) const;
 
 private:
 	GLHandle m_Handle;

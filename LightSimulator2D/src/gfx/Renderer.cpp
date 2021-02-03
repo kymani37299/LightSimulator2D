@@ -21,6 +21,7 @@ void Renderer::Init(Window& window)
         {Vec2(1.0,-1.0),Vec2(1.0,0.0)}
     };
     m_Triangle = new ShaderInput(vertices);
+    m_Texture = new Texture("res/Grass.jpg");
 }
 
 void Renderer::Update(float dt)
@@ -50,5 +51,9 @@ void Renderer::RenderFrame()
 {
     m_Shader->Bind();
     m_Triangle->Bind();
+
+    m_Texture->Bind(0);
+    m_Shader->SetUniform("u_Texture", 0);
+
     GLFunctions::Draw(3);
 }

@@ -3,6 +3,7 @@
 class Window;
 class Shader;
 class ShaderInput;
+class Texture;
 
 class Renderer
 {
@@ -21,4 +22,5 @@ private:
 
 	Shader* m_Shader;
 	ShaderInput* m_Triangle;
+	Texture* m_Texture;
 };
