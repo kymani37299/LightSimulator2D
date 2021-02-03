@@ -10,6 +10,8 @@
 #include <vector>
 #include <set>
 
+#include "glm/gtc/type_ptr.hpp"
+
 #ifdef DEBUG
 
 static void GLClearError()
@@ -255,3 +257,9 @@ template<> void Shader::SetUniform<int>(const std::string& key, int value) const
 {
 	GL_CALL(glUniform1i(GetUniformLocation(m_Handle, key), value));
 }
+
+template<> void Shader::SetUniform<Mat3>(const std::string& key, Mat3 value) const
+{
+	GL_CALL(glUniformMatrix3fv(GetUniformLocation(m_Handle, key), 1, GL_FALSE, glm::value_ptr(value)));
+}
+

@@ -4,6 +4,7 @@
 #include <chrono>
 
 #include "input/Controller.h"
+#include "scene/Entity.h"
 
 void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -37,6 +38,16 @@ void GameEngine::Init()
     m_Renderer.Init(m_Window);
     m_Controller = new PlayerController();
     m_Controller->Init(&m_Input);
+    m_Renderer.SetScene(&m_Scene);
+
+    // TMP
+    Entity e1{ "res/animals/elephant.png" };
+    Entity e2{ "res/animals/hippo.png" };
+    e2.m_Transform.scale *= 0.2;
+    e2.m_Transform.position = Vec2(-0.3, 0.5);
+    m_Scene.AddEntity(e1);
+    m_Scene.AddEntity(e2);
+    //
 }
 
 void GameEngine::EngineLoop()

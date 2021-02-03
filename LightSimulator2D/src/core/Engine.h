@@ -4,6 +4,7 @@
 #include "core/Window.h"
 #include "gfx/Renderer.h"
 #include "input/Input.h"
+#include "scene/Scene.h"
 
 class PlayerController;
 
@@ -38,4 +39,6 @@ private:
 	Renderer m_Renderer;
 	Input m_Input{ &m_Window };
 	PlayerController* m_Controller;
+
+	Scene m_Scene;
 };

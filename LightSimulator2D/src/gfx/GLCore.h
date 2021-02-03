@@ -44,6 +44,9 @@ public:
 	void Bind(unsigned slot);
 	void Unbind(unsigned slot);
 
+	inline unsigned GetWidth() const { return m_Width; }
+	inline unsigned GetHeight() const { return m_Height; }
+
 private:
 	GLHandle m_Handle;
 	

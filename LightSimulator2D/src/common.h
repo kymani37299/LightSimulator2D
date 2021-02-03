@@ -25,3 +25,6 @@ using Vec3 = glm::vec3;
 using Vec4 = glm::vec4;
 using Mat3 = glm::mat3;
 using Mat4 = glm::mat4;
+
+#define VEC2_ZERO Vec2(0.0f,0.0f)
+#define VEC2_ONE Vec2(1.0f,1.0f)

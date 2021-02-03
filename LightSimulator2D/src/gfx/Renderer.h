@@ -1,9 +1,12 @@
 #pragma once
 
+#include <vector>
+
 class Window;
 class Shader;
 class ShaderInput;
 class Texture;
+class Scene;
 
 class Renderer
 {
@@ -14,6 +17,8 @@ public:
 	void Update(float dt);
 	bool RenderIfNeeded();
 
+	inline void SetScene(Scene* scene) { m_Scene = scene; }
+
 private:
 	void RenderFrame();
 
@@ -22,5 +27,8 @@ private:
 
 	ShaderInput* m_QuadInput;
 	Shader* m_Shader;
-	Texture* m_Texture;
+
+	Scene* m_Scene;
+
+	std::vector<Texture*> m_Textures;
 };
