@@ -64,6 +64,7 @@ void Renderer::Update(float dt)
                 e.m_ReadyForDraw = true;
             }
         }
+        m_Scene->ClearDirty();
     }
 }
 
@@ -90,6 +91,8 @@ static Mat3 GetTransformation(Transform t)
 
 void Renderer::RenderFrame()
 {
+    GLFunctions::ClearScreen();
+
     m_Shader->Bind();
     m_QuadInput->Bind();
     m_Shader->SetUniform("u_Texture", 0);

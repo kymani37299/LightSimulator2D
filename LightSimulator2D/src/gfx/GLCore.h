@@ -18,7 +18,7 @@ namespace GLFunctions
 {
 	void InitGL(void* procAddressGet);
 	void Draw(unsigned numVertices);
-	void DrawFC();
+	void ClearScreen(Vec3 clearColor = VEC3_ZERO);
 };
 
 class ShaderInput

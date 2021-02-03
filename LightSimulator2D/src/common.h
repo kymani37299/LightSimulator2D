@@ -28,3 +28,5 @@ using Mat4 = glm::mat4;
 
 #define VEC2_ZERO Vec2(0.0f,0.0f)
 #define VEC2_ONE Vec2(1.0f,1.0f)
+
+#define VEC3_ZERO Vec3(0.0f,0.0f,0.0f)

@@ -13,3 +13,23 @@
 PLAYER_KEY_CALLBACK_BEGIN(EscapeCallback)
     GameEngine::Get()->Stop();
 PLAYER_KEY_CALLBACK_END()
+
+PLAYER_KEY_SCALLBACK_BEGIN(ForwardCallback)
+const float factor = state == KeyState::Pressed ? 1.0f : -1.0f;
+c.GetMoveDir() += factor * Vec2(0.0f, 1.0f);
+PLAYER_KEY_CALLBACK_END()
+
+PLAYER_KEY_SCALLBACK_BEGIN(BackCallback)
+const float factor = state == KeyState::Pressed ? 1.0f : -1.0f;
+c.GetMoveDir() -= factor * Vec2(0.0f, 1.0f);
+PLAYER_KEY_CALLBACK_END()
+
+PLAYER_KEY_SCALLBACK_BEGIN(LeftCallback)
+const float factor = state == KeyState::Pressed ? 1.0f : -1.0f;
+c.GetMoveDir() -= factor * Vec2(1.0f, 0.0f);
+PLAYER_KEY_CALLBACK_END()
+
+PLAYER_KEY_SCALLBACK_BEGIN(RightCallback)
+const float factor = state == KeyState::Pressed ? 1.0f : -1.0f;
+c.GetMoveDir() += factor * Vec2(1.0f, 0.0f);
+PLAYER_KEY_CALLBACK_END()

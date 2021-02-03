@@ -14,6 +14,8 @@ public:
     std::vector<Entity>::iterator Begin() { return m_Entites.begin(); }
     std::vector<Entity>::iterator End() { return m_Entites.end(); }
 
+    Entity& operator [] (int index) { return m_Entites[index]; }
+
 private:
 	std::vector<Entity> m_Entites;
 	bool m_Dirty = false;

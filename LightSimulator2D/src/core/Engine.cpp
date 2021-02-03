@@ -34,12 +34,6 @@ GameEngine::~GameEngine()
 
 void GameEngine::Init()
 {
-    m_Window.SetInput(&m_Input);
-    m_Renderer.Init(m_Window);
-    m_Controller = new PlayerController();
-    m_Controller->Init(&m_Input);
-    m_Renderer.SetScene(&m_Scene);
-
     // TMP
     Entity e1{ "res/animals/elephant.png" };
     Entity e2{ "res/animals/hippo.png" };
@@ -48,6 +42,12 @@ void GameEngine::Init()
     m_Scene.AddEntity(e1);
     m_Scene.AddEntity(e2);
     //
+
+    m_Window.SetInput(&m_Input);
+    m_Renderer.Init(m_Window);
+    m_Controller = new PlayerController(&m_Scene[0]);
+    m_Controller->Init(&m_Input);
+    m_Renderer.SetScene(&m_Scene);
 }
 
 void GameEngine::EngineLoop()
