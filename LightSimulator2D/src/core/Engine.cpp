@@ -31,12 +31,17 @@ GameEngine::~GameEngine()
 
 void GameEngine::Init()
 {
+    m_Renderer.Init(m_Window);
 }
 
 void GameEngine::EngineLoop()
 {
     m_Running = m_Window.Active();
     UpdateDT();
+    if (m_Renderer.RenderIfNeeded())
+    {
+        m_Window.UpdateGraphic();
+    }
     m_Window.Update(m_DT);
 }
 

@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include "core/Window.h"
+#include "gfx/Renderer.h"
 
 class GameEngine
 {
@@ -31,5 +32,5 @@ private:
 	bool m_Running = false;
 
 	Window m_Window{ SCREEN_WIDTH, SCREEN_HEIGHT, PROJECT_NAME };
-
+	Renderer m_Renderer;
 };
