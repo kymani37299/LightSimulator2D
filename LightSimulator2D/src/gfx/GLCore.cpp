@@ -118,16 +118,16 @@ void GLFunctions::Draw(unsigned numVertices)
 
 ShaderInput::ShaderInput(std::vector<Vertex> vertices)
 {
+	GL_CALL(glGenBuffers(1, &m_VertexBuffer));
+	GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer));
+	GL_CALL(glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW));
+
 	GL_CALL(glGenVertexArrays(1, &m_VertexArray));
 	GL_CALL(glBindVertexArray(m_VertexArray));
 
-	GL_CALL(glGenBuffers(1, &m_VertexBuffer));
-	GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer));
-	GL_CALL(glBufferData(GL_ARRAY_BUFFER, vertices.size(), vertices.data(), GL_STATIC_DRAW));
-
 	GL_CALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0));
 	GL_CALL(glEnableVertexAttribArray(0));
-	GL_CALL(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0));
+	GL_CALL(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2*sizeof(float))));
 	GL_CALL(glEnableVertexAttribArray(1));
 }
 

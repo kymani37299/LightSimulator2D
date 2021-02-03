@@ -38,6 +38,7 @@ void GameEngine::EngineLoop()
 {
     m_Running = m_Window.Active();
     UpdateDT();
+    m_Renderer.Update(m_DT);
     if (m_Renderer.RenderIfNeeded())
     {
         m_Window.UpdateGraphic();

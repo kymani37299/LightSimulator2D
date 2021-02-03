@@ -12,6 +12,15 @@ Renderer::~Renderer()
 void Renderer::Init(Window& window)
 {
     GLFunctions::InitGL(window.GetProcessAddressHandle());
+    m_Shader = new Shader("main.vert", "main.frag");
+    ASSERT(m_Shader->IsValid());
+
+    std::vector<Vertex> vertices = {
+        {Vec2(-1.0,-1.0),Vec2(0.0,0.0)},
+        {Vec2(0.0,1.0),Vec2(0.5,1.0)},
+        {Vec2(1.0,-1.0),Vec2(1.0,0.0)}
+    };
+    m_Triangle = new ShaderInput(vertices);
 }
 
 void Renderer::Update(float dt)
@@ -39,5 +48,7 @@ bool Renderer::RenderIfNeeded()
 
 void Renderer::RenderFrame()
 {
-
+    m_Shader->Bind();
+    m_Triangle->Bind();
+    GLFunctions::Draw(3);
 }

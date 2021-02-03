@@ -1,6 +1,8 @@
 #pragma once
 
 class Window;
+class Shader;
+class ShaderInput;
 
 class Renderer
 {
@@ -16,4 +18,7 @@ private:
 
 private:
 	bool m_ShouldRender = true;
+
+	Shader* m_Shader;
+	ShaderInput* m_Triangle;
 };
