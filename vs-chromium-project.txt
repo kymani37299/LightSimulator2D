@@ -1,0 +1,14 @@
+[SourceExplorer.ignore]
+.git/
+.github/
+*.suo
+*.csproj
+*.vcxproj
+
+[SearchableFiles.ignore]
+out/
+Extern/
+.vs/
+
+[SearchableFiles.include]
+*
