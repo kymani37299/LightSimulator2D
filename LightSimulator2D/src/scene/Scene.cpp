@@ -2,6 +2,12 @@
 
 #include "gfx/Renderer.h"
 
+Scene::~Scene()
+{
+	if (m_Renderer)
+		m_Renderer->FreeScene();
+}
+
 void Scene::Init(Renderer* renderer)
 {
 	m_Renderer = renderer;

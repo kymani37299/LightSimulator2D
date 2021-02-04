@@ -22,12 +22,14 @@ public:
 	bool RenderIfNeeded();
 
 	void SetScene(Scene* scene);
+	void FreeScene();
 
 	void OnEntityAdded(Entity& e);
 	void OnEntityRemoved(Entity& e);
 
 private:
 	void InitEntityForRender(Entity& e);
+	void RemoveEntityFromRenderPipeline(Entity& e);
 
 	void RenderFrame();
 
@@ -38,8 +40,5 @@ private:
 	Shader* m_Shader;
 
 	Scene* m_Scene;
-
-	std::vector<Texture*> m_Textures;
-
 	std::vector<PointLight*> m_PointLights;
 };

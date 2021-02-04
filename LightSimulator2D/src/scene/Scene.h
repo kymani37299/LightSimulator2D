@@ -9,6 +9,8 @@ class Renderer;
 class Scene
 {
 public:
+    ~Scene();
+
     inline void AddEntity(const Entity& entity) 
     {
         m_Entites.push_back(entity);

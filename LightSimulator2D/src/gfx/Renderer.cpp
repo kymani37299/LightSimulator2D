@@ -22,11 +22,7 @@ Renderer::~Renderer()
 {
     delete m_Shader;
     delete m_QuadInput;
-
-    for (Texture* tex : m_Textures)
-    {
-        delete tex;
-    }
+    if (m_Scene) FreeScene();
 }
 
 void Renderer::Init(Window& window)
@@ -91,11 +87,17 @@ void Renderer::InitEntityForRender(Entity& e)
     if (!e.m_ReadyForDraw)
     {
         Texture* tex = new Texture(e.m_TexturePath);
-        m_Textures.push_back(tex);
         e.m_Texture = tex;
         e.m_Transform.scale *= Vec2((float)tex->GetWidth() / SCREEN_WIDTH, (float)tex->GetHeight() / SCREEN_HEIGHT);
         e.m_ReadyForDraw = true;
     }
+}
+
+void Renderer::RemoveEntityFromRenderPipeline(Entity& e)
+{
+    Texture* tex = e.m_Texture;
+    if (tex) delete tex;
+    e.m_ReadyForDraw = false;
 }
 
 void Renderer::SetScene(Scene* scene)
@@ -107,6 +109,18 @@ void Renderer::SetScene(Scene* scene)
     }
 }
 
+void Renderer::FreeScene()
+{
+    if (m_Scene)
+    {
+        for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
+        {
+            RemoveEntityFromRenderPipeline((*it));
+        }
+        m_Scene = nullptr;
+    }
+}
+
 void Renderer::OnEntityAdded(Entity& e)
 {
     InitEntityForRender(e);
@@ -114,5 +128,5 @@ void Renderer::OnEntityAdded(Entity& e)
 
 void Renderer::OnEntityRemoved(Entity& e)
 {
-    NOT_IMPLEMENTED;
+    RemoveEntityFromRenderPipeline(e);
 }
