@@ -48,24 +48,6 @@ void Renderer::Update(float dt)
         m_ShouldRender = true;
         timeUntilLastRender = 0;
     }
-
-    // Update scene
-    if (m_Scene->IsDirty())
-    {
-        for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
-        {
-            Entity& e = (*it);
-            if (!e.m_ReadyForDraw)
-            {
-                Texture* tex = new Texture(e.m_TexturePath);
-                m_Textures.push_back(tex);
-                e.m_Texture = tex;
-                e.m_Transform.scale *= Vec2( (float) tex->GetWidth() / SCREEN_WIDTH, (float) tex->GetHeight() / SCREEN_HEIGHT);
-                e.m_ReadyForDraw = true;
-            }
-        }
-        m_Scene->ClearDirty();
-    }
 }
 
 bool Renderer::RenderIfNeeded()
@@ -102,4 +84,35 @@ void Renderer::RenderFrame()
         (*it).m_Texture->Bind(0);
         GLFunctions::Draw(6);
     }
+}
+
+void Renderer::InitEntityForRender(Entity& e)
+{
+    if (!e.m_ReadyForDraw)
+    {
+        Texture* tex = new Texture(e.m_TexturePath);
+        m_Textures.push_back(tex);
+        e.m_Texture = tex;
+        e.m_Transform.scale *= Vec2((float)tex->GetWidth() / SCREEN_WIDTH, (float)tex->GetHeight() / SCREEN_HEIGHT);
+        e.m_ReadyForDraw = true;
+    }
+}
+
+void Renderer::SetScene(Scene* scene)
+{
+    m_Scene = scene;
+    for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
+    {
+        InitEntityForRender((*it));
+    }
+}
+
+void Renderer::OnEntityAdded(Entity& e)
+{
+    InitEntityForRender(e);
+}
+
+void Renderer::OnEntityRemoved(Entity& e)
+{
+    NOT_IMPLEMENTED;
 }

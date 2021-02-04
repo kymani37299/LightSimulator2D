@@ -12,12 +12,20 @@ struct Transform
 	float rotation;
 };
 
+struct DrawParams
+{
+	bool occluder : 1;
+	bool emitter : 1;
+
+};
+
 class Entity
 {
 	friend class Renderer;
 
 public:
 	Entity(const std::string& texture);
+	unsigned GetID() { return m_EntityID; }
 
 	Transform m_Transform;
 private:

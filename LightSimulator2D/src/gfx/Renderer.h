@@ -1,12 +1,16 @@
 #pragma once
 
 #include <vector>
+#include <map>
+
+#include "gfx/Lights.h"
 
 class Window;
 class Shader;
 class ShaderInput;
 class Texture;
 class Scene;
+class Entity;
 
 class Renderer
 {
@@ -17,9 +21,14 @@ public:
 	void Update(float dt);
 	bool RenderIfNeeded();
 
-	inline void SetScene(Scene* scene) { m_Scene = scene; }
+	void SetScene(Scene* scene);
+
+	void OnEntityAdded(Entity& e);
+	void OnEntityRemoved(Entity& e);
 
 private:
+	void InitEntityForRender(Entity& e);
+
 	void RenderFrame();
 
 private:
@@ -31,4 +40,6 @@ private:
 	Scene* m_Scene;
 
 	std::vector<Texture*> m_Textures;
+
+	std::vector<PointLight*> m_PointLights;
 };
