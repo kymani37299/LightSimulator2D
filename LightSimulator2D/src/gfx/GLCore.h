@@ -14,11 +14,19 @@ struct Vertex
 
 using GLHandle = unsigned int;
 
+enum class BarrierType
+{
+	Image,
+
+};
+
 namespace GLFunctions
 {
 	void InitGL(void* procAddressGet);
 	void Draw(unsigned numVertices);
+	void Dispatch(unsigned groupX = 1, unsigned groupY = 1, unsigned groupZ = 1);
 	void ClearScreen(Vec3 clearColor = VEC3_ZERO);
+	void MemoryBarrier(BarrierType barrier);
 };
 
 class ShaderInput
@@ -54,6 +62,30 @@ private:
 	unsigned m_Height;
 };
 
+enum ImageFlags
+{
+	IF_WriteAccess = 1,
+	IF_ReadAccess = 2
+	// Next 4
+};
+
+class Image
+{
+public:
+	Image(unsigned width, unsigned height, unsigned flags);
+	~Image();
+
+	void Bind(unsigned slot);
+	void Unbind(unsigned slot);
+
+private:
+	GLHandle m_Handle;
+
+	unsigned m_Width;
+	unsigned m_Height;
+	unsigned m_Flags;
+};
+
 class Shader
 {
 public:
@@ -66,6 +98,26 @@ public:
 	inline bool IsValid() const { return m_Valid; }
 
 	template<typename T> void SetUniform(const std::string& key, T value) const;
+
+private:
+	GLHandle m_Handle;
+	bool m_Valid = true;
+};
+
+class ComputeShader
+{
+	static bool s_InitializedHW;
+	static void InitializeHW();
+
+	static int s_MaxGroupSize[3];
+	static int s_MaxGroupInvocations;
+	
+public:
+	ComputeShader(const std::string& cs);
+	~ComputeShader();
+
+	void Bind();
+	void Unbind();
 
 private:
 	GLHandle m_Handle;

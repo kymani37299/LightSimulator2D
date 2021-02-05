@@ -20,6 +20,11 @@ static std::vector<Vertex> quadVertices =
 
 Renderer::~Renderer()
 {
+    // TMP START - Compute shaders test
+    delete m_ComputeShader;
+    delete m_Image;
+    // TMP END - Compute shaders test
+
     delete m_Shader;
     delete m_QuadInput;
     if (m_Scene) FreeScene();
@@ -32,6 +37,11 @@ void Renderer::Init(Window& window)
     ASSERT(m_Shader->IsValid());
 
     m_QuadInput = new ShaderInput(quadVertices);
+
+    // TMP START - Compute shaders test
+    m_ComputeShader = new ComputeShader("test.cs");
+    m_Image = new Image(512, 512, IF_WriteAccess);
+    // TMP END - Compute shaders test
 }
 
 void Renderer::Update(float dt)
@@ -80,6 +90,18 @@ void Renderer::RenderFrame()
         (*it).m_Texture->Bind(0);
         GLFunctions::Draw(6);
     }
+
+    // TMP START - Compute shaders test
+    m_ComputeShader->Bind();
+    m_Image->Bind(0);
+    GLFunctions::Dispatch(512, 512);
+    GLFunctions::MemoryBarrier(BarrierType::Image);
+    m_Shader->Bind();
+    m_QuadInput->Bind();
+    Transform t = { Vec2(0.2,0.2),Vec2(0.2,0.2), 0 };
+    m_Shader->SetUniform("u_Transform", GetTransformation(t));
+    GLFunctions::Draw(6);
+    // TMP END - Compute shaders test
 }
 
 void Renderer::InitEntityForRender(Entity& e)
@@ -90,6 +112,11 @@ void Renderer::InitEntityForRender(Entity& e)
         e.m_Texture = tex;
         e.m_Transform.scale *= Vec2((float)tex->GetWidth() / SCREEN_WIDTH, (float)tex->GetHeight() / SCREEN_HEIGHT);
         e.m_ReadyForDraw = true;
+
+        if (e.m_DrawFlags.emitter)
+        {
+            m_PointLights.push_back({ e.m_EntityID, e.m_Transform.position, e.m_EmissionColor });
+        }
     }
 }
 

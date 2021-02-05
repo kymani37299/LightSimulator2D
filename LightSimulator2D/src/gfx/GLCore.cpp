@@ -114,10 +114,29 @@ void GLFunctions::Draw(unsigned numVertices)
 	GL_CALL(glDrawArrays(GL_TRIANGLES, 0, numVertices));
 }
 
+void GLFunctions::Dispatch(unsigned groupX, unsigned groupY, unsigned groupZ)
+{
+	GL_CALL(glDispatchCompute(groupX, groupY, groupZ));
+}
+
 void GLFunctions::ClearScreen(Vec3 clearColor)
 {
 	GL_CALL(glClearColor(clearColor.r, clearColor.g, clearColor.b, 1));
 	GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+}
+
+void GLFunctions::MemoryBarrier(BarrierType barrier)
+{
+	unsigned glBarrier = 0;
+	switch (barrier)
+	{
+	case BarrierType::Image:
+		glBarrier = GL_SHADER_IMAGE_ACCESS_BARRIER_BIT;
+		break;
+	default:
+		ASSERT(0);
+	}
+	GL_CALL(glMemoryBarrier(glBarrier));
 }
 
 // -------------------------------------------
@@ -167,6 +186,7 @@ Texture::Texture(const std::string& path)
 	m_Height = imageData->height;
 
 	GL_CALL(glGenTextures(1, &m_Handle));
+	GL_CALL(glActiveTexture(GL_TEXTURE0));
 	GL_CALL(glBindTexture(GL_TEXTURE_2D, m_Handle));
 
 	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
@@ -192,6 +212,52 @@ void Texture::Bind(unsigned slot)
 }
 
 void Texture::Unbind(unsigned slot)
+{
+	GL_CALL(glActiveTexture(GL_TEXTURE0 + slot));
+	GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
+}
+
+// -------------------------------------------
+// ---------- Image --------------------------
+// -------------------------------------------
+
+Image::Image(unsigned width, unsigned height, unsigned flags):
+	m_Width(width),
+	m_Height(height),
+	m_Flags(flags)
+{
+	GL_CALL(glGenTextures(1, &m_Handle));
+	GL_CALL(glActiveTexture(GL_TEXTURE0));
+	GL_CALL(glBindTexture(GL_TEXTURE_2D, m_Handle));
+
+	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+
+	GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_Width, m_Height, 0, GL_RGBA, GL_FLOAT, NULL));
+
+	unsigned accessFlags = GL_READ_ONLY;
+	if (flags | IF_ReadAccess && flags | IF_WriteAccess)
+		accessFlags = GL_READ_WRITE;
+	else if (flags | IF_WriteAccess)
+		accessFlags = GL_WRITE_ONLY;
+
+	GL_CALL(glBindImageTexture(0, m_Handle, 0, GL_FALSE, 0, accessFlags, GL_RGBA32F));
+}
+
+Image::~Image()
+{
+	GL_CALL(glDeleteTextures(1, &m_Handle));
+}
+
+void Image::Bind(unsigned slot)
+{
+	GL_CALL(glActiveTexture(GL_TEXTURE0 + slot));
+	GL_CALL(glBindTexture(GL_TEXTURE_2D, m_Handle));
+}
+
+void Image::Unbind(unsigned slot)
 {
 	GL_CALL(glActiveTexture(GL_TEXTURE0 + slot));
 	GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
@@ -269,3 +335,64 @@ template<> void Shader::SetUniform<Mat3>(const std::string& key, Mat3 value) con
 	GL_CALL(glUniformMatrix3fv(GetUniformLocation(m_Handle, key), 1, GL_FALSE, glm::value_ptr(value)));
 }
 
+// -------------------------------------------
+// ---------- ComputeShader ------------------
+// -------------------------------------------
+
+bool ComputeShader::s_InitializedHW = false;
+int  ComputeShader::s_MaxGroupSize[3] = { 0 };
+int  ComputeShader::s_MaxGroupInvocations = 0;
+
+void ComputeShader::InitializeHW()
+{
+	GL_CALL(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &s_MaxGroupSize[0]));
+	GL_CALL(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &s_MaxGroupSize[1]));
+	GL_CALL(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &s_MaxGroupSize[2]));
+
+	GL_CALL(glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &s_MaxGroupInvocations));
+	
+	LOG("[ComputeShader][HWInit] Max group size is (" + std::to_string(s_MaxGroupSize[0]) + "," + std::to_string(s_MaxGroupSize[1]) + "," + std::to_string(s_MaxGroupSize[2]) + ")");
+	LOG("[ComputeShader][HWInit] Max local group invoactions is " + std::to_string(s_MaxGroupInvocations));
+
+	s_InitializedHW = true;
+}
+
+ComputeShader::ComputeShader(const std::string& cs)
+{
+	if (!s_InitializedHW) InitializeHW();
+
+	std::string csCode;
+	if (!LoadShader(cs, csCode))
+	{
+		m_Valid = false;
+		return;
+	}
+
+	GL_CALL(m_Handle = glCreateProgram());
+
+	GLHandle csHandle = CompileShader(GL_COMPUTE_SHADER, csCode.c_str());
+
+	if (!csHandle)
+	{
+		m_Valid = false;
+		return;
+	}
+
+	GL_CALL(glAttachShader(m_Handle, csHandle));
+	GL_CALL(glLinkProgram(m_Handle));
+}
+
+ComputeShader::~ComputeShader()
+{
+	GL_CALL(glDeleteProgram(m_Handle));
+}
+
+void ComputeShader::Bind()
+{
+	GL_CALL(glUseProgram(m_Handle));
+}
+
+void ComputeShader::Unbind()
+{
+	GL_CALL(glUseProgram(0));
+}

@@ -11,6 +11,8 @@ class ShaderInput;
 class Texture;
 class Scene;
 class Entity;
+class ComputeShader;
+class Image;
 
 class Renderer
 {
@@ -40,5 +42,10 @@ private:
 	Shader* m_Shader;
 
 	Scene* m_Scene;
-	std::vector<PointLight*> m_PointLights;
+	std::vector<PointLight> m_PointLights;
+
+	// TMP START - Compute shaders test
+	ComputeShader* m_ComputeShader;
+	Image* m_Image;
+	// TMP END - Compute shaders test
 };

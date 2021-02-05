@@ -12,7 +12,7 @@ struct Transform
 	float rotation;
 };
 
-struct DrawParams
+struct DrawFlags
 {
 	bool occluder : 1;
 	bool emitter : 1;
@@ -33,6 +33,9 @@ private:
 
 	std::string m_TexturePath;
 	Texture* m_Texture;
+
+	DrawFlags m_DrawFlags;
+	Vec3 m_EmissionColor = VEC3_ZERO;
 
 	bool m_ReadyForDraw = false;
 };
