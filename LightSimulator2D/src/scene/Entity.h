@@ -24,7 +24,7 @@ class Entity
 	friend class Renderer;
 
 public:
-	Entity(const std::string& texture);
+	Entity(const std::string& texture, bool _static = true);
 	unsigned GetID() { return m_EntityID; }
 
 	Transform m_Transform;
@@ -38,4 +38,5 @@ private:
 	Vec3 m_EmissionColor = VEC3_ZERO;
 
 	bool m_ReadyForDraw = false;
+	bool m_Static = true;
 };

@@ -378,6 +378,15 @@ void Shader::Unbind()
 	GL_CALL(glUseProgram(0));
 }
 
+void Shader::SetUniformBlock(const std::string& block_name, unsigned int slot) const
+{
+	GL_CALL(unsigned int index = glGetUniformBlockIndex(m_Handle, block_name.c_str()));
+	if (index != GL_INVALID_INDEX)
+	{
+		GL_CALL(glUniformBlockBinding(m_Handle, index, slot));
+	}
+}
+
 static int GetUniformLocation(GLHandle shader, const std::string& name)
 {
 	GL_CALL(int location = glGetUniformLocation(shader, name.c_str()));

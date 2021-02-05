@@ -14,6 +14,7 @@ class Entity;
 class ComputeShader;
 class Image;
 class Framebuffer;
+class UniformBuffer;
 
 class Renderer
 {
@@ -45,10 +46,6 @@ private:
 	Scene* m_Scene;
 	std::vector<PointLight> m_PointLights;
 
-	// TMP START - Compute shaders test
-	ComputeShader* m_ComputeShader;
-	Image* m_Image;
-	// TMP END - Compute shaders test
-
-	Framebuffer* m_Framebuffer; // TMP - Framebuffer test
+	UniformBuffer* m_StaticTransformBuffer;
+	unsigned m_NumStaticTransforms = 0;
 };

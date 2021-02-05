@@ -18,15 +18,20 @@ static std::vector<Vertex> quadVertices =
     {Vec2(1.0,1.0)     ,Vec2(1.0,1.0)}
 };
 
+static constexpr unsigned MAX_BATCH_SIZE = 100;
+
+struct EntityInstanceData
+{
+    // Mat3 dont have good alignment because it is 4*vec4 row based
+    alignas(16) Vec3 transformation_row_1;
+    alignas(16) Vec3 transformation_row_2;
+    alignas(16) Vec3 transformation_row_3;
+    static unsigned GetStride() { return 12 * 4; }
+};
+
 Renderer::~Renderer()
 {
-    // TMP START - Compute shaders test
-    delete m_ComputeShader;
-    delete m_Image;
-    // TMP END - Compute shaders test
-
-    delete m_Framebuffer; // TMP - Framebuffer test
-
+    delete m_StaticTransformBuffer;
     delete m_Shader;
     delete m_QuadInput;
     if (m_Scene) FreeScene();
@@ -39,13 +44,7 @@ void Renderer::Init(Window& window)
     ASSERT(m_Shader->IsValid());
 
     m_QuadInput = new ShaderInput(quadVertices);
-
-    // TMP START - Compute shaders test
-    m_ComputeShader = new ComputeShader("test.cs");
-    m_Image = new Image(512, 512, IF_WriteAccess);
-    // TMP END - Compute shaders test
-
-    m_Framebuffer = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT); // TMP - Framebuffer test
+    m_StaticTransformBuffer = new UniformBuffer(EntityInstanceData::GetStride(), MAX_BATCH_SIZE);
 }
 
 void Renderer::Update(float dt)
@@ -81,43 +80,43 @@ static Mat3 GetTransformation(Transform t)
         0.0,0.0,1.0 });
 }
 
+static EntityInstanceData GetInstanceData(Transform t)
+{
+    Mat3 transformation = GetTransformation(t);
+    EntityInstanceData instanceData;
+    instanceData.transformation_row_1 = transformation[0];
+    instanceData.transformation_row_2 = transformation[1];
+    instanceData.transformation_row_3 = transformation[2];
+    return instanceData;
+}
+
 void Renderer::RenderFrame()
 {
     GLFunctions::ClearScreen();
 
-    // TMP START - Framebuffer test
-    m_Framebuffer->Bind();
-    GLFunctions::ClearScreen();
-    // TMP END - Framebuffer test
+    int staticIndex = 0;
 
     m_Shader->Bind();
     m_QuadInput->Bind();
     m_Shader->SetUniform("u_Texture", 0);
+    m_StaticTransformBuffer->Bind(1);
+    m_Shader->SetUniformBlock("StaticBuffer", 1);
     for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
     {
-        m_Shader->SetUniform("u_Transform", GetTransformation((*it).m_Transform));
-        (*it).m_Texture->Bind(0);
+        Entity& e = (*it);
+        if (e.m_Static)
+        {
+            m_Shader->SetUniform("u_StaticIndex", staticIndex);
+            staticIndex++;
+        }
+        else
+        {
+            m_Shader->SetUniform("u_StaticIndex", -1);
+            m_Shader->SetUniform("u_Transform", GetTransformation(e.m_Transform));
+        }
+        e.m_Texture->Bind(0);
         GLFunctions::Draw(6);
     }
-
-    // TMP START - Framebuffer test
-    m_Framebuffer->Unbind();
-    m_Framebuffer->BindTexture(0, 0);
-    m_Shader->SetUniform("u_Transform", GetTransformation({ Vec2(-0.5,0.5),Vec2(0.5,0.5), 0 }));
-    GLFunctions::Draw(6);
-    // TMP END - Framebuffer test
-
-    // TMP START - Compute shaders test
-    m_ComputeShader->Bind();
-    m_Image->Bind(0);
-    GLFunctions::Dispatch(512, 512);
-    GLFunctions::MemoryBarrier(BarrierType::Image);
-    m_Shader->Bind();
-    m_QuadInput->Bind();
-    m_Shader->SetUniform("u_Transform", GetTransformation({ Vec2(0.2,0.2),Vec2(0.2,0.2), 0 }));
-    GLFunctions::Draw(6);
-    // TMP END - Compute shaders test
-
 }
 
 void Renderer::InitEntityForRender(Entity& e)
@@ -133,11 +132,19 @@ void Renderer::InitEntityForRender(Entity& e)
         {
             m_PointLights.push_back({ e.m_EntityID, e.m_Transform.position, e.m_EmissionColor });
         }
+
+        if (e.m_Static)
+        {
+            EntityInstanceData instanceData = GetInstanceData(e.m_Transform);
+            m_StaticTransformBuffer->UploadData(&instanceData, m_NumStaticTransforms, 1);
+            m_NumStaticTransforms++;
+        }
     }
 }
 
 void Renderer::RemoveEntityFromRenderPipeline(Entity& e)
 {
+    // TODO: Not supported dynamic removing because it will make static transform buffer out of sync
     Texture* tex = e.m_Texture;
     if (tex) delete tex;
     e.m_ReadyForDraw = false;

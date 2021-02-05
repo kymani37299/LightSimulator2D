@@ -1,6 +1,6 @@
 #include "Entity.h"
 
-Entity::Entity(const std::string& texture)
+Entity::Entity(const std::string& texture, bool _static)
 {
 	static unsigned autoInc = 1;
 	m_EntityID = autoInc++;
@@ -10,4 +10,6 @@ Entity::Entity(const std::string& texture)
 	m_Transform.rotation = 0.0f;
 
 	m_TexturePath = texture;
+
+	m_Static = _static;
 }

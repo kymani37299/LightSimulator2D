@@ -121,6 +121,7 @@ public:
 
 	inline bool IsValid() const { return m_Valid; }
 
+	void SetUniformBlock(const std::string& block_name, unsigned int slot) const;
 	template<typename T> void SetUniform(const std::string& key, T value) const;
 
 private:
