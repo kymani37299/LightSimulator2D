@@ -147,3 +147,26 @@ private:
 	GLHandle m_Handle;
 	bool m_Valid = true;
 };
+
+class Framebuffer
+{
+	static constexpr int MAX_COLOR_ATTACHMENTS = 5;
+public:
+	Framebuffer(unsigned width, unsigned height, unsigned numColorAttachments = 1);
+	~Framebuffer();
+
+	void Bind();
+	void Unbind();
+
+	void BindTexture(unsigned colorAttachment, unsigned slot);
+	void UnbindTexture(unsigned colorAttachment);
+
+private:
+	GLHandle m_Handle;
+	GLHandle m_ColorAttachments[MAX_COLOR_ATTACHMENTS] = { 0 };
+
+	int m_CurrentSlots[MAX_COLOR_ATTACHMENTS] = { -1 };
+	unsigned m_NumColorAttachments;
+	unsigned m_Width;
+	unsigned m_Height;
+};

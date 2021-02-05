@@ -13,6 +13,7 @@ class Scene;
 class Entity;
 class ComputeShader;
 class Image;
+class Framebuffer;
 
 class Renderer
 {
@@ -48,4 +49,6 @@ private:
 	ComputeShader* m_ComputeShader;
 	Image* m_Image;
 	// TMP END - Compute shaders test
+
+	Framebuffer* m_Framebuffer; // TMP - Framebuffer test
 };

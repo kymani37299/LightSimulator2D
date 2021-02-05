@@ -178,7 +178,7 @@ void ShaderInput::Unbind()
 // ---------- UniformBuffer ------------------
 // -------------------------------------------
 
-UniformBuffer::UniformBuffer(unsigned stride, unsigned count = 1)
+UniformBuffer::UniformBuffer(unsigned stride, unsigned count)
 {
 	ASSERT(stride % 2 == 0); // Stride must be aligned to std140
 
@@ -212,7 +212,7 @@ void UniformBuffer::Unbind()
 
 }
 
-void UniformBuffer::UploadData(void* data, unsigned index = 0, unsigned count = 1)
+void UniformBuffer::UploadData(void* data, unsigned index, unsigned count)
 {
 	ASSERT(index + count <= m_Count);
 
@@ -454,4 +454,72 @@ void ComputeShader::Bind()
 void ComputeShader::Unbind()
 {
 	GL_CALL(glUseProgram(0));
+}
+
+// -------------------------------------------
+// ---------- Framebuffer --------------------
+// -------------------------------------------
+
+Framebuffer::Framebuffer(unsigned width, unsigned height, unsigned numColorAttachments):
+	m_Width(width),
+	m_Height(height),
+	m_NumColorAttachments(numColorAttachments)
+{
+	ASSERT(m_NumColorAttachments <= MAX_COLOR_ATTACHMENTS);
+
+	GL_CALL(glGenFramebuffers(1, &m_Handle));
+	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, m_Handle));
+
+	for (int i = 0; i < m_NumColorAttachments; i++)
+	{
+		GL_CALL(glGenTextures(1, &m_ColorAttachments[i]));
+		GL_CALL(glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[i]));
+
+		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+		GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+
+		GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL));
+		GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
+
+		GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, m_ColorAttachments[i], 0));
+	}
+
+}
+
+Framebuffer::~Framebuffer()
+{
+	for (int i = 0; i < m_NumColorAttachments; i++)
+	{
+		GL_CALL(glDeleteTextures(1, &m_ColorAttachments[i]));
+	}
+	GL_CALL(glDeleteFramebuffers(1, &m_Handle));
+}
+
+void Framebuffer::Bind()
+{
+	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, m_Handle));
+}
+
+void Framebuffer::Unbind()
+{
+	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+}
+
+void Framebuffer::BindTexture(unsigned colorAttachment, unsigned slot)
+{
+	GL_CALL(glActiveTexture(GL_TEXTURE0 + slot));
+	GL_CALL(glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[colorAttachment]));
+	m_CurrentSlots[colorAttachment] = slot;
+}
+
+void Framebuffer::UnbindTexture(unsigned colorAttachment)
+{
+	if (m_CurrentSlots[colorAttachment] != -1)
+	{
+		GL_CALL(glActiveTexture(GL_TEXTURE0 + m_CurrentSlots[colorAttachment]));
+		GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
+		m_CurrentSlots[colorAttachment] = -1;
+	}
 }

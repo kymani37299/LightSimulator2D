@@ -25,6 +25,8 @@ Renderer::~Renderer()
     delete m_Image;
     // TMP END - Compute shaders test
 
+    delete m_Framebuffer; // TMP - Framebuffer test
+
     delete m_Shader;
     delete m_QuadInput;
     if (m_Scene) FreeScene();
@@ -42,6 +44,8 @@ void Renderer::Init(Window& window)
     m_ComputeShader = new ComputeShader("test.cs");
     m_Image = new Image(512, 512, IF_WriteAccess);
     // TMP END - Compute shaders test
+
+    m_Framebuffer = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT); // TMP - Framebuffer test
 }
 
 void Renderer::Update(float dt)
@@ -81,6 +85,11 @@ void Renderer::RenderFrame()
 {
     GLFunctions::ClearScreen();
 
+    // TMP START - Framebuffer test
+    m_Framebuffer->Bind();
+    GLFunctions::ClearScreen();
+    // TMP END - Framebuffer test
+
     m_Shader->Bind();
     m_QuadInput->Bind();
     m_Shader->SetUniform("u_Texture", 0);
@@ -91,6 +100,13 @@ void Renderer::RenderFrame()
         GLFunctions::Draw(6);
     }
 
+    // TMP START - Framebuffer test
+    m_Framebuffer->Unbind();
+    m_Framebuffer->BindTexture(0, 0);
+    m_Shader->SetUniform("u_Transform", GetTransformation({ Vec2(-0.5,0.5),Vec2(0.5,0.5), 0 }));
+    GLFunctions::Draw(6);
+    // TMP END - Framebuffer test
+
     // TMP START - Compute shaders test
     m_ComputeShader->Bind();
     m_Image->Bind(0);
@@ -98,10 +114,10 @@ void Renderer::RenderFrame()
     GLFunctions::MemoryBarrier(BarrierType::Image);
     m_Shader->Bind();
     m_QuadInput->Bind();
-    Transform t = { Vec2(0.2,0.2),Vec2(0.2,0.2), 0 };
-    m_Shader->SetUniform("u_Transform", GetTransformation(t));
+    m_Shader->SetUniform("u_Transform", GetTransformation({ Vec2(0.2,0.2),Vec2(0.2,0.2), 0 }));
     GLFunctions::Draw(6);
     // TMP END - Compute shaders test
+
 }
 
 void Renderer::InitEntityForRender(Entity& e)
