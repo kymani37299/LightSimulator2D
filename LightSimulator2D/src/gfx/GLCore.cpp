@@ -175,6 +175,53 @@ void ShaderInput::Unbind()
 }
 
 // -------------------------------------------
+// ---------- UniformBuffer ------------------
+// -------------------------------------------
+
+UniformBuffer::UniformBuffer(unsigned stride, unsigned count = 1)
+{
+	ASSERT(stride % 2 == 0); // Stride must be aligned to std140
+
+	GL_CALL(glGenBuffers(1, &m_Handle));
+	GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, m_Handle));
+	GL_CALL(glBufferData(GL_UNIFORM_BUFFER, stride * count, NULL, GL_DYNAMIC_DRAW)); // TODO: Investigate alternatives to dynamic draw
+	GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
+
+	m_Stride = stride;
+	m_Count = count;
+}
+
+UniformBuffer::~UniformBuffer()
+{
+	GL_CALL(glDeleteBuffers(1, &m_Handle));
+}
+
+void UniformBuffer::Bind(unsigned slot)
+{
+	GL_CALL(glBindBufferBase(GL_UNIFORM_BUFFER, slot, m_Handle));
+	m_CurrentSlot = slot;
+}
+
+void UniformBuffer::Unbind()
+{
+	if (m_CurrentSlot != -1)
+	{
+		GL_CALL(glBindBufferBase(GL_UNIFORM_BUFFER, m_CurrentSlot, 0));
+		m_CurrentSlot = -1;
+	}
+
+}
+
+void UniformBuffer::UploadData(void* data, unsigned index = 0, unsigned count = 1)
+{
+	ASSERT(index + count <= m_Count);
+
+	GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, m_Handle));
+	GL_CALL(glBufferSubData(GL_UNIFORM_BUFFER, index * m_Stride, count * m_Stride, data));
+	GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
+}
+
+// -------------------------------------------
 // ---------- Texture ------------------------
 // -------------------------------------------
 
@@ -209,12 +256,19 @@ void Texture::Bind(unsigned slot)
 {
 	GL_CALL(glActiveTexture(GL_TEXTURE0 + slot));
 	GL_CALL(glBindTexture(GL_TEXTURE_2D, m_Handle));
+
+	m_CurrentSlot = slot;
 }
 
-void Texture::Unbind(unsigned slot)
+void Texture::Unbind()
 {
-	GL_CALL(glActiveTexture(GL_TEXTURE0 + slot));
-	GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
+	if (m_CurrentSlot != -1)
+	{
+		GL_CALL(glActiveTexture(GL_TEXTURE0 + m_CurrentSlot));
+		GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
+		m_CurrentSlot = -1;
+	}
+
 }
 
 // -------------------------------------------
@@ -255,12 +309,17 @@ void Image::Bind(unsigned slot)
 {
 	GL_CALL(glActiveTexture(GL_TEXTURE0 + slot));
 	GL_CALL(glBindTexture(GL_TEXTURE_2D, m_Handle));
+	m_CurrentSlot = slot;
 }
 
-void Image::Unbind(unsigned slot)
+void Image::Unbind()
 {
-	GL_CALL(glActiveTexture(GL_TEXTURE0 + slot));
-	GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
+	if (m_CurrentSlot != -1)
+	{
+		GL_CALL(glActiveTexture(GL_TEXTURE0 + m_CurrentSlot));
+		GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
+		m_CurrentSlot = -1;
+	}
 }
 
 // -------------------------------------------

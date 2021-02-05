@@ -29,6 +29,8 @@ namespace GLFunctions
 	void MemoryBarrier(BarrierType barrier);
 };
 
+// TODO: Delete copy constructors from all gl classes
+
 class ShaderInput
 {
 public:
@@ -43,6 +45,25 @@ private:
 	GLHandle m_VertexArray;
 };
 
+class UniformBuffer
+{
+public:
+	UniformBuffer(unsigned stride, unsigned count = 1);
+	~UniformBuffer();
+
+	void Bind(unsigned slot);
+	void Unbind();
+
+	void UploadData(void* data, unsigned index = 0, unsigned count = 1);
+
+private:
+	GLHandle m_Handle;
+
+	int m_CurrentSlot = -1;
+	unsigned m_Stride;
+	unsigned m_Count;
+};
+
 class Texture
 {
 public:
@@ -50,7 +71,7 @@ public:
 	~Texture();
 
 	void Bind(unsigned slot);
-	void Unbind(unsigned slot);
+	void Unbind();
 
 	inline unsigned GetWidth() const { return m_Width; }
 	inline unsigned GetHeight() const { return m_Height; }
@@ -58,8 +79,10 @@ public:
 private:
 	GLHandle m_Handle;
 	
+	int m_CurrentSlot = -1;
 	unsigned m_Width;
 	unsigned m_Height;
+
 };
 
 enum ImageFlags
@@ -76,11 +99,12 @@ public:
 	~Image();
 
 	void Bind(unsigned slot);
-	void Unbind(unsigned slot);
+	void Unbind();
 
 private:
 	GLHandle m_Handle;
 
+	int m_CurrentSlot = -1;
 	unsigned m_Width;
 	unsigned m_Height;
 	unsigned m_Flags;
