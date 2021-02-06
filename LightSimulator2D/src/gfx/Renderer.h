@@ -44,8 +44,4 @@ private:
 	Shader* m_Shader;
 
 	Scene* m_Scene;
-	std::vector<PointLight> m_PointLights;
-
-	UniformBuffer* m_StaticTransformBuffer;
-	unsigned m_NumStaticTransforms = 0;
 };

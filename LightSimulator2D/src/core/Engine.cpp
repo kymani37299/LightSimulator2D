@@ -37,7 +37,7 @@ void GameEngine::Init()
     // TMP
     Entity bg{ "res/bg.png" };
     bg.m_Transform.scale *= 1000.0f;
-    Entity e1{ "res/animals/elephant.png" , false };
+    Entity e1{ "res/animals/elephant.png" };
     Entity e2{ "res/animals/hippo.png" };
     e2.m_Transform.scale *= 0.2;
     e2.m_Transform.position = Vec2(-0.3, 0.5);
