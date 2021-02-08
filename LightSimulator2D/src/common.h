@@ -20,6 +20,9 @@
 #define MIN(X,Y) ((X) < (Y)) ? (X) : (Y)
 #define MAX(X,Y) ((X) > (Y)) ? (X) : (Y)
 
+#define JOIN_IMPL(X,Y) X##Y
+#define JOIN(X,Y) JOIN_IMPL(X,Y)
+
 using Vec2 = glm::vec2;
 using Vec3 = glm::vec3;
 using Vec4 = glm::vec4;

@@ -7,6 +7,8 @@
 #include "scene/Scene.h"
 #include "scene/Entity.h"
 
+#include "util/Profiler.h"
+
 static std::vector<Vertex> quadVertices = 
 {
     {Vec2(-1.0,-1.0)   ,Vec2(0.0,0.0)},
@@ -69,6 +71,8 @@ static Mat3 GetTransformation(Transform t)
 
 void Renderer::RenderFrame()
 {
+    PROFILE_SCOPE("RenderFrame");
+
     GLFunctions::ClearScreen();
 
     m_Shader->Bind();

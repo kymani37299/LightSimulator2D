@@ -6,6 +6,8 @@
 #include "input/Controller.h"
 #include "scene/Entity.h"
 
+#include "util/Profiler.h"
+
 void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     GameEngine::Get()->GetMainWindow()->KeyPressedCallback(window, key, scancode, action, mods);
@@ -55,6 +57,8 @@ void GameEngine::Init()
 
 void GameEngine::EngineLoop()
 {
+    PROFILE_SCOPE("EngineLoop");
+
     m_Running = m_Window.Active();
     UpdateDT();
     m_Controller->Update(m_DT);
@@ -62,6 +66,10 @@ void GameEngine::EngineLoop()
     if (m_Renderer.RenderIfNeeded())
     {
         m_Window.UpdateGraphic();
+#ifdef DEBUG // TMP BEGIN - Profiler test
+        LOG("Current engine time: " + std::to_string(PROFILE_GET("EngineLoop")));
+        LOG("Current render time: " + std::to_string(PROFILE_GET("RenderFrame")));
+#endif  // TMP END
     }
     m_Window.Update(m_DT);
 }

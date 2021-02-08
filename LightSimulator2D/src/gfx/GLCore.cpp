@@ -479,7 +479,7 @@ Framebuffer::Framebuffer(unsigned width, unsigned height, unsigned numColorAttac
 	GL_CALL(glGenFramebuffers(1, &m_Handle));
 	GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, m_Handle));
 
-	for (int i = 0; i < m_NumColorAttachments; i++)
+	for (unsigned i = 0; i < m_NumColorAttachments; i++)
 	{
 		GL_CALL(glGenTextures(1, &m_ColorAttachments[i]));
 		GL_CALL(glBindTexture(GL_TEXTURE_2D, m_ColorAttachments[i]));
@@ -499,7 +499,7 @@ Framebuffer::Framebuffer(unsigned width, unsigned height, unsigned numColorAttac
 
 Framebuffer::~Framebuffer()
 {
-	for (int i = 0; i < m_NumColorAttachments; i++)
+	for (unsigned i = 0; i < m_NumColorAttachments; i++)
 	{
 		GL_CALL(glDeleteTextures(1, &m_ColorAttachments[i]));
 	}
