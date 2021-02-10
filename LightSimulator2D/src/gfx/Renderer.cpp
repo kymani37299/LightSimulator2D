@@ -20,9 +20,28 @@ static std::vector<Vertex> quadVertices =
     {Vec2(1.0,1.0)     ,Vec2(1.0,1.0)}
 };
 
+static Shader* CreateShader(const std::string& name)
+{
+    Shader* shader = new Shader(name + ".vert", name + ".frag");
+    ASSERT(shader->IsValid());
+    return shader;
+}
+
+static ComputeShader* CreateCShader(const std::string& name)
+{
+    ComputeShader* shader = new ComputeShader(name + ".cs");
+    ASSERT(shader->IsValid());
+    return shader;
+}
+
 Renderer::~Renderer()
 {
-    delete m_Shader;
+    delete m_IntersectionShaderInput;
+    delete m_ShadowmapShader;
+    delete m_OcclusionLines;
+    delete m_LightOcclusionShader;
+    delete m_IntersectionBuffer;
+    delete m_OpaqueShader;
     delete m_QuadInput;
     if (m_Scene) FreeScene();
 }
@@ -30,17 +49,18 @@ Renderer::~Renderer()
 void Renderer::Init(Window& window)
 {
     GLFunctions::InitGL(window.GetProcessAddressHandle());
-    m_Shader = new Shader("main.vert", "main.frag");
-    ASSERT(m_Shader->IsValid());
+
+    m_OpaqueShader = CreateShader("main");
+    m_ShadowmapShader = CreateShader("shadowmap");
+    m_LightOcclusionShader = CreateCShader("light_occlusion");
 
     m_QuadInput = new ShaderInput(quadVertices);
     
     static constexpr unsigned MAX_LINE_SEGMENTS = 300; // TODO : Implement UB resize and use dynamic size
     m_OcclusionLines = new UniformBuffer(sizeof(Vec4), MAX_LINE_SEGMENTS);
-    m_IntersectionBuffer = new ShaderStorageBuffer(sizeof(Vec2), NUM_INTERSECTIONS);
 
-    m_LightOcclusionShader = new ComputeShader("light_occlusion.cs");
-    ASSERT(m_LightOcclusionShader->IsValid());
+    m_IntersectionBuffer = new ShaderStorageBuffer(sizeof(Vec2), NUM_INTERSECTIONS);
+    m_IntersectionShaderInput = m_IntersectionBuffer->AsShaderInput();
 }
 
 void Renderer::Update(float dt)
@@ -94,20 +114,28 @@ void Renderer::RenderFrame()
     }
 
     {
-        PROFILE_SCOPE("OpaquePass");
+        PROFILE_SCOPE("Opaque");
 
-        m_Shader->Bind();
+        m_OpaqueShader->Bind();
         m_QuadInput->Bind();
-        m_Shader->SetUniform("u_Texture", 0);
+        m_OpaqueShader->SetUniform("u_Texture", 0);
         for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
         {
             Entity& e = (*it);
-            m_Shader->SetUniform("u_Transform", GetTransformation(e.m_Transform));
+            m_OpaqueShader->SetUniform("u_Transform", GetTransformation(e.m_Transform));
             e.m_Texture->Bind(0);
             GLFunctions::Draw(6);
         }
     }
 
+    {
+        PROFILE_SCOPE("Shadow map");
+
+        GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
+        m_ShadowmapShader->Bind();
+        m_IntersectionShaderInput->Bind();
+        GLFunctions::Draw(NUM_INTERSECTIONS);
+    }
 }
 
 void Renderer::InitEntityForRender(Entity& e)

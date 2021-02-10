@@ -40,17 +40,18 @@ private:
 
 private:
 	bool m_ShouldRender = true;
+	Scene* m_Scene;
 
 	ShaderInput* m_QuadInput;
-	Shader* m_Shader;
 
-	Scene* m_Scene;
+	ComputeShader* m_LightOcclusionShader;
+	Shader* m_OpaqueShader;
+	Shader* m_ShadowmapShader;
 
 	static constexpr unsigned NUM_INTERSECTIONS = 30;
 	ShaderStorageBuffer* m_IntersectionBuffer;
+	ShaderInput* m_IntersectionShaderInput;
 
 	UniformBuffer* m_OcclusionLines;
 	unsigned m_OcclusionLineCount = 0;
-
-	ComputeShader* m_LightOcclusionShader;
 };

@@ -61,6 +61,15 @@ void calcIntersection(out vec3 intersection, vec4 ray, vec4 segment)
     }
 }
 
+// TODO: Optimize this
+void intersectScreen(out vec3 intersection, vec4 ray)
+{
+	calcIntersection(intersection, ray, vec4(-1.0, -1.0, 1.0, -1.0));
+	calcIntersection(intersection, ray, vec4(1.0, -1.0, 1.0, 1.0));
+	calcIntersection(intersection, ray, vec4(1.0, 1.0, -1.0, 1.0));
+	calcIntersection(intersection, ray, vec4(-1.0, 1.0, -1.0, -1.0));
+}
+
 void main()
 {
 	float angle = gl_GlobalInvocationID.x * (PI2 / NUM_INTERSECTIONS);
@@ -74,5 +83,11 @@ void main()
 	{
 		calcIntersection(closestIntersect, ray, lineSegments[i]);
 	}
+
+	if(closestIntersect.x == 1000.0)
+    {
+		intersectScreen(closestIntersect, ray);
+	}
+
 	intersections[gl_GlobalInvocationID.x] = closestIntersect.xy;
 }

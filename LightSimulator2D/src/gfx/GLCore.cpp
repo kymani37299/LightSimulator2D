@@ -133,6 +133,9 @@ void GLFunctions::MemoryBarrier(BarrierType barrier)
 	case BarrierType::Image:
 		glBarrier = GL_SHADER_IMAGE_ACCESS_BARRIER_BIT;
 		break;
+	case BarrierType::VertexBuffer:
+		glBarrier = GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT;
+		break;
 	default:
 		ASSERT(0);
 	}
@@ -158,9 +161,24 @@ ShaderInput::ShaderInput(std::vector<Vertex> vertices)
 	GL_CALL(glEnableVertexAttribArray(1));
 }
 
+ShaderInput::ShaderInput(GLHandle buffer):
+	m_VertexBuffer(buffer),
+	m_BufferOwner(false)
+{
+	GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer));
+	GL_CALL(glGenVertexArrays(1, &m_VertexArray));
+	GL_CALL(glBindVertexArray(m_VertexArray));
+
+	// TOOD: Parametrize this
+	GL_CALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), (void*)0));
+	GL_CALL(glEnableVertexAttribArray(0));
+}
+
 ShaderInput::~ShaderInput()
 {
-	GL_CALL(glDeleteBuffers(1, &m_VertexBuffer));
+	if(m_BufferOwner)
+		GL_CALL(glDeleteBuffers(1, &m_VertexBuffer));
+
 	GL_CALL(glDeleteVertexArrays(1, &m_VertexArray));
 }
 
@@ -238,6 +256,12 @@ ShaderStorageBuffer::ShaderStorageBuffer(unsigned stride, unsigned count):
 ShaderStorageBuffer::~ShaderStorageBuffer()
 {
 	GL_CALL(glDeleteBuffers(1, &m_Handle));
+}
+
+ShaderInput* ShaderStorageBuffer::AsShaderInput()
+{
+	ShaderInput* shaderInput = new ShaderInput(m_Handle);
+	return shaderInput;
 }
 
 void ShaderStorageBuffer::Bind(unsigned slot)

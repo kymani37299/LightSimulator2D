@@ -17,6 +17,7 @@ using GLHandle = unsigned int;
 enum class BarrierType
 {
 	Image,
+	VertexBuffer
 
 };
 
@@ -35,12 +36,15 @@ class ShaderInput
 {
 public:
 	ShaderInput(std::vector<Vertex> vertices);
+	ShaderInput(GLHandle buffer);
+
 	~ShaderInput();
 
 	void Bind();
 	void Unbind();
 
 private:
+	bool m_BufferOwner = true;
 	GLHandle m_VertexBuffer;
 	GLHandle m_VertexArray;
 };
@@ -69,6 +73,8 @@ class ShaderStorageBuffer
 public:
 	ShaderStorageBuffer(unsigned stride, unsigned count = 1);
 	~ShaderStorageBuffer();
+
+	ShaderInput* AsShaderInput();
 
 	void Bind(unsigned slot);
 	void Unbind();
