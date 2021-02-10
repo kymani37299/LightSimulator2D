@@ -17,7 +17,10 @@ using GLHandle = unsigned int;
 enum class BarrierType
 {
 	Image,
-	VertexBuffer
+	VertexBuffer,
+	UniformBuffer,
+	BufferUpdate,
+	All
 
 };
 

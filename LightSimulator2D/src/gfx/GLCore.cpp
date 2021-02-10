@@ -136,6 +136,15 @@ void GLFunctions::MemoryBarrier(BarrierType barrier)
 	case BarrierType::VertexBuffer:
 		glBarrier = GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT;
 		break;
+	case BarrierType::UniformBuffer:
+		glBarrier = GL_UNIFORM_BARRIER_BIT;
+		break;
+	case BarrierType::BufferUpdate:
+		glBarrier = GL_BUFFER_UPDATE_BARRIER_BIT;
+		break;
+	case BarrierType::All:
+		glBarrier = GL_ALL_BARRIER_BITS;
+		break;
 	default:
 		ASSERT(0);
 	}

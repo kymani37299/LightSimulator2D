@@ -45,6 +45,7 @@ private:
 	ShaderInput* m_QuadInput;
 
 	ComputeShader* m_LightOcclusionShader;
+	ComputeShader* m_TrianglulateIntersectionsShader;
 	Shader* m_OpaqueShader;
 	Shader* m_ShadowmapShader;
 
@@ -54,4 +55,8 @@ private:
 
 	UniformBuffer* m_OcclusionLines;
 	unsigned m_OcclusionLineCount = 0;
+
+	static constexpr unsigned NUM_TRIANGLED_INTERSECTION_VERTICES = (NUM_INTERSECTIONS-1) * 3;
+	ShaderStorageBuffer* m_TriangledIntersecitonsBuffer;
+	ShaderInput* m_TriangledIntersecitonsShaderInput;
 };
