@@ -222,6 +222,40 @@ void UniformBuffer::UploadData(void* data, unsigned index, unsigned count)
 }
 
 // -------------------------------------------
+// ---------- ShaderStorageBuffer ------------
+// -------------------------------------------
+
+ShaderStorageBuffer::ShaderStorageBuffer(unsigned stride, unsigned count):
+	m_Stride(stride),
+	m_Count(count)
+{
+	GL_CALL(glGenBuffers(1, &m_Handle));
+	GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_Handle));
+	GL_CALL(glBufferData(GL_SHADER_STORAGE_BUFFER, stride*count, NULL, GL_DYNAMIC_COPY /* TODO: Check if this is right */));
+	GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0));
+}
+
+ShaderStorageBuffer::~ShaderStorageBuffer()
+{
+	GL_CALL(glDeleteBuffers(1, &m_Handle));
+}
+
+void ShaderStorageBuffer::Bind(unsigned slot)
+{
+	GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, m_Handle));
+	m_CurrentSlot = slot;
+}
+
+void ShaderStorageBuffer::Unbind()
+{
+	if (m_CurrentSlot != -1)
+	{
+		GL_CALL(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_CurrentSlot, 0));
+		m_CurrentSlot = -1;
+	}
+}
+
+// -------------------------------------------
 // ---------- Texture ------------------------
 // -------------------------------------------
 
@@ -463,6 +497,16 @@ void ComputeShader::Bind()
 void ComputeShader::Unbind()
 {
 	GL_CALL(glUseProgram(0));
+}
+
+template<> void ComputeShader::SetUniform<int>(const std::string& key, int value) const
+{
+	GL_CALL(glUniform1i(GetUniformLocation(m_Handle, key), value));
+}
+
+template<> void ComputeShader::SetUniform<Vec2>(const std::string& key, Vec2 value) const
+{
+	GL_CALL(glUniform2fv(GetUniformLocation(m_Handle, key), 1 ,glm::value_ptr(value)));
 }
 
 // -------------------------------------------

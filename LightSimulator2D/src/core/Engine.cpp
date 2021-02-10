@@ -66,10 +66,6 @@ void GameEngine::EngineLoop()
     if (m_Renderer.RenderIfNeeded())
     {
         m_Window.UpdateGraphic();
-#ifdef DEBUG // TMP BEGIN - Profiler test
-        LOG("Current engine time: " + std::to_string(PROFILE_GET("EngineLoop")));
-        LOG("Current render time: " + std::to_string(PROFILE_GET("RenderFrame")));
-#endif  // TMP END
     }
     m_Window.Update(m_DT);
 }

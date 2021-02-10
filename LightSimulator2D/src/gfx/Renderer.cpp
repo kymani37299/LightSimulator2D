@@ -34,6 +34,13 @@ void Renderer::Init(Window& window)
     ASSERT(m_Shader->IsValid());
 
     m_QuadInput = new ShaderInput(quadVertices);
+    
+    static constexpr unsigned MAX_LINE_SEGMENTS = 300; // TODO : Implement UB resize and use dynamic size
+    m_OcclusionLines = new UniformBuffer(sizeof(Vec4), MAX_LINE_SEGMENTS);
+    m_IntersectionBuffer = new ShaderStorageBuffer(sizeof(Vec2), NUM_INTERSECTIONS);
+
+    m_LightOcclusionShader = new ComputeShader("light_occlusion.cs");
+    ASSERT(m_LightOcclusionShader->IsValid());
 }
 
 void Renderer::Update(float dt)
@@ -75,16 +82,32 @@ void Renderer::RenderFrame()
 
     GLFunctions::ClearScreen();
 
-    m_Shader->Bind();
-    m_QuadInput->Bind();
-    m_Shader->SetUniform("u_Texture", 0);
-    for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
     {
-        Entity& e = (*it);
-        m_Shader->SetUniform("u_Transform", GetTransformation(e.m_Transform));
-        e.m_Texture->Bind(0);
-        GLFunctions::Draw(6);
+        PROFILE_SCOPE("Light occlusion");
+
+        m_LightOcclusionShader->Bind();
+        m_LightOcclusionShader->SetUniform("lightPosition", Vec2(-0.8, -0.1));
+        m_LightOcclusionShader->SetUniform("numSegments", (int) m_OcclusionLineCount);
+        m_IntersectionBuffer->Bind(1);
+        m_OcclusionLines->Bind(2);
+        GLFunctions::Dispatch(NUM_INTERSECTIONS);
     }
+
+    {
+        PROFILE_SCOPE("OpaquePass");
+
+        m_Shader->Bind();
+        m_QuadInput->Bind();
+        m_Shader->SetUniform("u_Texture", 0);
+        for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
+        {
+            Entity& e = (*it);
+            m_Shader->SetUniform("u_Transform", GetTransformation(e.m_Transform));
+            e.m_Texture->Bind(0);
+            GLFunctions::Draw(6);
+        }
+    }
+
 }
 
 void Renderer::InitEntityForRender(Entity& e)
@@ -95,12 +118,25 @@ void Renderer::InitEntityForRender(Entity& e)
         e.m_Texture = tex;
         e.m_Transform.scale *= Vec2((float)tex->GetWidth() / SCREEN_WIDTH, (float)tex->GetHeight() / SCREEN_HEIGHT);
         e.m_ReadyForDraw = true;
+
+        // TODO: Do this for dynamic meshes
+        static std::vector<Vec2> aabbVertices = {{-1.0,-1.0},{1.0,-1.0},{1.0,1.0},{-1.0,1.0}};
+        Mat3 transform = GetTransformation(e.m_Transform);
+
+        for (size_t i = 0; i < aabbVertices.size() - 1; i++)
+        {
+            Vec3 a = Vec3(aabbVertices[i],1.0) * transform;
+            Vec3 b = Vec3(aabbVertices[i+1],1.0) * transform;
+            Vec4 lineSegment = Vec4(a.x,a.y,b.x, b.y);
+            m_OcclusionLines->UploadData(&lineSegment, m_OcclusionLineCount);
+            m_OcclusionLineCount++;
+        }
     }
 }
 
 void Renderer::RemoveEntityFromRenderPipeline(Entity& e)
 {
-    // TODO: Not supported dynamic removing because it will make static transform buffer out of sync
+    // TODO: Support UniformBuffer deleting m_LineSegments
     Texture* tex = e.m_Texture;
     if (tex) delete tex;
     e.m_ReadyForDraw = false;

@@ -64,6 +64,24 @@ private:
 	unsigned m_Count;
 };
 
+class ShaderStorageBuffer
+{
+public:
+	ShaderStorageBuffer(unsigned stride, unsigned count = 1);
+	~ShaderStorageBuffer();
+
+	void Bind(unsigned slot);
+	void Unbind();
+
+private:
+	GLHandle m_Handle;
+
+	int m_CurrentSlot = -1;
+	unsigned m_Stride;
+	unsigned m_Count;
+
+};
+
 class Texture
 {
 public:
@@ -143,6 +161,10 @@ public:
 
 	void Bind();
 	void Unbind();
+
+	inline bool IsValid() const { return m_Valid; }
+
+	template<typename T> void SetUniform(const std::string& key, T value) const;
 
 private:
 	GLHandle m_Handle;

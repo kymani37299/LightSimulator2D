@@ -15,6 +15,7 @@ class ComputeShader;
 class Image;
 class Framebuffer;
 class UniformBuffer;
+class ShaderStorageBuffer;
 
 class Renderer
 {
@@ -44,4 +45,12 @@ private:
 	Shader* m_Shader;
 
 	Scene* m_Scene;
+
+	static constexpr unsigned NUM_INTERSECTIONS = 30;
+	ShaderStorageBuffer* m_IntersectionBuffer;
+
+	UniformBuffer* m_OcclusionLines;
+	unsigned m_OcclusionLineCount = 0;
+
+	ComputeShader* m_LightOcclusionShader;
 };
