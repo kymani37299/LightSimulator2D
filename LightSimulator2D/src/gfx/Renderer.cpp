@@ -119,15 +119,6 @@ bool Renderer::RenderIfNeeded()
     return false;
 }
 
-// TODO: Apply rotation
-static Mat3 GetTransformation(Transform t)
-{
-    return Mat3({
-        t.scale.x,0.0,t.position.x,
-        0.0,t.scale.y,t.position.y,
-        0.0,0.0,1.0 });
-}
-
 void Renderer::RenderFrame()
 {
     PROFILE_SCOPE("RenderFrame");
@@ -145,7 +136,7 @@ void Renderer::RenderFrame()
         for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
         {
             Entity& e = (*it);
-            m_OpaqueShader->SetUniform("u_Transform", GetTransformation(e.m_Transform));
+            m_OpaqueShader->SetUniform("u_Transform", e.GetTransformation());
             e.m_Texture->Bind(0);
             GLFunctions::Draw(6);
         }

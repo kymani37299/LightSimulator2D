@@ -20,6 +20,15 @@ public:
 	Entity(const std::string& texture);
 	unsigned GetID() { return m_EntityID; }
 
+	// TODO: Apply rotation
+	inline Mat3 GetTransformation() const
+	{
+		return Mat3({
+			m_Transform.scale.x,0.0,m_Transform.position.x,
+			0.0,m_Transform.scale.y,m_Transform.position.y,
+			0.0,0.0,1.0 });
+	}
+
 	Transform m_Transform;
 private:
 	unsigned m_EntityID;

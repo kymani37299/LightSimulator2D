@@ -70,34 +70,40 @@ void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
     }
 }
 
-static Mat3 GetTransformation(Transform t)
+void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
 {
-    return Mat3({
-        t.scale.x,0.0,t.position.x,
-        0.0,t.scale.y,t.position.y,
-        0.0,0.0,1.0 });
+    m_Segments.clear();
+    m_Segments.resize(4*scene->Size());
+    m_OcclusionLineCount = 0;
+    for (size_t id = 0; id < scene->Size(); id++)
+    {
+        static std::vector<Vec2> aabbVertices = { {-1.0,-1.0},{1.0,-1.0},{1.0,1.0},{-1.0,1.0} };
+        Mat3 transform = (*scene)[id].GetTransformation();
+
+        for (size_t i = 0; i < aabbVertices.size(); i++)
+        {
+            Vec3 a = Vec3(aabbVertices[i], 1.0) * transform;
+            size_t next_i = i + 1 == 4 ? 0 : i + 1;
+            Vec3 b = Vec3(aabbVertices[next_i], 1.0) * transform;
+            Vec4 lineSegment = Vec4(a.x, a.y, b.x, b.y);
+            if (m_UseGPU)
+            {
+                m_OcclusionLines->UploadData(&lineSegment, m_OcclusionLineCount);
+            }
+            else
+            {
+                m_Segments[m_OcclusionLineCount] = lineSegment;
+            }
+            m_OcclusionLineCount++;
+        }
+    }
 }
 
 void LightOcclusionRenderer::LightOcclusionGPU(Scene* scene)
 {
     PROFILE_SCOPE("Light occlusion");
 
-    m_OcclusionLineCount = 0;
-    for (auto it = scene->Begin(); it != scene->End(); it++)
-    {
-        Entity& e = (*it);
-        static std::vector<Vec2> aabbVertices = { {-1.0,-1.0},{1.0,-1.0},{1.0,1.0},{-1.0,1.0} };
-        Mat3 transform = GetTransformation(e.m_Transform);
-
-        for (size_t i = 0; i < aabbVertices.size() - 1; i++)
-        {
-            Vec3 a = Vec3(aabbVertices[i], 1.0) * transform;
-            Vec3 b = Vec3(aabbVertices[i + 1], 1.0) * transform;
-            Vec4 lineSegment = Vec4(a.x, a.y, b.x, b.y);
-            m_OcclusionLines->UploadData(&lineSegment, m_OcclusionLineCount);
-            m_OcclusionLineCount++;
-        }
-    }
+    SetupLineSegments(scene);
 
     m_OcclusionShader->Bind();
     m_OcclusionShader->SetUniform("lightPosition", Vec2(0.0, 0.0));
@@ -155,23 +161,7 @@ void LightOcclusionRenderer::LightOcclusionCPU(Scene* scene)
 {
     PROFILE_SCOPE("Light occlusion");
 
-    std::vector<Vec4> segments;
-    m_OcclusionLineCount = 0;
-    for (auto it = scene->Begin(); it != scene->End(); it++)
-    {
-        Entity& e = (*it);
-        static std::vector<Vec2> aabbVertices = { {-1.0,-1.0},{1.0,-1.0},{1.0,1.0},{-1.0,1.0} };
-        Mat3 transform = GetTransformation(e.m_Transform);
-
-        for (size_t i = 0; i < aabbVertices.size(); i++)
-        {
-            Vec3 a = Vec3(aabbVertices[i], 1.0) * transform;
-            size_t next_i = i + 1 == 4 ? 0 : i + 1;
-            Vec3 b = Vec3(aabbVertices[next_i], 1.0) * transform;
-            Vec4 lineSegment = Vec4(a.x, a.y, b.x, b.y);
-            segments.push_back(lineSegment);
-        }
-    }
+    SetupLineSegments(scene);
 
     for (size_t id = 0; id < NUM_INTERSECTIONS; id++)
     {
@@ -185,9 +175,9 @@ void LightOcclusionRenderer::LightOcclusionCPU(Scene* scene)
         Vec2 mousePos = GameEngine::Get()->GetInput()->GetMousePosition();
         Vec4 ray = Vec4(mousePos, mousePos + Vec2(dx, dy));
 
-        for (size_t i = 0; i < segments.size(); i++)
+        for (size_t i = 0; i < m_Segments.size(); i++)
         {
-            calcIntersection(closestIntersect, ray, segments[i]);
+            calcIntersection(closestIntersect, ray, m_Segments[i]);
         }
 
         if (closestIntersect.z == 1000.0)
@@ -207,7 +197,6 @@ void LightOcclusionRenderer::TriangulateMeshesCPU()
     PROFILE_SCOPE("Triangulate intersections");
 
     SAFE_DELETE(m_TriangledIntersecitonsShaderInput);
-
 
 #ifdef INTERSECTION_POINT
     std::vector<Vec2> triangledIntersections{ NUM_INTERSECTIONS * 3 };

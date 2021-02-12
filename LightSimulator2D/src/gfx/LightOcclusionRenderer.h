@@ -26,12 +26,14 @@ public:
 	void SetUseGPU(bool value);
 
 private:
+	void SetupLineSegments(Scene* scene);
+	
 	void LightOcclusionGPU(Scene* scene);
 	void TriangulateMeshesGPU();
 
 	void LightOcclusionCPU(Scene* scene);
 	void TriangulateMeshesCPU();
-
+	
 	void InitGPUResources();
 	void DeleteGPUResources();
 
@@ -53,4 +55,5 @@ private:
 
 	Vec2 m_LightPosition = VEC2_ZERO;
 	std::vector<Vec2> m_Intersections{ NUM_INTERSECTIONS };
+	std::vector<Vec4> m_Segments;
 };

@@ -31,6 +31,7 @@ public:
 
     std::vector<Entity>::iterator Begin() { return m_Entites.begin(); }
     std::vector<Entity>::iterator End() { return m_Entites.end(); }
+    size_t Size() { return m_Entites.size(); }
 
     Entity& operator [] (int index) { return m_Entites[index]; }
 
