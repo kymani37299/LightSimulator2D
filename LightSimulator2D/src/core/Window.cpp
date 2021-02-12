@@ -21,7 +21,7 @@ Window::Window(int width, int height, const char* title)
 	ASSERT(m_Window);
 
 	glfwMakeContextCurrent(m_Window);
-	SetCursorEnabled(false);
+	//SetCursorEnabled(false);
 	glfwSetKeyCallback(m_Window, &glfwKeyCallback);
 	
 	m_ProcAddressHandle = glfwGetProcAddress;

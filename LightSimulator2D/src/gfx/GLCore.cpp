@@ -171,6 +171,8 @@ ShaderInput::ShaderInput(std::vector<Vertex> vertices)
 	GL_CALL(glEnableVertexAttribArray(0));
 	GL_CALL(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2*sizeof(float))));
 	GL_CALL(glEnableVertexAttribArray(1));
+
+	m_ElementNumber = vertices.size();
 }
 
 ShaderInput::ShaderInput(std::vector<Vec2> vertices)
@@ -184,6 +186,8 @@ ShaderInput::ShaderInput(std::vector<Vec2> vertices)
 
 	GL_CALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), (void*)0));
 	GL_CALL(glEnableVertexAttribArray(0));
+
+	m_ElementNumber = vertices.size();
 }
 
 ShaderInput::ShaderInput(GLHandle buffer):

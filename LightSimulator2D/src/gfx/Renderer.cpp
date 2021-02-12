@@ -82,7 +82,6 @@ void Renderer::Init(Window& window)
     GLFunctions::InitGL(window.GetProcessAddressHandle());
 
     m_OcclusionRenderer = new LightOcclusionRenderer();
-    m_OcclusionRenderer->SetUseGPU(true);
 
     CompileShaders();
 
@@ -157,8 +156,9 @@ void Renderer::RenderFrame()
 
         GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
         m_ShadowmapShader->Bind();
-        m_OcclusionRenderer->GetOcclusionMesh()->Bind();
-        GLFunctions::Draw(m_OcclusionRenderer->GetOccusionMeshVertexNumber());
+        ShaderInput* occlusionInput = m_OcclusionRenderer->GetOcclusionMesh();
+        occlusionInput->Bind();
+        GLFunctions::Draw(occlusionInput->GetElementNumber());
     }
 }
 

@@ -14,9 +14,16 @@ static inline void ProcessInputMap(InputMap& map, KeyInput key, KeyState state)
 	}
 }
 
+// Mouse position in (-1,-1) to (1,1) space
+// (-1 -1) is down left
 Vec2 Input::GetMousePosition()
 {
-	return m_Window->GetMousePosition();
+	Vec2 absolutePosition = m_Window->GetMousePosition();
+	absolutePosition /= Vec2(SCREEN_WIDTH, SCREEN_HEIGHT);
+	absolutePosition *=  2.0;
+	absolutePosition -= 1.0;
+	absolutePosition.y *= -1.0;
+	return absolutePosition;
 }
 
 void Input::AddKeyInputCallback(KeyInput key, KeyCallback* callback)

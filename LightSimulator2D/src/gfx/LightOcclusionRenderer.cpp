@@ -2,6 +2,9 @@
 
 #include "util/Profiler.h"
 
+#include "core/Engine.h"
+#include "input/Input.h"
+
 #include "gfx/GLCore.h"
 #include "scene/Entity.h"
 #include "scene/Scene.h"
@@ -118,33 +121,24 @@ void LightOcclusionRenderer::TriangulateMeshesGPU()
 
 void calcIntersection(Vec3& intersection, Vec4 ray, Vec4 segment)
 {
-    // Parametric form : Origin + t*Direction
-    // ro + t1*rd
-    Vec2 ro = Vec2(ray.x, ray.y);
-    Vec2 rd = Vec2(ray.z, ray.w);
+    float x = ray.x, y = ray.y, dx = ray.z, dy = ray.w;
+    float x1 = segment.x, y1 = segment.y, x2 = segment.z, y2 = segment.w;
+    float r, s, d;
 
-    // a + t2*b
-    Vec2 a = Vec2(segment.x, segment.y);
-    Vec2 b = Vec2(segment.z, segment.w);
-
-    float t2_1 = rd.x * (a.y - ro.y) + rd.y * (ro.x - a.x);
-    float t2_2 = b.x * rd.y - b.y * rd.x;
-    float t2 = t2_1 / t2_2;
-
-    float t1_1 = a.x + b.x * t2 - ro.x;
-    float t1_2 = rd.x;
-    float t1 = t1_1 / t1_2;
-
-    // Parallel lines
-    if (t1_2 == 0 || t2_2 == 0) return;
-
-    // Intersect test
-    if (t1 > 0.0 && t2 > 0.0 && t2 < 1.0 && (intersection.z < t1 || intersection.z == -1))
+    if (dy / dx != (y2 - y1) / (x2 - x1))
     {
-        Vec2 p = ro + t1 * rd;
-        intersection.x = p.x;
-        intersection.y = p.y;
-        intersection.z = t1;
+        d = ((dx * (y2 - y1)) - dy * (x2 - x1));
+        if (d != 0)
+        {
+            r = (((y - y1) * (x2 - x1)) - (x - x1) * (y2 - y1)) / d;
+            s = (((y - y1) * dx) - (x - x1) * dy) / d;
+            if (r >= 0 && s >= 0 && s <= 1 && r < intersection.z)
+            {
+                intersection.x = x + r * dx;
+                intersection.y = y + r * dy;
+                intersection.z = r;
+            }
+        }
     }
 }
 
@@ -169,15 +163,16 @@ void LightOcclusionRenderer::LightOcclusionCPU(Scene* scene)
         static std::vector<Vec2> aabbVertices = { {-1.0,-1.0},{1.0,-1.0},{1.0,1.0},{-1.0,1.0} };
         Mat3 transform = GetTransformation(e.m_Transform);
 
-        for (size_t i = 0; i < aabbVertices.size() - 1; i++)
+        for (size_t i = 0; i < aabbVertices.size(); i++)
         {
             Vec3 a = Vec3(aabbVertices[i], 1.0) * transform;
-            Vec3 b = Vec3(aabbVertices[i + 1], 1.0) * transform;
+            size_t next_i = i + 1 == 4 ? 0 : i + 1;
+            Vec3 b = Vec3(aabbVertices[next_i], 1.0) * transform;
             Vec4 lineSegment = Vec4(a.x, a.y, b.x, b.y);
             segments.push_back(lineSegment);
         }
     }
-
+#ifdef MULTI_INTERSECTION
     for (size_t id = 0; id < NUM_INTERSECTIONS; id++)
     {
         float angle = id * (6.283f / NUM_INTERSECTIONS);
@@ -200,7 +195,25 @@ void LightOcclusionRenderer::LightOcclusionCPU(Scene* scene)
 
         m_Intersections[id] = Vec2(closestIntersect.x, closestIntersect.y);
     }
+#else
+    Vec3 closestIntersect;
+    closestIntersect.z = 1000.0f;
+    Vec2 rayDirection = GameEngine::Get()->GetInput()->GetMousePosition();
+    Vec4 ray = Vec4(m_LightPosition.x, m_LightPosition.y, rayDirection.x, rayDirection.y);
+    for (size_t i = 0; i < segments.size(); i++)
+    {
+        calcIntersection(closestIntersect, ray, segments[i]);
+    }
+    if (closestIntersect.z == 1000.0)
+    {
+        intersectScreen(closestIntersect, ray);
+    }
+    m_Intersections[0] = Vec2(closestIntersect.x, closestIntersect.y);
+#endif
 }
+
+//#define INTERSECTION_POINT
+#define INTERSECTION_LINE
 
 void LightOcclusionRenderer::TriangulateMeshesCPU()
 {
@@ -208,18 +221,31 @@ void LightOcclusionRenderer::TriangulateMeshesCPU()
 
     SAFE_DELETE(m_TriangledIntersecitonsShaderInput);
 
-    std::vector<Vec2> triangledIntersections{ NUM_INTERSECTIONS * 3 };
-    for (size_t id = 0; id < NUM_INTERSECTIONS - 1; id++)
-    {
-        //Vec2 p = intersections[id];
-        //float f = 0.1;
-        //triangledIntersections[3*id] = p + Vec2(-0.5, -0.5) * f;
-        //triangledIntersections[3 * id+1] = p + Vec2(0.5, -0.5) * f;
-        //triangledIntersections[3 * id+2] = p + Vec2(0.0, 0.5) * f;
 
+#ifdef INTERSECTION_POINT
+    std::vector<Vec2> triangledIntersections{ NUM_INTERSECTIONS * 3 };
+    for (size_t id = 0; id < NUM_INTERSECTIONS; id++)
+    {
+        Vec2 p = m_Intersections[id];
+        float f = 0.1;
+        triangledIntersections[3*id] = p + Vec2(-0.5, -0.5) * f;
+        triangledIntersections[3 * id+1] = p + Vec2(0.5, -0.5) * f;
+        triangledIntersections[3 * id+2] = p + Vec2(0.0, 0.5) * f;
+#elif defined(INTERSECTION_LINE)
+    std::vector<Vec2> triangledIntersections{ NUM_INTERSECTIONS * 3 };
+    for (size_t id = 0; id < NUM_INTERSECTIONS; id++)
+    {
+        triangledIntersections[3 * id] = m_LightPosition;
+        triangledIntersections[3 * id + 1] = m_Intersections[id];
+        triangledIntersections[3 * id + 2] = m_LightPosition + Vec2(0.0, 0.05);
+#else
+    std::vector<Vec2> triangledIntersections{ (NUM_INTERSECTIONS-1) * 3 };
+    for (size_t id = 0; id < NUM_INTERSECTIONS-1; id++)
+        {
         triangledIntersections[3 * id] = m_Intersections[id];
         triangledIntersections[3 * id + 1] = m_LightPosition;
         triangledIntersections[3 * id + 2] = m_Intersections[id + 1];
+#endif
     }
 
     m_TriangledIntersecitonsShaderInput = new ShaderInput(triangledIntersections);

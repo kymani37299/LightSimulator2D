@@ -22,7 +22,6 @@ public:
 	ComputeShader*& GetTriangulateShader() { return m_TriangulationShader; }
 
 	ShaderInput* GetOcclusionMesh() { return m_TriangledIntersecitonsShaderInput; }
-	unsigned GetOccusionMeshVertexNumber() { return NUM_TRIANGLED_INTERSECTION_VERTICES; }
 
 	void SetUseGPU(bool value);
 
@@ -39,19 +38,19 @@ private:
 private:
 	bool m_UseGPU = false;
 
-	static constexpr unsigned NUM_INTERSECTIONS = 30;
+	static constexpr unsigned NUM_INTERSECTIONS = 1;
 	ShaderStorageBuffer* m_IntersectionBuffer;
 
 	UniformBuffer* m_OcclusionLines;
 	unsigned m_OcclusionLineCount = 0;
 
-	static constexpr unsigned NUM_TRIANGLED_INTERSECTION_VERTICES = (NUM_INTERSECTIONS - 1) * 3;
+	static constexpr unsigned NUM_TRIANGLED_INTERSECTION_VERTICES = NUM_INTERSECTIONS * 3;
 	ShaderStorageBuffer* m_TriangledIntersecitonsBuffer;
 	ShaderInput* m_TriangledIntersecitonsShaderInput = nullptr;
 
 	ComputeShader* m_OcclusionShader = nullptr;
 	ComputeShader* m_TriangulationShader = nullptr;
 
-	Vec2 m_LightPosition = Vec2(-0.5, -0.5);
+	Vec2 m_LightPosition = VEC2_ZERO;
 	std::vector<Vec2> m_Intersections{ NUM_INTERSECTIONS };
 };

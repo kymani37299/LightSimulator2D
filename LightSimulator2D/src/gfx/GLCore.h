@@ -44,10 +44,14 @@ public:
 
 	~ShaderInput();
 
+	inline unsigned GetElementNumber() const { return m_ElementNumber; }
+
 	void Bind();
 	void Unbind();
 
 private:
+	unsigned m_ElementNumber = 0;
+
 	bool m_BufferOwner = true;
 	GLHandle m_VertexBuffer;
 	GLHandle m_VertexArray;
