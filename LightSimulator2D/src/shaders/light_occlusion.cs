@@ -21,43 +21,32 @@ layout(std140, binding = 2) uniform LineSegmentsBuffer
 
 void calcIntersection(out vec3 intersection, vec4 ray, vec4 segment)
 {
+	// Parametric form : Origin + t*Direction
+	// ro + t1*rd
+	vec2 ro = ray.xy;
+	vec2 rd = ray.zw;
 
-	// RAY in parametric: Point + Direction*T1
-	float r_px = ray.x;
-	float r_py = ray.y;
-	float r_dx = ray.z - ray.x;
-	float r_dy = ray.w - ray.y;
+	// a + t2*b
+	vec2 a = segment.xy;
+	vec2 b = segment.zw;
 
-	// SEGMENT in parametric: Point + Direction*T2
-	float s_px = segment.x;
-	float s_py = segment.y;
-	float s_dx = segment.z - segment.x;
-	float s_dy = segment.w - segment.y;
+	float t2_1 = rd.x * (a.y - ro.y) + rd.y * (ro.x - a.x);
+	float t2_2 = b.x * rd.y - b.y * rd.x;
+	float t2 = t2_1 / t2_2;
 
-	// Are they parallel? If so, no intersect
-	float r_mag = sqrt(r_dx * r_dx + r_dy * r_dy);
-	float s_mag = sqrt(s_dx * s_dx + s_dy * s_dy);
+	float t1_1 = a.x + b.x * t2 - ro.x;
+	float t1_2 = rd.x;
+	float t1 = t1_1 / t1_2;
 
-	if (r_dx / r_mag == s_dx / s_mag && r_dy / r_mag == s_dy / s_mag)
-	{
-		return;
-	}
+	// Parallel lines
+	if (t1_2 == 0 || t2_2 == 0) return;
 
-	// SOLVE FOR T1 & T2
-	// r_px+r_dx*T1 = s_px+s_dx*T2 && r_py+r_dy*T1 = s_py+s_dy*T2
-	// ==> T1 = (s_px+s_dx*T2-r_px)/r_dx = (s_py+s_dy*T2-r_py)/r_dy
-	// ==> s_px*r_dy + s_dx*T2*r_dy - r_px*r_dy = s_py*r_dx + s_dy*T2*r_dx - r_py*r_dx
-	// ==> T2 = (r_dx*(s_py-r_py) + r_dy*(r_px-s_px))/(s_dx*r_dy - s_dy*r_dx)
-	float T2 = (r_dx * (s_py - r_py) + r_dy * (r_px - s_px)) / (s_dx * r_dy - s_dy * r_dx);
-	float T1 = (s_px + s_dx * T2 - r_px) / r_dx;
-
-	// Must be within parametic whatevers for RAY/SEGMENT
-	if (T1 < 0) return;
-	if (T2 < 0 || T2 > 1) return;
-
-	if(T1 < intersection.z)
+	// Intersect test
+	if(t1 > 0.0 && t2 > 0.0 && t2 < 1.0)
     {
-		intersection = vec3(r_px + r_dx * T1, r_py + r_dy * T1, T1);
+		vec2 p = ro + t1 * rd;
+		intersection.xy = p;
+		intersection.z = length(p - ro);
     }
 }
 
