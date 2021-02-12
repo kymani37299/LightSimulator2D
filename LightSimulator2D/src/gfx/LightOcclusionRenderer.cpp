@@ -172,7 +172,7 @@ void LightOcclusionRenderer::LightOcclusionCPU(Scene* scene)
             segments.push_back(lineSegment);
         }
     }
-#ifdef MULTI_INTERSECTION
+
     for (size_t id = 0; id < NUM_INTERSECTIONS; id++)
     {
         float angle = id * (6.283f / NUM_INTERSECTIONS);
@@ -180,36 +180,23 @@ void LightOcclusionRenderer::LightOcclusionCPU(Scene* scene)
         float dy = sin(angle);
 
         Vec3 closestIntersect;
-        closestIntersect.z = -1.0f;
-        Vec4 ray = Vec4(m_LightPosition, m_LightPosition + Vec2(dx, dy));
+        closestIntersect.z = 1000.0f;
+
+        Vec2 mousePos = GameEngine::Get()->GetInput()->GetMousePosition();
+        Vec4 ray = Vec4(mousePos, mousePos + Vec2(dx, dy));
 
         for (size_t i = 0; i < segments.size(); i++)
         {
             calcIntersection(closestIntersect, ray, segments[i]);
         }
 
-        if (closestIntersect.x == 1000.0)
+        if (closestIntersect.z == 1000.0)
         {
             intersectScreen(closestIntersect, ray);
         }
 
         m_Intersections[id] = Vec2(closestIntersect.x, closestIntersect.y);
     }
-#else
-    Vec3 closestIntersect;
-    closestIntersect.z = 1000.0f;
-    Vec2 rayDirection = GameEngine::Get()->GetInput()->GetMousePosition();
-    Vec4 ray = Vec4(m_LightPosition.x, m_LightPosition.y, rayDirection.x, rayDirection.y);
-    for (size_t i = 0; i < segments.size(); i++)
-    {
-        calcIntersection(closestIntersect, ray, segments[i]);
-    }
-    if (closestIntersect.z == 1000.0)
-    {
-        intersectScreen(closestIntersect, ray);
-    }
-    m_Intersections[0] = Vec2(closestIntersect.x, closestIntersect.y);
-#endif
 }
 
 //#define INTERSECTION_POINT
@@ -233,11 +220,12 @@ void LightOcclusionRenderer::TriangulateMeshesCPU()
         triangledIntersections[3 * id+2] = p + Vec2(0.0, 0.5) * f;
 #elif defined(INTERSECTION_LINE)
     std::vector<Vec2> triangledIntersections{ NUM_INTERSECTIONS * 3 };
+    Vec2 mousePos = GameEngine::Get()->GetInput()->GetMousePosition();
     for (size_t id = 0; id < NUM_INTERSECTIONS; id++)
     {
-        triangledIntersections[3 * id] = m_LightPosition;
+        triangledIntersections[3 * id] = mousePos;
         triangledIntersections[3 * id + 1] = m_Intersections[id];
-        triangledIntersections[3 * id + 2] = m_LightPosition + Vec2(0.0, 0.05);
+        triangledIntersections[3 * id + 2] = mousePos + Vec2(0.0, 0.05);
 #else
     std::vector<Vec2> triangledIntersections{ (NUM_INTERSECTIONS-1) * 3 };
     for (size_t id = 0; id < NUM_INTERSECTIONS-1; id++)
