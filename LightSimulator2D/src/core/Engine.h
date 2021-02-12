@@ -18,6 +18,7 @@ public:
 	static void Delete();
 
 	Window* GetMainWindow() { return &m_Window; }
+	Renderer* GetRenderer() { return &m_Renderer; }
 
 public:
 	void Run();

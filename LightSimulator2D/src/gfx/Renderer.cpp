@@ -20,18 +20,50 @@ static std::vector<Vertex> quadVertices =
     {Vec2(1.0,1.0)     ,Vec2(1.0,1.0)}
 };
 
-static Shader* CreateShader(const std::string& name)
+static bool CreateShader(const std::string& name, Shader*& shader)
 {
-    Shader* shader = new Shader(name + ".vert", name + ".frag");
-    ASSERT(shader->IsValid());
-    return shader;
+    Shader* _shader = new Shader(name + ".vert", name + ".frag");
+    if (_shader->IsValid())
+    {
+        SAFE_DELETE(shader);
+        shader = _shader;
+        return true;
+    }
+    else if(shader)
+    {
+        delete _shader;
+        LOG("[CREATE_SHADER] Reloading shader " + name + "failed.");
+        return false;
+    }
+    else
+    {
+        delete _shader;
+        ASSERT(0);
+        return false;
+    }
 }
 
-static ComputeShader* CreateCShader(const std::string& name)
+static bool CreateCShader(const std::string& name, ComputeShader*& shader)
 {
-    ComputeShader* shader = new ComputeShader(name + ".cs");
-    ASSERT(shader->IsValid());
-    return shader;
+    ComputeShader* _shader = new ComputeShader(name + ".cs");
+    if (_shader->IsValid())
+    {
+        SAFE_DELETE(shader);
+        shader = _shader;
+        return true;
+    }
+    else if (shader)
+    {
+        delete _shader;
+        LOG("[CREATE_SHADER] Reloading shader " + name + "failed.");
+        return false;
+    }
+    else
+    {
+        delete _shader;
+        ASSERT(0);
+        return false;
+    }
 }
 
 Renderer::~Renderer()
@@ -57,10 +89,7 @@ void Renderer::Init(Window& window)
 {
     GLFunctions::InitGL(window.GetProcessAddressHandle());
 
-    m_OpaqueShader = CreateShader("main");
-    m_ShadowmapShader = CreateShader("shadowmap");
-    m_LightOcclusionShader = CreateCShader("light_occlusion");
-    m_TrianglulateIntersectionsShader = CreateCShader("triangulate_intersections");
+    CompileShaders();
 
     m_QuadInput = new ShaderInput(quadVertices);
     
@@ -83,6 +112,13 @@ void Renderer::Update(float dt)
     {
         m_ShouldRender = true;
         timeUntilLastRender = 0;
+    }
+
+    // Reload shaders if needed
+    if (m_ShouldReloadShaders)
+    {
+        CompileShaders();
+        m_ShouldReloadShaders = false;
     }
 }
 
@@ -180,6 +216,14 @@ void Renderer::RenderFrame()
     }
 }
 
+void Renderer::CompileShaders()
+{
+    CreateShader("main", m_OpaqueShader);
+    CreateShader("shadowmap", m_ShadowmapShader);
+    CreateCShader("light_occlusion", m_LightOcclusionShader);
+    CreateCShader("triangulate_intersections", m_TrianglulateIntersectionsShader);
+}
+
 void Renderer::InitEntityForRender(Entity& e)
 {
     if (!e.m_ReadyForDraw)
@@ -188,19 +232,6 @@ void Renderer::InitEntityForRender(Entity& e)
         e.m_Texture = tex;
         e.m_Transform.scale *= Vec2((float)tex->GetWidth() / SCREEN_WIDTH, (float)tex->GetHeight() / SCREEN_HEIGHT);
         e.m_ReadyForDraw = true;
-
-        // TODO: Do this for dynamic meshes
-        static std::vector<Vec2> aabbVertices = {{-1.0,-1.0},{1.0,-1.0},{1.0,1.0},{-1.0,1.0}};
-        Mat3 transform = GetTransformation(e.m_Transform);
-
-        for (size_t i = 0; i < aabbVertices.size() - 1; i++)
-        {
-            Vec3 a = Vec3(aabbVertices[i],1.0) * transform;
-            Vec3 b = Vec3(aabbVertices[i+1],1.0) * transform;
-            Vec4 lineSegment = Vec4(a.x,a.y,b.x, b.y);
-            m_OcclusionLines->UploadData(&lineSegment, m_OcclusionLineCount);
-            m_OcclusionLineCount++;
-        }
     }
 }
 

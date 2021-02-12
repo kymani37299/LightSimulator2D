@@ -24,4 +24,5 @@ void PlayerController::_Init()
     m_Input->AddStateChangedCallback(GLFW_KEY_D, PLAYER_KEY_CALLBACK(RightCallback));
 
     m_Input->AddKeyPressedCallback(GLFW_KEY_ESCAPE, PLAYER_KEY_CALLBACK(EscapeCallback));
+    m_Input->AddKeyPressedCallback(GLFW_KEY_R, PLAYER_KEY_CALLBACK(ReloadShadersCallback));
 }

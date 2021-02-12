@@ -32,13 +32,17 @@ public:
 	void OnEntityAdded(Entity& e);
 	void OnEntityRemoved(Entity& e);
 
+	void ReloadShaders() { m_ShouldReloadShaders = true; }
+
 private:
+	void CompileShaders();
 	void InitEntityForRender(Entity& e);
 	void RemoveEntityFromRenderPipeline(Entity& e);
 
 	void RenderFrame();
 
 private:
+	bool m_ShouldReloadShaders = false;
 	bool m_ShouldRender = true;
 	Scene* m_Scene;
 

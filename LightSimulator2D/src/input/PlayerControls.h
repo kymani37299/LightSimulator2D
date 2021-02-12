@@ -33,3 +33,7 @@ PLAYER_KEY_SCALLBACK_BEGIN(RightCallback)
 const float factor = state == KeyState::Pressed ? 1.0f : -1.0f;
 c.GetMoveDir() += factor * Vec2(1.0f, 0.0f);
 PLAYER_KEY_CALLBACK_END()
+
+PLAYER_KEY_CALLBACK_BEGIN(ReloadShadersCallback)
+GameEngine::Get()->GetRenderer()->ReloadShaders();
+PLAYER_KEY_CALLBACK_END()
