@@ -42,11 +42,11 @@ void calcIntersection(out vec3 intersection, vec4 ray, vec4 segment)
 	if (t1_2 == 0 || t2_2 == 0) return;
 
 	// Intersect test
-	if(t1 > 0.0 && t2 > 0.0 && t2 < 1.0)
+	if(t1 > 0.0 && t2 > 0.0 && t2 < 1.0 && (intersection.z < t1 || intersection.z == -1))
     {
 		vec2 p = ro + t1 * rd;
 		intersection.xy = p;
-		intersection.z = length(p - ro);
+		intersection.z = t1;
     }
 }
 
@@ -65,7 +65,8 @@ void main()
 	float dx = cos(angle);
 	float dy = sin(angle);
 
-	vec3 closestIntersect = vec3(1000.0);
+	vec3 closestIntersect;
+	closestIntersect.z = -1.0f;
 	vec4 ray = vec4(lightPosition, lightPosition + vec2(dx, dy));
 
 	for (int i = 0; i < numSegments; i++)
