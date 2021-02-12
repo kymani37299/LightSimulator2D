@@ -39,6 +39,7 @@ class ShaderInput
 {
 public:
 	ShaderInput(std::vector<Vertex> vertices);
+	ShaderInput(std::vector<Vec2> vertices);
 	ShaderInput(GLHandle buffer);
 
 	~ShaderInput();
