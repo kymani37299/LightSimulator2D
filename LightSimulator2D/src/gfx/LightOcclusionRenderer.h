@@ -38,7 +38,7 @@ private:
 private:
 	bool m_UseGPU = false;
 
-	static constexpr unsigned NUM_INTERSECTIONS = 100;
+	static constexpr unsigned NUM_INTERSECTIONS = 360;
 	ShaderStorageBuffer* m_IntersectionBuffer;
 
 	UniformBuffer* m_OcclusionLines;

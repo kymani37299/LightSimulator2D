@@ -200,7 +200,7 @@ void LightOcclusionRenderer::LightOcclusionCPU(Scene* scene)
 }
 
 //#define INTERSECTION_POINT
-#define INTERSECTION_LINE
+//#define INTERSECTION_LINE
 
 void LightOcclusionRenderer::TriangulateMeshesCPU()
 {
@@ -228,6 +228,7 @@ void LightOcclusionRenderer::TriangulateMeshesCPU()
         triangledIntersections[3 * id + 2] = mousePos + Vec2(0.0, 0.05);
 #else
     std::vector<Vec2> triangledIntersections{ (NUM_INTERSECTIONS-1) * 3 };
+    m_LightPosition = GameEngine::Get()->GetInput()->GetMousePosition();
     for (size_t id = 0; id < NUM_INTERSECTIONS-1; id++)
         {
         triangledIntersections[3 * id] = m_Intersections[id];
