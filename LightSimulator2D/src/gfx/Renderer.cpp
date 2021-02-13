@@ -157,8 +157,10 @@ void Renderer::CompileShaders()
 {
     CreateShader("main", m_OpaqueShader);
     CreateShader("shadowmap", m_ShadowmapShader);
+#ifdef GPU_OCCLUSION
     CreateCShader("light_occlusion", m_OcclusionRenderer->GetOcclusionShader());
     CreateCShader("triangulate_intersections", m_OcclusionRenderer->GetTriangulateShader());
+#endif
 }
 
 void Renderer::InitEntityForRender(Entity& e)

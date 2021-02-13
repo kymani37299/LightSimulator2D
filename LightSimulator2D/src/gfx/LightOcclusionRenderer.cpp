@@ -11,18 +11,7 @@
 
 LightOcclusionRenderer::LightOcclusionRenderer()
 {
-    if (m_UseGPU) InitGPUResources();
-}
-
-LightOcclusionRenderer::~LightOcclusionRenderer()
-{
-    delete m_TriangulationShader;
-    delete m_OcclusionShader;
-    if(m_UseGPU) DeleteGPUResources();
-}
-
-void LightOcclusionRenderer::InitGPUResources()
-{
+#ifdef GPU_OCCLUSION
     static constexpr unsigned MAX_LINE_SEGMENTS = 300; // TODO : Implement UB resize and use dynamic size
     m_OcclusionLines = new UniformBuffer(sizeof(Vec4), MAX_LINE_SEGMENTS);
 
@@ -30,50 +19,29 @@ void LightOcclusionRenderer::InitGPUResources()
 
     m_TriangledIntersecitonsBuffer = new ShaderStorageBuffer(sizeof(Vec2), NUM_TRIANGLED_INTERSECTION_VERTICES);
     m_TriangledIntersecitonsShaderInput = m_TriangledIntersecitonsBuffer->AsShaderInput();
+#endif
 }
 
-void LightOcclusionRenderer::DeleteGPUResources()
+LightOcclusionRenderer::~LightOcclusionRenderer()
 {
+#ifdef GPU_OCCLUSION
+    delete m_TriangulationShader;
+    delete m_OcclusionShader;
     delete m_OcclusionLines;
     delete m_IntersectionBuffer;
     delete m_TriangledIntersecitonsBuffer;
     delete m_TriangledIntersecitonsShaderInput;
-}
-
-void LightOcclusionRenderer::SetUseGPU(bool value)
-{
-    if (value == m_UseGPU) return;
-
-    m_UseGPU = value;
-    
-    if (m_UseGPU)
-    {
-        InitGPUResources();
-    }
-    else
-    {
-        DeleteGPUResources();
-    }
+#endif
 }
 
 void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
 {
-    if (m_UseGPU)
-    {
-        LightOcclusionGPU(scene);
-        TriangulateMeshesGPU();
-    }
-    else
-    {
-        LightOcclusionCPU(scene);
-        TriangulateMeshesCPU();
-    }
+    LightOcclusion(scene);
+    TriangulateMeshes();
 }
 
 void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
 {
-    m_Segments.clear();
-    m_Segments.resize(4*scene->Size());
     m_OcclusionLineCount = 0;
     for (size_t id = 0; id < scene->Size(); id++)
     {
@@ -86,39 +54,24 @@ void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
             size_t next_i = i + 1 == 4 ? 0 : i + 1;
             Vec3 b = Vec3(aabbVertices[next_i], 1.0) * transform;
             Vec4 lineSegment = Vec4(a.x, a.y, b.x, b.y);
-            if (m_UseGPU)
-            {
-                m_OcclusionLines->UploadData(&lineSegment, m_OcclusionLineCount);
-            }
-            else
-            {
-                m_Segments[m_OcclusionLineCount] = lineSegment;
-            }
+#ifdef GPU_OCCLUSION
+            m_OcclusionLines->UploadData(&lineSegment, m_OcclusionLineCount);
+#else
+            m_Segments[m_OcclusionLineCount] = lineSegment;
+#endif
             m_OcclusionLineCount++;
         }
     }
 }
 
+#ifdef GPU_OCCLUSION
 void LightOcclusionRenderer::SetupRayQuery()
 {
-    ASSERT(m_RayQuery.size() == 0);
-
-    for (size_t i = 0; i < NUM_INTERSECTIONS; i++)
-    {
-        m_RayQuery.push(Vec2(cos(i), sin(i)));
-    }
-
-    const Vec2 e = Vec2(0.01f);
-    for (const Vec4& seg : m_Segments)
-    {
-        Vec2 p = Vec2(seg.x, seg.y);
-        m_RayQuery.push(p - e);
-        m_RayQuery.push(e);
-        m_RayQuery.push(p + e);
-    }
+    // TODO
 }
 
-void LightOcclusionRenderer::LightOcclusionGPU(Scene* scene)
+
+void LightOcclusionRenderer::LightOcclusion(Scene* scene)
 {
     PROFILE_SCOPE("Light occlusion");
 
@@ -132,7 +85,7 @@ void LightOcclusionRenderer::LightOcclusionGPU(Scene* scene)
     GLFunctions::Dispatch(NUM_INTERSECTIONS);
 }
 
-void LightOcclusionRenderer::TriangulateMeshesGPU()
+void LightOcclusionRenderer::TriangulateMeshes()
 {
     PROFILE_SCOPE("Triangulate intersections");
 
@@ -143,6 +96,7 @@ void LightOcclusionRenderer::TriangulateMeshesGPU()
     m_TriangledIntersecitonsBuffer->Bind(2);
     GLFunctions::Dispatch(NUM_TRIANGLED_INTERSECTION_VERTICES);
 }
+#else
 
 void calcIntersection(Vec3& intersection, Vec4 ray, Vec4 segment)
 {
@@ -176,10 +130,31 @@ void intersectScreen(Vec3& intersection, Vec4 ray)
     calcIntersection(intersection, ray, Vec4(-1.0, 1.0, -1.0, -1.0));
 }
 
-void LightOcclusionRenderer::LightOcclusionCPU(Scene* scene)
+void LightOcclusionRenderer::SetupRayQuery()
+{
+    ASSERT(m_RayQuery.size() == 0);
+
+    for (size_t i = 0; i < NUM_INTERSECTIONS; i++)
+    {
+        m_RayQuery.push(Vec2(cos(i), sin(i)));
+    }
+
+    const Vec2 e = Vec2(0.01f);
+    for (const Vec4& seg : m_Segments)
+    {
+        Vec2 p = Vec2(seg.x, seg.y);
+        m_RayQuery.push(p - e);
+        m_RayQuery.push(e);
+        m_RayQuery.push(p + e);
+    }
+}
+
+void LightOcclusionRenderer::LightOcclusion(Scene* scene)
 {
     PROFILE_SCOPE("Light occlusion");
 
+    m_Segments.clear();
+    m_Segments.resize(4 * scene->Size());
     SetupLineSegments(scene);
     SetupRayQuery();
     m_LightSource = GameEngine::Get()->GetInput()->GetMousePosition();
@@ -211,7 +186,7 @@ void LightOcclusionRenderer::LightOcclusionCPU(Scene* scene)
 //#define INTERSECTION_POINT
 //#define INTERSECTION_LINE
 
-void LightOcclusionRenderer::TriangulateMeshesCPU()
+void LightOcclusionRenderer::TriangulateMeshes()
 {
     PROFILE_SCOPE("Triangulate intersections");
 
@@ -247,3 +222,5 @@ void LightOcclusionRenderer::TriangulateMeshesCPU()
     }
     m_TriangledIntersecitonsShaderInput = new ShaderInput(triangledIntersections);
 }
+
+#endif
