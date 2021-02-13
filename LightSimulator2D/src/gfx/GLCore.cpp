@@ -93,7 +93,19 @@ static uint32_t CompileShader(uint32_t type, const char* source)
 		GL_CALL(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
 		char* message = (char*)alloca(length * sizeof(char));
 		GL_CALL(glGetShaderInfoLog(id, length, &length, message));
-		std::string error_tag = type == GL_VERTEX_SHADER ? "[VS]" : "[FS]";
+		std::string error_tag;
+		switch (type)
+		{
+		case GL_VERTEX_SHADER:
+			error_tag = "[VS]";
+			break;
+		case GL_FRAGMENT_SHADER:
+			error_tag = "[FS]";
+			break;
+		case GL_COMPUTE_SHADER:
+			error_tag = "[CS]";
+			break;
+		}
 		LOG(error_tag + " " + message);
 		GL_CALL(glDeleteShader(id));
 		return 0;
@@ -535,6 +547,13 @@ ComputeShader::ComputeShader(const std::string& cs)
 
 	GL_CALL(glAttachShader(m_Handle, csHandle));
 	GL_CALL(glLinkProgram(m_Handle));
+	GL_CALL(glValidateProgram(m_Handle));
+
+#ifdef DEBUG
+	GL_CALL(glDetachShader(m_Handle, csHandle));
+#else
+	GL_CALL(glDeleteShader(csHandle));
+#endif
 }
 
 ComputeShader::~ComputeShader()
