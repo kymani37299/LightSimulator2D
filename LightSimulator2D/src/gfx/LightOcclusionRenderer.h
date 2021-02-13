@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <queue>
 
 #include "common.h"
 
@@ -27,6 +28,7 @@ public:
 
 private:
 	void SetupLineSegments(Scene* scene);
+	void SetupRayQuery();
 	
 	void LightOcclusionGPU(Scene* scene);
 	void TriangulateMeshesGPU();
@@ -53,7 +55,19 @@ private:
 	ComputeShader* m_OcclusionShader = nullptr;
 	ComputeShader* m_TriangulationShader = nullptr;
 
-	Vec2 m_LightPosition = VEC2_ZERO;
 	std::vector<Vec2> m_Intersections{ NUM_INTERSECTIONS };
 	std::vector<Vec4> m_Segments;
+	
+	Vec2 m_LightSource;
+
+	// Vec2 of Vec4 for ray query ? What about multiple lights ?
+	struct RayAngleComparator
+	{
+		bool operator () (const Vec2& l, const Vec2& r)
+		{
+			return glm::atan(l.y, l.x) < glm::atan(r.y, r.x);
+		}
+	};
+	using RayQuery = std::priority_queue<Vec2, std::vector<Vec2>, RayAngleComparator>;
+	RayQuery m_RayQuery;
 };

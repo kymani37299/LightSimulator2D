@@ -99,6 +99,25 @@ void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
     }
 }
 
+void LightOcclusionRenderer::SetupRayQuery()
+{
+    ASSERT(m_RayQuery.size() == 0);
+
+    for (size_t i = 0; i < NUM_INTERSECTIONS; i++)
+    {
+        m_RayQuery.push(Vec2(cos(i), sin(i)));
+    }
+
+    const Vec2 e = Vec2(0.01f);
+    for (const Vec4& seg : m_Segments)
+    {
+        Vec2 p = Vec2(seg.x, seg.y);
+        m_RayQuery.push(p - e);
+        m_RayQuery.push(e);
+        m_RayQuery.push(p + e);
+    }
+}
+
 void LightOcclusionRenderer::LightOcclusionGPU(Scene* scene)
 {
     PROFILE_SCOPE("Light occlusion");
@@ -162,30 +181,30 @@ void LightOcclusionRenderer::LightOcclusionCPU(Scene* scene)
     PROFILE_SCOPE("Light occlusion");
 
     SetupLineSegments(scene);
+    SetupRayQuery();
+    m_LightSource = GameEngine::Get()->GetInput()->GetMousePosition();
 
-    for (size_t id = 0; id < NUM_INTERSECTIONS; id++)
+    m_Intersections.clear();
+    m_Intersections.reserve(m_RayQuery.size());
+
+    while (!m_RayQuery.empty())
     {
-        float angle = id * (6.283f / NUM_INTERSECTIONS);
-        float dx = cos(angle);
-        float dy = sin(angle);
+        Vec4 ray = Vec4(m_LightSource, m_RayQuery.top());
+        m_RayQuery.pop();
 
-        Vec3 closestIntersect;
-        closestIntersect.z = 1000.0f;
-
-        Vec2 mousePos = GameEngine::Get()->GetInput()->GetMousePosition();
-        Vec4 ray = Vec4(mousePos, mousePos + Vec2(dx, dy));
+        Vec3 closestIntersect = Vec3(1000.0f);
 
         for (size_t i = 0; i < m_Segments.size(); i++)
         {
             calcIntersection(closestIntersect, ray, m_Segments[i]);
         }
 
-        if (closestIntersect.z == 1000.0)
+        if (closestIntersect.z == 1000.0f)
         {
             intersectScreen(closestIntersect, ray);
         }
 
-        m_Intersections[id] = Vec2(closestIntersect.x, closestIntersect.y);
+        m_Intersections.push_back(Vec2(closestIntersect.x, closestIntersect.y));
     }
 }
 
@@ -198,9 +217,11 @@ void LightOcclusionRenderer::TriangulateMeshesCPU()
 
     SAFE_DELETE(m_TriangledIntersecitonsShaderInput);
 
+    const size_t numIntersections = m_Intersections.size();
+
 #ifdef INTERSECTION_POINT
-    std::vector<Vec2> triangledIntersections{ NUM_INTERSECTIONS * 3 };
-    for (size_t id = 0; id < NUM_INTERSECTIONS; id++)
+    std::vector<Vec2> triangledIntersections{ numIntersections * 3 };
+    for (size_t id = 0; id < numIntersections; id++)
     {
         Vec2 p = m_Intersections[id];
         float f = 0.1;
@@ -208,23 +229,22 @@ void LightOcclusionRenderer::TriangulateMeshesCPU()
         triangledIntersections[3 * id+1] = p + Vec2(0.5, -0.5) * f;
         triangledIntersections[3 * id+2] = p + Vec2(0.0, 0.5) * f;
 #elif defined(INTERSECTION_LINE)
-    std::vector<Vec2> triangledIntersections{ NUM_INTERSECTIONS * 3 };
-    Vec2 mousePos = GameEngine::Get()->GetInput()->GetMousePosition();
-    for (size_t id = 0; id < NUM_INTERSECTIONS; id++)
+    std::vector<Vec2> triangledIntersections{ numIntersections * 3 };
+    for (size_t id = 0; id < numIntersections; id++)
     {
-        triangledIntersections[3 * id] = mousePos;
+        triangledIntersections[3 * id] = m_LightSource;
         triangledIntersections[3 * id + 1] = m_Intersections[id];
-        triangledIntersections[3 * id + 2] = mousePos + Vec2(0.0, 0.05);
+        triangledIntersections[3 * id + 2] = m_LightSource + Vec2(0.0, 0.05);
 #else
-    std::vector<Vec2> triangledIntersections{ (NUM_INTERSECTIONS-1) * 3 };
-    m_LightPosition = GameEngine::Get()->GetInput()->GetMousePosition();
-    for (size_t id = 0; id < NUM_INTERSECTIONS-1; id++)
+    std::vector<Vec2> triangledIntersections{ (numIntersections -1) * 3 };
+    // TODO: Join last and first vertex
+    m_LightSource = GameEngine::Get()->GetInput()->GetMousePosition();
+    for (size_t id = 0; id < numIntersections -1; id++)
         {
         triangledIntersections[3 * id] = m_Intersections[id];
-        triangledIntersections[3 * id + 1] = m_LightPosition;
+        triangledIntersections[3 * id + 1] = m_LightSource;
         triangledIntersections[3 * id + 2] = m_Intersections[id + 1];
 #endif
     }
-
     m_TriangledIntersecitonsShaderInput = new ShaderInput(triangledIntersections);
 }
