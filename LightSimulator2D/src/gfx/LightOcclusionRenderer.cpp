@@ -236,14 +236,13 @@ void LightOcclusionRenderer::TriangulateMeshesCPU()
         triangledIntersections[3 * id + 1] = m_Intersections[id];
         triangledIntersections[3 * id + 2] = m_LightSource + Vec2(0.0, 0.05);
 #else
-    std::vector<Vec2> triangledIntersections{ (numIntersections -1) * 3 };
-    // TODO: Join last and first vertex
-    m_LightSource = GameEngine::Get()->GetInput()->GetMousePosition();
-    for (size_t id = 0; id < numIntersections -1; id++)
-        {
+    std::vector<Vec2> triangledIntersections{ numIntersections * 3 };
+    for (size_t id = 0; id < numIntersections; id++)
+    {
+        size_t next_id = id + 1 == numIntersections ? 0 : id + 1;
         triangledIntersections[3 * id] = m_Intersections[id];
         triangledIntersections[3 * id + 1] = m_LightSource;
-        triangledIntersections[3 * id + 2] = m_Intersections[id + 1];
+        triangledIntersections[3 * id + 2] = m_Intersections[next_id];
 #endif
     }
     m_TriangledIntersecitonsShaderInput = new ShaderInput(triangledIntersections);
