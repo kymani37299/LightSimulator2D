@@ -17,14 +17,17 @@ LightOcclusionRenderer::LightOcclusionRenderer()
 
     m_IntersectionBuffer = new ShaderStorageBuffer(sizeof(Vec2), NUM_INTERSECTIONS);
 
-    m_TriangledIntersecitonsBuffer = new ShaderStorageBuffer(sizeof(Vec2), NUM_TRIANGLED_INTERSECTION_VERTICES);
+    m_TriangledIntersecitonsBuffer = new ShaderStorageBuffer(sizeof(Vec2), NUM_INTERSECTIONS * 3);
     m_TriangledIntersecitonsShaderInput = m_TriangledIntersecitonsBuffer->AsShaderInput();
+
+    m_RayQueryBuffer = new UniformBuffer(sizeof(Vec2), NUM_INTERSECTIONS);
 #endif
 }
 
 LightOcclusionRenderer::~LightOcclusionRenderer()
 {
 #ifdef GPU_OCCLUSION
+    delete m_RayQueryBuffer;
     delete m_TriangulationShader;
     delete m_OcclusionShader;
     delete m_OcclusionLines;
@@ -67,22 +70,31 @@ void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
 #ifdef GPU_OCCLUSION
 void LightOcclusionRenderer::SetupRayQuery()
 {
-    // TODO
+    m_RayCount = 0;
+    for (size_t i = 0; i < NUM_INTERSECTIONS; i++)
+    {
+        float angle = i * (2.0f * 6.283f / NUM_INTERSECTIONS);
+        Vec2 dir = Vec2(cos(angle), sin(angle));
+        m_RayQueryBuffer->UploadData(&dir, m_RayCount);
+        m_RayCount++;
+    }
 }
-
 
 void LightOcclusionRenderer::LightOcclusion(Scene* scene)
 {
     PROFILE_SCOPE("Light occlusion");
 
     SetupLineSegments(scene);
+    SetupRayQuery();
+    m_LightSource = GameEngine::Get()->GetInput()->GetMousePosition();
 
     m_OcclusionShader->Bind();
-    m_OcclusionShader->SetUniform("lightPosition", Vec2(0.0, 0.0));
+    m_OcclusionShader->SetUniform("lightPosition", m_LightSource);
     m_OcclusionShader->SetUniform("numSegments", (int)m_OcclusionLineCount);
     m_IntersectionBuffer->Bind(1);
     m_OcclusionLines->Bind(2);
-    GLFunctions::Dispatch(NUM_INTERSECTIONS);
+    m_RayQueryBuffer->Bind(3);
+    GLFunctions::Dispatch(m_RayCount);
 }
 
 void LightOcclusionRenderer::TriangulateMeshes()
@@ -91,10 +103,13 @@ void LightOcclusionRenderer::TriangulateMeshes()
 
     GLFunctions::MemoryBarrier(BarrierType::BufferUpdate); // Not sure if this is right barrier
     m_TriangulationShader->Bind();
-    m_TriangulationShader->SetUniform("lightPosition", Vec2(0.0, 0.0));
+    m_TriangulationShader->SetUniform("lightPosition", m_LightSource);
+    m_TriangulationShader->SetUniform("numIntersections", (int) m_RayCount);
     m_IntersectionBuffer->Bind(1);
     m_TriangledIntersecitonsBuffer->Bind(2);
-    GLFunctions::Dispatch(NUM_TRIANGLED_INTERSECTION_VERTICES);
+    GLFunctions::Dispatch(NUM_INTERSECTIONS*3);
+
+    m_TriangledIntersecitonsShaderInput->SetElementNumber(NUM_INTERSECTIONS * 3); // TODO: This is hack!
 }
 #else
 
@@ -136,7 +151,8 @@ void LightOcclusionRenderer::SetupRayQuery()
 
     for (size_t i = 0; i < NUM_INTERSECTIONS; i++)
     {
-        m_RayQuery.push(Vec2(cos(i), sin(i)));
+        float angle = i * (2.0f * 6.283f / NUM_INTERSECTIONS);
+        m_RayQuery.push(Vec2(cos(angle), sin(angle)));
     }
 
     const Vec2 e = Vec2(0.01f);

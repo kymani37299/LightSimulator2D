@@ -9,75 +9,67 @@ layout(local_size_x = 1) in;
 uniform vec2 lightPosition;
 uniform int numSegments;
 
-layout(std140, binding = 1) buffer IntersectionsBuffer
+layout(std140, binding = 1) buffer writeonly IntersectionsBuffer
 {
     vec2 intersections[NUM_INTERSECTIONS];
 };
 
-layout(std140, binding = 2) uniform LineSegmentsBuffer
+layout(std140, binding = 2) uniform readonly LineSegmentsBuffer
 {
     vec4 lineSegments[MAX_LINE_SEGMENTS];
 };
 
+layout(std140, binding = 3) uniform writeonly RayQueryBuffer // Can this be "in" ?
+{
+    vec2 rays[NUM_INTERSECTIONS];
+};
+
 void calcIntersection(out vec3 intersection, vec4 ray, vec4 segment)
 {
-	// Parametric form : Origin + t*Direction
-	// ro + t1*rd
-	vec2 ro = ray.xy;
-	vec2 rd = ray.zw;
+    float x = ray.x, y = ray.y, dx = ray.z, dy = ray.w;
+    float x1 = segment.x, y1 = segment.y, x2 = segment.z, y2 = segment.w;
+    float r, s, d;
 
-	// a + t2*b
-	vec2 a = segment.xy;
-	vec2 b = segment.zw;
-
-	float t2_1 = rd.x * (a.y - ro.y) + rd.y * (ro.x - a.x);
-	float t2_2 = b.x * rd.y - b.y * rd.x;
-	float t2 = t2_1 / t2_2;
-
-	float t1_1 = a.x + b.x * t2 - ro.x;
-	float t1_2 = rd.x;
-	float t1 = t1_1 / t1_2;
-
-	// Parallel lines
-	if (t1_2 == 0 || t2_2 == 0) return;
-
-	// Intersect test
-	if(t1 > 0.0 && t2 > 0.0 && t2 < 1.0 && (intersection.z < t1 || intersection.z == -1))
+    if (dy / dx != (y2 - y1) / (x2 - x1))
     {
-		vec2 p = ro + t1 * rd;
-		intersection.xy = p;
-		intersection.z = t1;
+        d = ((dx * (y2 - y1)) - dy * (x2 - x1));
+        if (d != 0)
+        {
+            r = (((y - y1) * (x2 - x1)) - (x - x1) * (y2 - y1)) / d;
+            s = (((y - y1) * dx) - (x - x1) * dy) / d;
+            if (r >= 0 && s >= 0 && s <= 1 && r < intersection.z)
+            {
+                intersection.x = x + r * dx;
+                intersection.y = y + r * dy;
+                intersection.z = r;
+            }
+        }
     }
 }
 
 // TODO: Optimize this
 void intersectScreen(out vec3 intersection, vec4 ray)
 {
-	calcIntersection(intersection, ray, vec4(-1.0, -1.0, 1.0, -1.0));
-	calcIntersection(intersection, ray, vec4(1.0, -1.0, 1.0, 1.0));
-	calcIntersection(intersection, ray, vec4(1.0, 1.0, -1.0, 1.0));
-	calcIntersection(intersection, ray, vec4(-1.0, 1.0, -1.0, -1.0));
+    calcIntersection(intersection, ray, vec4(-1.0, -1.0, 1.0, -1.0));
+    calcIntersection(intersection, ray, vec4(1.0, -1.0, 1.0, 1.0));
+    calcIntersection(intersection, ray, vec4(1.0, 1.0, -1.0, 1.0));
+    calcIntersection(intersection, ray, vec4(-1.0, 1.0, -1.0, -1.0));
 }
 
 void main()
 {
-	float angle = gl_GlobalInvocationID.x * (PI2 / NUM_INTERSECTIONS);
-	float dx = cos(angle);
-	float dy = sin(angle);
+    vec4 ray = vec4(lightPosition, rays[gl_GlobalInvocationID.x]);
+    vec3 closestIntersect = vec3(1000.0f);
 
-	vec3 closestIntersect;
-	closestIntersect.z = -1.0f;
-	vec4 ray = vec4(lightPosition, lightPosition + vec2(dx, dy));
-
-	for (int i = 0; i < numSegments; i++)
-	{
-		calcIntersection(closestIntersect, ray, lineSegments[i]);
-	}
-
-	if(closestIntersect.x == 1000.0)
+    for (int i = 0; i < numSegments; i++)
     {
-		intersectScreen(closestIntersect, ray);
-	}
+        calcIntersection(closestIntersect, ray, lineSegments[i]);
+    }
 
-	intersections[gl_GlobalInvocationID.x] = closestIntersect.xy;
+    if (closestIntersect.z == 1000.0f)
+    {
+        intersectScreen(closestIntersect, ray);
+    }
+
+    intersections[gl_GlobalInvocationID.x] = closestIntersect.xy;
 }

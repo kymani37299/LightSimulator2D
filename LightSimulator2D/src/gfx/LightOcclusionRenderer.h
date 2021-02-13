@@ -37,15 +37,17 @@ private:
 
 	static constexpr unsigned NUM_INTERSECTIONS = 360;
 	unsigned m_OcclusionLineCount = 0;
-	static constexpr unsigned NUM_TRIANGLED_INTERSECTION_VERTICES = NUM_INTERSECTIONS * 3;
 	Vec2 m_LightSource;
 
 	ShaderInput* m_TriangledIntersecitonsShaderInput = nullptr;
 
 #ifdef GPU_OCCLUSION
+	unsigned m_RayCount = 0;
+
 	ShaderStorageBuffer* m_IntersectionBuffer;
 	ShaderStorageBuffer* m_TriangledIntersecitonsBuffer;
 	UniformBuffer* m_OcclusionLines;
+	UniformBuffer* m_RayQueryBuffer;
 
 	ComputeShader* m_OcclusionShader = nullptr;
 	ComputeShader* m_TriangulationShader = nullptr;

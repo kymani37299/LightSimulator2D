@@ -46,6 +46,9 @@ public:
 
 	inline unsigned GetElementNumber() const { return m_ElementNumber; }
 
+	// TODO: Delete this, this is hack
+	inline void SetElementNumber(unsigned value) { m_ElementNumber = value; }
+
 	void Bind();
 	void Unbind();
 

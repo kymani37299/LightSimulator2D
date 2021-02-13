@@ -10,4 +10,4 @@
 
 #define SHADER_PATH "src/shaders/"
 
-//#define GPU_OCCLUSION
+#define GPU_OCCLUSION

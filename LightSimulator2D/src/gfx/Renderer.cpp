@@ -176,7 +176,6 @@ void Renderer::InitEntityForRender(Entity& e)
 
 void Renderer::RemoveEntityFromRenderPipeline(Entity& e)
 {
-    // TODO: Support UniformBuffer deleting m_LineSegments
     Texture* tex = e.m_Texture;
     if (tex) delete tex;
     e.m_ReadyForDraw = false;
