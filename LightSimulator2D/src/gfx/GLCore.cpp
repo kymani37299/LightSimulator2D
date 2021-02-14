@@ -170,14 +170,19 @@ void GLFunctions::MemoryBarrier(BarrierType barrier)
 // ---------- ShaderInput --------------------
 // -------------------------------------------
 
+void CreateShaderInput(GLHandle& vbo, GLHandle& vao, unsigned size, void* data)
+{
+	GL_CALL(glGenBuffers(1, &vbo));
+	GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, vbo));
+	GL_CALL(glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW));
+
+	GL_CALL(glGenVertexArrays(1, &vao));
+	GL_CALL(glBindVertexArray(vao));
+}
+
 ShaderInput::ShaderInput(std::vector<Vertex> vertices)
 {
-	GL_CALL(glGenBuffers(1, &m_VertexBuffer));
-	GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer));
-	GL_CALL(glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW));
-
-	GL_CALL(glGenVertexArrays(1, &m_VertexArray));
-	GL_CALL(glBindVertexArray(m_VertexArray));
+	CreateShaderInput(m_VertexBuffer, m_VertexArray, vertices.size() * sizeof(Vertex), vertices.data());
 
 	GL_CALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0));
 	GL_CALL(glEnableVertexAttribArray(0));
@@ -189,12 +194,7 @@ ShaderInput::ShaderInput(std::vector<Vertex> vertices)
 
 ShaderInput::ShaderInput(std::vector<Vec2> vertices)
 {
-	GL_CALL(glGenBuffers(1, &m_VertexBuffer));
-	GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer));
-	GL_CALL(glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vec2), vertices.data(), GL_STATIC_DRAW));
-
-	GL_CALL(glGenVertexArrays(1, &m_VertexArray));
-	GL_CALL(glBindVertexArray(m_VertexArray));
+	CreateShaderInput(m_VertexBuffer, m_VertexArray, vertices.size() * sizeof(Vec2), vertices.data());
 
 	GL_CALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), (void*)0));
 	GL_CALL(glEnableVertexAttribArray(0));
@@ -202,24 +202,19 @@ ShaderInput::ShaderInput(std::vector<Vec2> vertices)
 	m_ElementNumber = vertices.size();
 }
 
-ShaderInput::ShaderInput(GLHandle buffer):
-	m_VertexBuffer(buffer),
-	m_BufferOwner(false)
+ShaderInput::ShaderInput(std::vector<unsigned> vertices)
 {
-	GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer));
-	GL_CALL(glGenVertexArrays(1, &m_VertexArray));
-	GL_CALL(glBindVertexArray(m_VertexArray));
+	CreateShaderInput(m_VertexBuffer, m_VertexArray, vertices.size() * sizeof(int), vertices.data());
 
-	// TOOD: Parametrize this
-	GL_CALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), (void*)0));
+	GL_CALL(glVertexAttribPointer(0, 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(unsigned), (void*)0));
 	GL_CALL(glEnableVertexAttribArray(0));
+
+	m_ElementNumber = vertices.size();
 }
 
 ShaderInput::~ShaderInput()
 {
-	if(m_BufferOwner)
-		GL_CALL(glDeleteBuffers(1, &m_VertexBuffer));
-
+	GL_CALL(glDeleteBuffers(1, &m_VertexBuffer));
 	GL_CALL(glDeleteVertexArrays(1, &m_VertexArray));
 }
 
@@ -297,12 +292,6 @@ ShaderStorageBuffer::ShaderStorageBuffer(unsigned stride, unsigned count):
 ShaderStorageBuffer::~ShaderStorageBuffer()
 {
 	GL_CALL(glDeleteBuffers(1, &m_Handle));
-}
-
-ShaderInput* ShaderStorageBuffer::AsShaderInput()
-{
-	ShaderInput* shaderInput = new ShaderInput(m_Handle);
-	return shaderInput;
 }
 
 void ShaderStorageBuffer::Bind(unsigned slot)

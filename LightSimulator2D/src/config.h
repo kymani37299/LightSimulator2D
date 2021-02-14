@@ -9,5 +9,3 @@
 #define SCREEN_ASPECT_RATIO ((float)SCREEN_WIDTH/SCREEN_HEIGHT)
 
 #define SHADER_PATH "src/shaders/"
-
-#define GPU_OCCLUSION

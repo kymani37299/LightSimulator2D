@@ -147,9 +147,8 @@ void Renderer::RenderFrame()
 
         GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
         m_ShadowmapShader->Bind();
-        ShaderInput* occlusionInput = m_OcclusionRenderer->GetOcclusionMesh();
-        occlusionInput->Bind();
-        GLFunctions::Draw(occlusionInput->GetElementNumber());
+        unsigned numVertices = m_OcclusionRenderer->SetupOcclusionMeshInput();
+        GLFunctions::Draw(numVertices);
     }
 }
 

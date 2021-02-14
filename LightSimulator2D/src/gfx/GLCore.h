@@ -40,14 +40,11 @@ class ShaderInput
 public:
 	ShaderInput(std::vector<Vertex> vertices);
 	ShaderInput(std::vector<Vec2> vertices);
-	ShaderInput(GLHandle buffer);
+	ShaderInput(std::vector<unsigned> vertices);
 
 	~ShaderInput();
 
 	inline unsigned GetElementNumber() const { return m_ElementNumber; }
-
-	// TODO: Delete this, this is hack
-	inline void SetElementNumber(unsigned value) { m_ElementNumber = value; }
 
 	void Bind();
 	void Unbind();
@@ -55,7 +52,6 @@ public:
 private:
 	unsigned m_ElementNumber = 0;
 
-	bool m_BufferOwner = true;
 	GLHandle m_VertexBuffer;
 	GLHandle m_VertexArray;
 };
@@ -84,8 +80,6 @@ class ShaderStorageBuffer
 public:
 	ShaderStorageBuffer(unsigned stride, unsigned count = 1);
 	~ShaderStorageBuffer();
-
-	ShaderInput* AsShaderInput();
 
 	void Bind(unsigned slot);
 	void Unbind();

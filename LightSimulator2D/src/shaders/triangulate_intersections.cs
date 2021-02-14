@@ -1,7 +1,6 @@
 #version 430
 
-#define NUM_INTERSECTIONS 360
-#define NUM_TRIANGLED_INTERSECTIONS (NUM_INTERSECTIONS*3)
+#include "common.h"
 
 layout(local_size_x = 1) in;
 

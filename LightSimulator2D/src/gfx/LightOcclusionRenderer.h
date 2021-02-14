@@ -4,6 +4,7 @@
 #include <queue>
 
 #include "common.h"
+#include "shaders/common.h"
 
 class ShaderStorageBuffer;
 class ShaderInput;
@@ -18,13 +19,12 @@ public:
 	~LightOcclusionRenderer();
 
 	void RenderOcclusion(Scene* scene);
+	unsigned SetupOcclusionMeshInput();
 
 #ifdef GPU_OCCLUSION
 	ComputeShader*& GetOcclusionShader() { return m_OcclusionShader; }
 	ComputeShader*& GetTriangulateShader() { return m_TriangulationShader; }
 #endif
-
-	ShaderInput* GetOcclusionMesh() { return m_TriangledIntersecitonsShaderInput; }
 
 private:
 	void SetupLineSegments(Scene* scene);
@@ -32,14 +32,12 @@ private:
 	
 	void LightOcclusion(Scene* scene);
 	void TriangulateMeshes();
-	
-private:
 
-	static constexpr unsigned NUM_INTERSECTIONS = 360;
+private:
 	unsigned m_OcclusionLineCount = 0;
 	Vec2 m_LightSource;
 
-	ShaderInput* m_TriangledIntersecitonsShaderInput = nullptr;
+	ShaderInput* m_OcclusionMesh = nullptr;
 
 #ifdef GPU_OCCLUSION
 	unsigned m_RayCount = 0;
@@ -53,6 +51,7 @@ private:
 	ComputeShader* m_TriangulationShader = nullptr;
 #else
 	std::vector<Vec2> m_Intersections{ NUM_INTERSECTIONS };
+	std::vector<Vec2> m_TriangledIntersections;
 	std::vector<Vec4> m_Segments;
 	
 	// Vec2 of Vec4 for ray query ? What about multiple lights ?

@@ -1,8 +1,8 @@
 #version 430
 
+#include "common.h"
+
 #define PI2 6.2830
-#define NUM_INTERSECTIONS 360
-#define MAX_LINE_SEGMENTS 200
 
 layout(local_size_x = 1) in;
 

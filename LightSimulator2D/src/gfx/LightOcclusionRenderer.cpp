@@ -12,13 +12,11 @@
 LightOcclusionRenderer::LightOcclusionRenderer()
 {
 #ifdef GPU_OCCLUSION
-    static constexpr unsigned MAX_LINE_SEGMENTS = 300; // TODO : Implement UB resize and use dynamic size
     m_OcclusionLines = new UniformBuffer(sizeof(Vec4), MAX_LINE_SEGMENTS);
 
     m_IntersectionBuffer = new ShaderStorageBuffer(sizeof(Vec2), NUM_INTERSECTIONS);
 
     m_TriangledIntersecitonsBuffer = new ShaderStorageBuffer(sizeof(Vec2), NUM_INTERSECTIONS * 3);
-    m_TriangledIntersecitonsShaderInput = m_TriangledIntersecitonsBuffer->AsShaderInput();
 
     m_RayQueryBuffer = new UniformBuffer(sizeof(Vec2), NUM_INTERSECTIONS);
 #endif
@@ -33,7 +31,6 @@ LightOcclusionRenderer::~LightOcclusionRenderer()
     delete m_OcclusionLines;
     delete m_IntersectionBuffer;
     delete m_TriangledIntersecitonsBuffer;
-    delete m_TriangledIntersecitonsShaderInput;
 #endif
 }
 
@@ -41,6 +38,27 @@ void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
 {
     LightOcclusion(scene);
     TriangulateMeshes();
+}
+
+unsigned LightOcclusionRenderer::SetupOcclusionMeshInput()
+{
+    SAFE_DELETE(m_OcclusionMesh);
+
+#ifdef GPU_OCCLUSION
+    unsigned numIntersections = NUM_INTERSECTIONS * 3;
+    std::vector<unsigned> vertices;
+    vertices.resize(numIntersections);
+    for (unsigned i = 0; i < numIntersections; i++) vertices[i] = i;
+    m_OcclusionMesh = new ShaderInput(vertices);
+    m_TriangledIntersecitonsBuffer->Bind(1);
+#else
+    unsigned numIntersections = m_TriangledIntersections.size();
+    m_OcclusionMesh = new ShaderInput(m_TriangledIntersections);
+#endif
+
+    m_OcclusionMesh->Bind();
+
+    return numIntersections;
 }
 
 void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
@@ -108,8 +126,6 @@ void LightOcclusionRenderer::TriangulateMeshes()
     m_IntersectionBuffer->Bind(1);
     m_TriangledIntersecitonsBuffer->Bind(2);
     GLFunctions::Dispatch(NUM_INTERSECTIONS*3);
-
-    m_TriangledIntersecitonsShaderInput->SetElementNumber(NUM_INTERSECTIONS * 3); // TODO: This is hack!
 }
 #else
 
@@ -206,37 +222,32 @@ void LightOcclusionRenderer::TriangulateMeshes()
 {
     PROFILE_SCOPE("Triangulate intersections");
 
-    SAFE_DELETE(m_TriangledIntersecitonsShaderInput);
-
     const size_t numIntersections = m_Intersections.size();
+    m_TriangledIntersections.resize(numIntersections*3);
 
 #ifdef INTERSECTION_POINT
-    std::vector<Vec2> triangledIntersections{ numIntersections * 3 };
     for (size_t id = 0; id < numIntersections; id++)
     {
         Vec2 p = m_Intersections[id];
         float f = 0.1;
-        triangledIntersections[3*id] = p + Vec2(-0.5, -0.5) * f;
-        triangledIntersections[3 * id+1] = p + Vec2(0.5, -0.5) * f;
-        triangledIntersections[3 * id+2] = p + Vec2(0.0, 0.5) * f;
+        m_TriangledIntersections[3*id] = p + Vec2(-0.5, -0.5) * f;
+        m_TriangledIntersections[3 * id+1] = p + Vec2(0.5, -0.5) * f;
+        m_TriangledIntersections[3 * id+2] = p + Vec2(0.0, 0.5) * f;
 #elif defined(INTERSECTION_LINE)
-    std::vector<Vec2> triangledIntersections{ numIntersections * 3 };
     for (size_t id = 0; id < numIntersections; id++)
     {
-        triangledIntersections[3 * id] = m_LightSource;
-        triangledIntersections[3 * id + 1] = m_Intersections[id];
-        triangledIntersections[3 * id + 2] = m_LightSource + Vec2(0.0, 0.05);
+        m_TriangledIntersections[3 * id] = m_LightSource;
+        m_TriangledIntersections[3 * id + 1] = m_Intersections[id];
+        m_TriangledIntersections[3 * id + 2] = m_LightSource + Vec2(0.0, 0.05);
 #else
-    std::vector<Vec2> triangledIntersections{ numIntersections * 3 };
     for (size_t id = 0; id < numIntersections; id++)
     {
         size_t next_id = id + 1 == numIntersections ? 0 : id + 1;
-        triangledIntersections[3 * id] = m_Intersections[id];
-        triangledIntersections[3 * id + 1] = m_LightSource;
-        triangledIntersections[3 * id + 2] = m_Intersections[next_id];
+        m_TriangledIntersections[3 * id] = m_Intersections[id];
+        m_TriangledIntersections[3 * id + 1] = m_LightSource;
+        m_TriangledIntersections[3 * id + 2] = m_Intersections[next_id];
 #endif
     }
-    m_TriangledIntersecitonsShaderInput = new ShaderInput(triangledIntersections);
 }
 
 #endif
