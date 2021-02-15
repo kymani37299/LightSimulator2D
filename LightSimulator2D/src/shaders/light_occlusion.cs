@@ -11,7 +11,7 @@ uniform int numSegments;
 
 layout(std140, binding = 1) buffer writeonly IntersectionsBuffer
 {
-    vec2 intersections[NUM_INTERSECTIONS];
+    vec4 intersections[NUM_INTERSECTIONS];
 };
 
 layout(std140, binding = 2) uniform readonly LineSegmentsBuffer
@@ -21,7 +21,7 @@ layout(std140, binding = 2) uniform readonly LineSegmentsBuffer
 
 layout(std140, binding = 3) uniform writeonly RayQueryBuffer // Can this be "in" ?
 {
-    vec2 rays[NUM_INTERSECTIONS];
+    vec4 rays[NUM_INTERSECTIONS];
 };
 
 void calcIntersection(out vec3 intersection, vec4 ray, vec4 segment)
@@ -58,7 +58,7 @@ void intersectScreen(out vec3 intersection, vec4 ray)
 
 void main()
 {
-    vec4 ray = vec4(lightPosition, rays[gl_GlobalInvocationID.x]);
+    vec4 ray = vec4(lightPosition, rays[gl_GlobalInvocationID.x].xy);
     vec3 closestIntersect = vec3(1000.0f);
 
     for (int i = 0; i < numSegments; i++)
@@ -71,5 +71,5 @@ void main()
         intersectScreen(closestIntersect, ray);
     }
 
-    intersections[gl_GlobalInvocationID.x] = closestIntersect.xy;
+    intersections[gl_GlobalInvocationID.x].xy = closestIntersect.xy;
 }

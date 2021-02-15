@@ -14,17 +14,20 @@ LightOcclusionRenderer::LightOcclusionRenderer()
 #ifdef GPU_OCCLUSION
     m_OcclusionLines = new UniformBuffer(sizeof(Vec4), MAX_LINE_SEGMENTS);
 
-    m_IntersectionBuffer = new ShaderStorageBuffer(sizeof(Vec2), NUM_INTERSECTIONS);
+    m_IntersectionBuffer = new ShaderStorageBuffer(sizeof(Vec4), NUM_INTERSECTIONS);
 
-    m_TriangledIntersecitonsBuffer = new ShaderStorageBuffer(sizeof(Vec2), NUM_INTERSECTIONS * 3);
+    m_TriangledIntersecitonsBuffer = new ShaderStorageBuffer(sizeof(Vec4), NUM_INTERSECTIONS * 3);
 
-    m_RayQueryBuffer = new UniformBuffer(sizeof(Vec2), NUM_INTERSECTIONS);
+    m_RayQueryBuffer = new UniformBuffer(sizeof(Vec4), NUM_INTERSECTIONS);
+
+    m_OcclusionMesh = m_TriangledIntersecitonsBuffer->AsShaderInput();
 #endif
 }
 
 LightOcclusionRenderer::~LightOcclusionRenderer()
 {
 #ifdef GPU_OCCLUSION
+    delete m_OcclusionMesh;
     delete m_RayQueryBuffer;
     delete m_TriangulationShader;
     delete m_OcclusionShader;
@@ -42,20 +45,13 @@ void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
 
 unsigned LightOcclusionRenderer::SetupOcclusionMeshInput()
 {
-    SAFE_DELETE(m_OcclusionMesh);
-
 #ifdef GPU_OCCLUSION
     unsigned numIntersections = NUM_INTERSECTIONS * 3;
-    std::vector<unsigned> vertices;
-    vertices.resize(numIntersections);
-    for (unsigned i = 0; i < numIntersections; i++) vertices[i] = i;
-    m_OcclusionMesh = new ShaderInput(vertices);
-    m_TriangledIntersecitonsBuffer->Bind(1);
 #else
+    SAFE_DELETE(m_OcclusionMesh);
     unsigned numIntersections = m_TriangledIntersections.size();
     m_OcclusionMesh = new ShaderInput(m_TriangledIntersections);
 #endif
-
     m_OcclusionMesh->Bind();
 
     return numIntersections;
@@ -92,7 +88,7 @@ void LightOcclusionRenderer::SetupRayQuery()
     for (size_t i = 0; i < NUM_INTERSECTIONS; i++)
     {
         float angle = i * (2.0f * 6.283f / NUM_INTERSECTIONS);
-        Vec2 dir = Vec2(cos(angle), sin(angle));
+        Vec4 dir = Vec4(cos(angle), sin(angle),0.0,0.0);
         m_RayQueryBuffer->UploadData(&dir, m_RayCount);
         m_RayCount++;
     }
