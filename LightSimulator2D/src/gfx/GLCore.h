@@ -20,6 +20,7 @@ enum class BarrierType
 	VertexBuffer,
 	UniformBuffer,
 	BufferUpdate,
+	ShaderStorage,
 	All
 
 };

@@ -157,6 +157,9 @@ void GLFunctions::MemoryBarrier(BarrierType barrier)
 	case BarrierType::BufferUpdate:
 		glBarrier = GL_BUFFER_UPDATE_BARRIER_BIT;
 		break;
+	case BarrierType::ShaderStorage:
+		glBarrier = GL_SHADER_STORAGE_BARRIER_BIT;
+		break;
 	case BarrierType::All:
 		glBarrier = GL_ALL_BARRIER_BITS;
 		break;
