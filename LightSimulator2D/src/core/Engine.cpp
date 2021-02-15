@@ -50,9 +50,11 @@ void GameEngine::Init()
 
     m_Window.SetInput(&m_Input);
     m_Renderer.Init(m_Window);
+    m_UI.Init(&m_Window);
+    m_Scene.Init(&m_Renderer);
+
     m_Controller = new PlayerController(&m_Scene[1]);
     m_Controller->Init(&m_Input);
-    m_Scene.Init(&m_Renderer);
 }
 
 void GameEngine::EngineLoop()
@@ -62,9 +64,11 @@ void GameEngine::EngineLoop()
     m_Running = m_Window.Active();
     UpdateDT();
     m_Controller->Update(m_DT);
+    m_UI.Update(m_DT);
     m_Renderer.Update(m_DT);
     if (m_Renderer.RenderIfNeeded())
     {
+        m_UI.Render();
         m_Window.UpdateGraphic();
     }
     m_Window.Update(m_DT);
