@@ -7,10 +7,14 @@
 #define PROFILE_SCOPE(X) Profiler JOIN(scopedProfiler,__LINE__){X}
 #define PROFILE_GET(X) Profiler::GetTime(X)
 
+class ProfilerUI;
+
 using ProfilerState = std::map<std::string, float>;
 
 class Profiler
 {
+	friend class ProfilerUI;
+
 	static ProfilerState s_CurrentState; // times in ms
 
 public:

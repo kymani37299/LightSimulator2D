@@ -5,11 +5,11 @@
 
 #include "core/Window.h"
 
-#include "elements/FpsProfiler.h"
+#include "elements/ProfilerUI.h"
 
 void UIEngine::SetupElements()
 {
-    AddElement(new FpsProfiler());
+    AddElement(new ProfilerUI());
 }
 
 UIEngine::~UIEngine()
@@ -42,7 +42,11 @@ void UIEngine::Update(float dt)
         UIElement* e = m_Elements[i];
 
         if (e->IsVisible()) e->Update(dt);
-        else RemoveElement(i);
+        else
+        {
+            RemoveElement(i);
+            i--;
+        }
     }
 }
 
