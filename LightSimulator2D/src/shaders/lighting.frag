@@ -14,7 +14,8 @@ void main()
 	vec3 lightMask = baseLight + texture(u_OcclusionMask, UV).rgb;
 	lightMask = clamp(lightMask,0.0,1.0);
 
-	vec3 col = texture(u_Albedo, UV).rgb;
+	vec3 col = texture(u_Albedo, UV).rgb*0.7;
+	col += 0.3;
 	col *= lightMask;
 
 	FinalColor = vec4(col, 1.0);

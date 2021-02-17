@@ -173,6 +173,21 @@ void Renderer::RenderFrame()
         m_OcclusionMaskFB->BindTexture(0, 1);
         GLFunctions::DrawFC();
     }
+
+    // TODO: Optimize this in early steps
+    {
+        PROFILE_SCOPE("Draw occluders");
+        m_OpaqueShader->Bind();
+        m_QuadInput->Bind();
+        for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
+        {
+            Entity& e = (*it);
+            if (!e.GetDrawFlags().occluder) continue;
+            m_OpaqueShader->SetUniform("u_Transform", e.GetTransformation());
+            e.m_Texture->Bind(0);
+            GLFunctions::Draw(6);
+        }
+    }
 }
 
 void Renderer::CompileShaders()
