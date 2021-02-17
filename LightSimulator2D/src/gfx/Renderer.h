@@ -45,10 +45,14 @@ private:
 	bool m_ShouldRender = true;
 	Scene* m_Scene;
 
+	Framebuffer* m_AlbedoFB;
+	Framebuffer* m_OcclusionMaskFB;
+
 	ShaderInput* m_QuadInput;
 
 	Shader* m_OpaqueShader;
 	Shader* m_ShadowmapShader;
+	Shader* m_LightingShader;
 
 	LightOcclusionRenderer* m_OcclusionRenderer;
 };

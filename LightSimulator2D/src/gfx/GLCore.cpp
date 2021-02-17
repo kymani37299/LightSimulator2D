@@ -118,15 +118,40 @@ static uint32_t CompileShader(uint32_t type, const char* source)
 // ---------- GLFunctions --------------------
 // -------------------------------------------
 
+static ShaderInput* s_FCShaderInput;
+
 void GLFunctions::InitGL(void* procAddressGet)
 {
 	int glad_status = gladLoadGLLoader((GLADloadproc)procAddressGet);
 	ASSERT(glad_status);
+
+	static std::vector<Vertex> fc = {
+		{Vec2(-1.0,-1.0)   ,Vec2(0.0,0.0)},
+		{Vec2(1.0,-1.0)    ,Vec2(1.0,0.0)},
+		{Vec2(-1.0,1.0)    ,Vec2(0.0,1.0)},
+
+		{Vec2(-1.0,1.0)    ,Vec2(0.0,1.0)},
+		{Vec2(1.0,-1.0)    ,Vec2(1.0,0.0)},
+		{Vec2(1.0,1.0)     ,Vec2(1.0,1.0)}
+	};
+
+	s_FCShaderInput = new ShaderInput(fc);
+}
+
+void GLFunctions::DeinitGL()
+{
+	delete s_FCShaderInput;
 }
 
 void GLFunctions::Draw(unsigned numVertices)
 {
 	GL_CALL(glDrawArrays(GL_TRIANGLES, 0, numVertices));
+}
+
+void GLFunctions::DrawFC()
+{
+	s_FCShaderInput->Bind();
+	GL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
 }
 
 void GLFunctions::Dispatch(unsigned groupX, unsigned groupY, unsigned groupZ)
@@ -159,6 +184,9 @@ void GLFunctions::MemoryBarrier(BarrierType barrier)
 		break;
 	case BarrierType::ShaderStorage:
 		glBarrier = GL_SHADER_STORAGE_BARRIER_BIT;
+		break;
+	case BarrierType::Framebuffer:
+		glBarrier = GL_FRAMEBUFFER_BARRIER_BIT;
 		break;
 	case BarrierType::All:
 		glBarrier = GL_ALL_BARRIER_BITS;
@@ -635,6 +663,12 @@ Framebuffer::~Framebuffer()
 		GL_CALL(glDeleteTextures(1, &m_ColorAttachments[i]));
 	}
 	GL_CALL(glDeleteFramebuffers(1, &m_Handle));
+}
+
+void Framebuffer::ClearAndBind()
+{
+	Bind();
+	GLFunctions::ClearScreen();
 }
 
 void Framebuffer::Bind()

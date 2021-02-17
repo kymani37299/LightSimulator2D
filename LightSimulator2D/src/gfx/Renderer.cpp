@@ -69,12 +69,19 @@ static bool CreateCShader(const std::string& name, ComputeShader*& shader)
 
 Renderer::~Renderer()
 {
+    delete m_OcclusionMaskFB;
+    delete m_AlbedoFB;
+
     delete m_OcclusionRenderer;
+
+    delete m_LightingShader;
     delete m_ShadowmapShader;
     delete m_OpaqueShader;
 
     delete m_QuadInput;
     if (m_Scene) FreeScene();
+
+    GLFunctions::DeinitGL();
 }
 
 void Renderer::Init(Window& window)
@@ -82,6 +89,8 @@ void Renderer::Init(Window& window)
     GLFunctions::InitGL(window.GetProcessAddressHandle());
 
     m_OcclusionRenderer = new LightOcclusionRenderer();
+    m_OcclusionMaskFB = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
+    m_AlbedoFB = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     CompileShaders();
 
@@ -125,11 +134,23 @@ void Renderer::RenderFrame()
 
     GLFunctions::ClearScreen();
 
-    m_OcclusionRenderer->RenderOcclusion();
+    {
+        PROFILE_SCOPE("Occlusion mask");
+
+        m_OcclusionRenderer->RenderOcclusion();
+        m_OcclusionMaskFB->ClearAndBind();
+        m_ShadowmapShader->Bind();
+        unsigned numVertices = m_OcclusionRenderer->SetupOcclusionMeshInput();
+
+        GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
+        GLFunctions::Draw(numVertices);
+
+        m_OcclusionMaskFB->Unbind();
+    }
 
     {
-        PROFILE_SCOPE("Opaque");
-
+        PROFILE_SCOPE("Albedo");
+        m_AlbedoFB->ClearAndBind();
         m_OpaqueShader->Bind();
         m_QuadInput->Bind();
         for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
@@ -139,15 +160,18 @@ void Renderer::RenderFrame()
             e.m_Texture->Bind(0);
             GLFunctions::Draw(6);
         }
+        m_AlbedoFB->Unbind();
     }
 
     {
-        PROFILE_SCOPE("Shadow map");
+        PROFILE_SCOPE("Lighting");
 
-        GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
-        m_ShadowmapShader->Bind();
-        unsigned numVertices = m_OcclusionRenderer->SetupOcclusionMeshInput();
-        GLFunctions::Draw(numVertices);
+        GLFunctions::MemoryBarrier(BarrierType::Framebuffer);
+
+        m_LightingShader->Bind();
+        m_AlbedoFB->BindTexture(0, 0);
+        m_OcclusionMaskFB->BindTexture(0, 1);
+        GLFunctions::DrawFC();
     }
 }
 
@@ -160,6 +184,7 @@ void Renderer::CompileShaders()
     CreateCShader("triangulate_intersections", m_OcclusionRenderer->GetTriangulateShader());
 #endif
     CreateCShader("occlusion_mesh_gen", m_OcclusionRenderer->GetOcclusuionMeshGenShader());
+    CreateShader("lighting", m_LightingShader);
 }
 
 void Renderer::InitEntityForRender(Entity& e)

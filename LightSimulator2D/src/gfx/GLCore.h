@@ -21,6 +21,7 @@ enum class BarrierType
 	UniformBuffer,
 	BufferUpdate,
 	ShaderStorage,
+	Framebuffer,
 	All
 
 };
@@ -28,7 +29,9 @@ enum class BarrierType
 namespace GLFunctions
 {
 	void InitGL(void* procAddressGet);
+	void DeinitGL();
 	void Draw(unsigned numVertices);
+	void DrawFC();
 	void Dispatch(unsigned groupX = 1, unsigned groupY = 1, unsigned groupZ = 1);
 	void ClearScreen(Vec3 clearColor = VEC3_ZERO);
 	void MemoryBarrier(BarrierType barrier);
@@ -196,6 +199,7 @@ public:
 	Framebuffer(unsigned width, unsigned height, unsigned numColorAttachments = 1);
 	~Framebuffer();
 
+	void ClearAndBind();
 	void Bind();
 	void Unbind();
 
