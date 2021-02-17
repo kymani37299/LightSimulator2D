@@ -1,8 +1,8 @@
-#version 330
+#version 430
 
 in vec2 UV;
 
-uniform sampler2D u_Texture;
+layout(binding = 0) uniform sampler2D u_Texture;
 
 layout(location = 0) out vec4 FinalColor;
 

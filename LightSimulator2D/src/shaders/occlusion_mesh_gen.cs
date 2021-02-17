@@ -6,7 +6,7 @@
 
 layout(local_size_x = 1) in;
 
-uniform sampler2D u_Texture;
+layout(binding = 0) uniform sampler2D u_Texture;
 
 layout(std140, binding = 1) buffer writeonly OcclusionMeshOutput
 {

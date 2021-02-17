@@ -3,8 +3,6 @@
 #include <vector>
 #include <map>
 
-#include "gfx/Lights.h"
-
 class Window;
 class Shader;
 class ShaderInput;

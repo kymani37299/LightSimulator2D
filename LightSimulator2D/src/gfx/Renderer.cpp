@@ -132,7 +132,6 @@ void Renderer::RenderFrame()
 
         m_OpaqueShader->Bind();
         m_QuadInput->Bind();
-        m_OpaqueShader->SetUniform("u_Texture", 0);
         for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
         {
             Entity& e = (*it);

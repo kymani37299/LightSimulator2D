@@ -49,7 +49,6 @@ void LightOcclusionRenderer::OnOccluderAdded(Entity& e)
     {
         m_OcclusionMeshGenShader->Bind();
         e.m_Texture->Bind(0);
-        m_OcclusionMeshGenShader->SetUniform("u_Texture", 0);
         m_OcclusionMeshOutput->Bind(1);
         GLFunctions::Dispatch(oBufferSize);
     }
