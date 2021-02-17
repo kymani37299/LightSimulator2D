@@ -9,12 +9,12 @@ uniform int numIntersections;
 
 layout(std140, binding = 1) buffer readonly IntersectionsBuffer
 {
-    vec4 intersections[NUM_INTERSECTIONS];
+    vec4 intersections[MAX_RAY_QUERIES];
 };
 
 layout(std140, binding = 2) buffer writeonly TriangledIntersectionsBuffer
 {
-    vec4 triangledIntersections[NUM_TRIANGLED_INTERSECTIONS];
+    vec4 triangledIntersections[MAX_RAY_QUERIES*3];
 };
 
 void main()

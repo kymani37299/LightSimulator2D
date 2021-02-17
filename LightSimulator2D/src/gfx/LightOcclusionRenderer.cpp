@@ -14,11 +14,11 @@ LightOcclusionRenderer::LightOcclusionRenderer()
 #ifdef GPU_OCCLUSION
     m_OcclusionLines = new UniformBuffer(sizeof(Vec4), MAX_LINE_SEGMENTS);
 
-    m_IntersectionBuffer = new ShaderStorageBuffer(sizeof(Vec4), NUM_INTERSECTIONS);
+    m_IntersectionBuffer = new ShaderStorageBuffer(sizeof(Vec4), MAX_RAY_QUERIES);
 
-    m_TriangledIntersecitonsBuffer = new ShaderStorageBuffer(sizeof(Vec4), NUM_INTERSECTIONS * 3);
+    m_TriangledIntersecitonsBuffer = new ShaderStorageBuffer(sizeof(Vec4), MAX_RAY_QUERIES * 3);
 
-    m_RayQueryBuffer = new UniformBuffer(sizeof(Vec4), NUM_INTERSECTIONS);
+    m_RayQueryBuffer = new UniformBuffer(sizeof(Vec4), MAX_RAY_QUERIES);
 
     m_OcclusionMesh = m_TriangledIntersecitonsBuffer->AsShaderInput();
 #endif
@@ -46,7 +46,7 @@ void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
 unsigned LightOcclusionRenderer::SetupOcclusionMeshInput()
 {
 #ifdef GPU_OCCLUSION
-    unsigned numIntersections = NUM_INTERSECTIONS * 3;
+    unsigned numIntersections = m_RayCount*3;
 #else
     SAFE_DELETE(m_OcclusionMesh);
     unsigned numIntersections = m_TriangledIntersections.size();
@@ -73,6 +73,13 @@ void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
             Vec4 lineSegment = Vec4(a.x, a.y, b.x, b.y);
 #ifdef GPU_OCCLUSION
             m_OcclusionLines->UploadData(&lineSegment, m_OcclusionLineCount);
+
+            // TODO: Move this to setup ray query
+            const Vec2 e = Vec2(0.01f);
+            Vec2 p = Vec2(lineSegment.x, lineSegment.y);
+            m_RayQuery.push(p - e);
+            m_RayQuery.push(e);
+            m_RayQuery.push(p + e);
 #else
             m_Segments[m_OcclusionLineCount] = lineSegment;
 #endif
@@ -84,13 +91,22 @@ void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
 #ifdef GPU_OCCLUSION
 void LightOcclusionRenderer::SetupRayQuery()
 {
-    m_RayCount = 0;
-    for (size_t i = 0; i < NUM_INTERSECTIONS; i++)
+    for (size_t i = 0; i < NUM_ANGLED_RAYS; i++)
     {
-        float angle = i * (2.0f * 6.283f / NUM_INTERSECTIONS);
-        Vec4 dir = Vec4(cos(angle), sin(angle),0.0,0.0);
-        m_RayQueryBuffer->UploadData(&dir, m_RayCount);
-        m_RayCount++;
+        float angle = i * (2.0f * 6.283f / NUM_ANGLED_RAYS);
+        Vec2 dir = Vec2(cos(angle), sin(angle));
+        m_RayQuery.push(dir);
+    }
+
+    // TODO: Optimize this, upload all at same time
+    size_t rayIndex = 0;
+    m_RayCount = m_RayQuery.size();
+    while (!m_RayQuery.empty())
+    {
+        Vec2 ray = m_RayQuery.top();
+        m_RayQuery.pop();
+        m_RayQueryBuffer->UploadData(&ray, rayIndex);
+        rayIndex++;
     }
 }
 
@@ -115,13 +131,13 @@ void LightOcclusionRenderer::TriangulateMeshes()
 {
     PROFILE_SCOPE("Triangulate intersections");
 
-    GLFunctions::MemoryBarrier(BarrierType::BufferUpdate); // Not sure if this is right barrier
+    GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
     m_TriangulationShader->Bind();
     m_TriangulationShader->SetUniform("lightPosition", m_LightSource);
     m_TriangulationShader->SetUniform("numIntersections", (int) m_RayCount);
     m_IntersectionBuffer->Bind(1);
     m_TriangledIntersecitonsBuffer->Bind(2);
-    GLFunctions::Dispatch(NUM_INTERSECTIONS*3);
+    GLFunctions::Dispatch(m_RayCount*3);
 }
 #else
 
@@ -161,9 +177,9 @@ void LightOcclusionRenderer::SetupRayQuery()
 {
     ASSERT(m_RayQuery.size() == 0);
 
-    for (size_t i = 0; i < NUM_INTERSECTIONS; i++)
+    for (size_t i = 0; i < NUM_ANGLED_RAYS; i++)
     {
-        float angle = i * (2.0f * 6.283f / NUM_INTERSECTIONS);
+        float angle = i * (2.0f * 6.283f / NUM_ANGLED_RAYS);
         m_RayQuery.push(Vec2(cos(angle), sin(angle)));
     }
 

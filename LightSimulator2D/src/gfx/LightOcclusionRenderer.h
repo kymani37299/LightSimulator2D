@@ -34,10 +34,23 @@ private:
 	void TriangulateMeshes();
 
 private:
+
+	static constexpr unsigned NUM_ANGLED_RAYS = 360;
+
 	unsigned m_OcclusionLineCount = 0;
 	Vec2 m_LightSource;
 
 	ShaderInput* m_OcclusionMesh = nullptr;
+
+	struct RayAngleComparator
+	{
+		bool operator () (const Vec2& l, const Vec2& r)
+		{
+			return glm::atan(l.y, l.x) < glm::atan(r.y, r.x);
+		}
+	};
+	using RayQuery = std::priority_queue<Vec2, std::vector<Vec2>, RayAngleComparator>;
+	RayQuery m_RayQuery;
 
 #ifdef GPU_OCCLUSION
 	unsigned m_RayCount = 0;
@@ -50,19 +63,8 @@ private:
 	ComputeShader* m_OcclusionShader = nullptr;
 	ComputeShader* m_TriangulationShader = nullptr;
 #else
-	std::vector<Vec2> m_Intersections{ NUM_INTERSECTIONS };
+	std::vector<Vec2> m_Intersections;
 	std::vector<Vec2> m_TriangledIntersections;
 	std::vector<Vec4> m_Segments;
-	
-	// Vec2 of Vec4 for ray query ? What about multiple lights ?
-	struct RayAngleComparator
-	{
-		bool operator () (const Vec2& l, const Vec2& r)
-		{
-			return glm::atan(l.y, l.x) < glm::atan(r.y, r.x);
-		}
-	};
-	using RayQuery = std::priority_queue<Vec2, std::vector<Vec2>, RayAngleComparator>;
-	RayQuery m_RayQuery;
 #endif
 };

@@ -11,7 +11,7 @@ uniform int numSegments;
 
 layout(std140, binding = 1) buffer writeonly IntersectionsBuffer
 {
-    vec4 intersections[NUM_INTERSECTIONS];
+    vec4 intersections[MAX_RAY_QUERIES];
 };
 
 layout(std140, binding = 2) uniform readonly LineSegmentsBuffer
@@ -21,7 +21,7 @@ layout(std140, binding = 2) uniform readonly LineSegmentsBuffer
 
 layout(std140, binding = 3) uniform writeonly RayQueryBuffer // Can this be "in" ?
 {
-    vec4 rays[NUM_INTERSECTIONS];
+    vec4 rays[MAX_RAY_QUERIES];
 };
 
 void calcIntersection(out vec3 intersection, vec4 ray, vec4 segment)

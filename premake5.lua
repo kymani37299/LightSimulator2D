@@ -23,7 +23,8 @@ project "LightSimulator2D"
 		"%{prj.name}/src/**.vert",
 		"%{prj.name}/src/**.frag",
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp"
+		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/src/**.cs"
 	}
 
 	includedirs
