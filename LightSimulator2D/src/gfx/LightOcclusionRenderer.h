@@ -11,7 +11,6 @@ class ShaderStorageBuffer;
 class ShaderInput;
 class UniformBuffer;
 class ComputeShader;
-class Scene;
 class Entity;
 
 class LightOcclusionRenderer
@@ -20,10 +19,10 @@ public:
 	LightOcclusionRenderer();
 	~LightOcclusionRenderer();
 
-	void OnEntityAdded(Entity& e);
-	void OnEntityRemoved(Entity& e);
+	void OnOccluderAdded(Entity& e);
+	void OnOccluderRemoved(Entity& e);
 
-	void RenderOcclusion(Scene* scene);
+	void RenderOcclusion();
 	unsigned SetupOcclusionMeshInput();
 
 #ifdef GPU_OCCLUSION
@@ -33,10 +32,10 @@ public:
 	ComputeShader*& GetOcclusuionMeshGenShader() { return m_OcclusionMeshGenShader; }
 
 private:
-	void SetupLineSegments(Scene* scene);
+	void SetupLineSegments();
 	void SetupRayQuery();
 	
-	void LightOcclusion(Scene* scene);
+	void LightOcclusion();
 	void TriangulateMeshes();
 
 private:
@@ -59,7 +58,7 @@ private:
 	RayQuery m_RayQuery;
 
 	using OcclusionMesh = std::vector<Vec2>;
-	std::map<unsigned, OcclusionMesh> m_OcclusionMeshPool;
+	std::map<Entity*, OcclusionMesh> m_OcclusionMeshPool;
 
 	ComputeShader* m_OcclusionMeshGenShader = nullptr;
 	ShaderStorageBuffer* m_OcclusionMeshOutput;

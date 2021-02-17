@@ -12,6 +12,11 @@ struct Transform
 	float rotation;
 };
 
+struct DrawFlags
+{
+	bool occluder : 1;
+};
+
 class Entity
 {
 	friend class Renderer;
@@ -20,6 +25,8 @@ class Entity
 public:
 	Entity(const std::string& texture);
 	unsigned GetID() { return m_EntityID; }
+	
+	DrawFlags& GetDrawFlags() { return m_DrawFlags; }
 
 	// TODO: Apply rotation
 	inline Mat3 GetTransformation() const
@@ -38,4 +45,5 @@ private:
 	Texture* m_Texture;
 
 	bool m_ReadyForDraw = false;
+	DrawFlags m_DrawFlags = {0};
 };

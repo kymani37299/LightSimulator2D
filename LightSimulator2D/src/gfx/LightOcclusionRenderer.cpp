@@ -7,7 +7,6 @@
 
 #include "gfx/GLCore.h"
 #include "scene/Entity.h"
-#include "scene/Scene.h"
 
 LightOcclusionRenderer::LightOcclusionRenderer()
 {
@@ -42,9 +41,11 @@ LightOcclusionRenderer::~LightOcclusionRenderer()
 #endif
 }
 
-void LightOcclusionRenderer::OnEntityAdded(Entity& e)
+void LightOcclusionRenderer::OnOccluderAdded(Entity& e)
 {
-    unsigned oBufferSize = OCCLUSION_MESH_SIZE / 2;
+    ASSERT(e.GetDrawFlags().occluder);
+
+    int oBufferSize = OCCLUSION_MESH_SIZE / 2;
     {
         m_OcclusionMeshGenShader->Bind();
         e.m_Texture->Bind(0);
@@ -54,7 +55,7 @@ void LightOcclusionRenderer::OnEntityAdded(Entity& e)
     }
 
     GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
-    OcclusionMesh& mesh = m_OcclusionMeshPool[e.m_EntityID];
+    OcclusionMesh& mesh = m_OcclusionMeshPool[&e];
 
     Vec4* ptr = (Vec4*)m_OcclusionMeshOutput->Map();
 
@@ -93,14 +94,15 @@ void LightOcclusionRenderer::OnEntityAdded(Entity& e)
     m_OcclusionMeshOutput->Unmap();
 }
 
-void LightOcclusionRenderer::OnEntityRemoved(Entity& e)
+void LightOcclusionRenderer::OnOccluderRemoved(Entity& e)
 {
-    m_OcclusionMeshPool[e.m_EntityID].clear();
+    ASSERT(e.GetDrawFlags().occluder);
+    m_OcclusionMeshPool[&e].clear();
 }
 
-void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
+void LightOcclusionRenderer::RenderOcclusion()
 {
-    LightOcclusion(scene);
+    LightOcclusion();
     TriangulateMeshes();
 }
 
@@ -118,15 +120,14 @@ unsigned LightOcclusionRenderer::SetupOcclusionMeshInput()
     return numIntersections;
 }
 
-void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
+void LightOcclusionRenderer::SetupLineSegments()
 {
     m_OcclusionLineCount = 0;
-    for (size_t id = 0; id < scene->Size(); id++)
+    for (auto it = m_OcclusionMeshPool.begin(); it != m_OcclusionMeshPool.end(); it++)
     {
-        static std::vector<Vec2> aabbVertices = { {-1.0,-1.0},{1.0,-1.0},{1.0,1.0},{-1.0,1.0} };
-        Entity& e = (*scene)[id];
-        Mat3 transform = e.GetTransformation();
-        OcclusionMesh& mesh = m_OcclusionMeshPool[e.m_EntityID];
+        const Entity* e = it->first;
+        const Mat3 transform = e->GetTransformation();
+        const OcclusionMesh& mesh = it->second;
         for (size_t i = 0; i < mesh.size(); i++)
         {
             Vec3 a = Vec3(mesh[i], 1.0) * transform;
@@ -136,13 +137,6 @@ void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
 
 #ifdef GPU_OCCLUSION
             m_OcclusionLines->UploadData(&lineSegment, m_OcclusionLineCount);
-
-            // TODO: Move this to setup ray query
-            const Vec2 e = Vec2(0.01f);
-            Vec2 p = Vec2(lineSegment.x, lineSegment.y);
-            m_RayQuery.push(p - e);
-            m_RayQuery.push(e);
-            m_RayQuery.push(p + e);
 #else
             m_Segments.push_back(lineSegment);
 #endif
@@ -161,6 +155,18 @@ void LightOcclusionRenderer::SetupRayQuery()
         m_RayQuery.push(dir);
     }
 
+    const Vec2 e = Vec2(0.01f);
+    for (auto it = m_OcclusionMeshPool.begin(); it != m_OcclusionMeshPool.end(); it++)
+    {
+        OcclusionMesh& mesh = it->second;
+        for (Vec2 p : mesh)
+        {
+            m_RayQuery.push(p - e);
+            m_RayQuery.push(e);
+            m_RayQuery.push(p + e);
+        }
+    }
+
     // TODO: Optimize this, upload all at same time
     size_t rayIndex = 0;
     m_RayCount = m_RayQuery.size();
@@ -173,11 +179,11 @@ void LightOcclusionRenderer::SetupRayQuery()
     }
 }
 
-void LightOcclusionRenderer::LightOcclusion(Scene* scene)
+void LightOcclusionRenderer::LightOcclusion()
 {
     PROFILE_SCOPE("Light occlusion");
 
-    SetupLineSegments(scene);
+    SetupLineSegments();
     SetupRayQuery();
     m_LightSource = GameEngine::Get()->GetInput()->GetMousePosition();
 
@@ -256,12 +262,12 @@ void LightOcclusionRenderer::SetupRayQuery()
     }
 }
 
-void LightOcclusionRenderer::LightOcclusion(Scene* scene)
+void LightOcclusionRenderer::LightOcclusion()
 {
     PROFILE_SCOPE("Light occlusion");
 
     m_Segments.clear();
-    SetupLineSegments(scene);
+    SetupLineSegments();
     SetupRayQuery();
     m_LightSource = GameEngine::Get()->GetInput()->GetMousePosition();
 

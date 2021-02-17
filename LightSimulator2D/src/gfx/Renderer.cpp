@@ -125,7 +125,7 @@ void Renderer::RenderFrame()
 
     GLFunctions::ClearScreen();
 
-    m_OcclusionRenderer->RenderOcclusion(m_Scene);
+    m_OcclusionRenderer->RenderOcclusion();
 
     {
         PROFILE_SCOPE("Opaque");
@@ -171,7 +171,8 @@ void Renderer::InitEntityForRender(Entity& e)
         e.m_Texture = tex;
         e.m_Transform.scale *= Vec2((float)tex->GetWidth() / SCREEN_WIDTH, (float)tex->GetHeight() / SCREEN_HEIGHT);
         e.m_ReadyForDraw = true;
-        m_OcclusionRenderer->OnEntityAdded(e);
+
+        if(e.GetDrawFlags().occluder) m_OcclusionRenderer->OnOccluderAdded(e);
     }
 }
 
@@ -180,7 +181,7 @@ void Renderer::RemoveEntityFromRenderPipeline(Entity& e)
     Texture* tex = e.m_Texture;
     if (tex) delete tex;
     e.m_ReadyForDraw = false;
-    m_OcclusionRenderer->OnEntityRemoved(e);
+    if (e.GetDrawFlags().occluder) m_OcclusionRenderer->OnOccluderRemoved(e);
 }
 
 void Renderer::SetScene(Scene* scene)
