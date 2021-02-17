@@ -22,10 +22,15 @@ LightOcclusionRenderer::LightOcclusionRenderer()
 
     m_OcclusionMesh = m_TriangledIntersecitonsBuffer->AsShaderInput();
 #endif
+
+    m_OcclusionMeshOutput = new ShaderStorageBuffer(sizeof(Vec4), OCCUSION_MESH_SIZE / 2);
 }
 
 LightOcclusionRenderer::~LightOcclusionRenderer()
 {
+    delete m_OcclusionMeshGenShader;
+    delete m_OcclusionMeshOutput;
+
 #ifdef GPU_OCCLUSION
     delete m_OcclusionMesh;
     delete m_RayQueryBuffer;
@@ -35,6 +40,41 @@ LightOcclusionRenderer::~LightOcclusionRenderer()
     delete m_IntersectionBuffer;
     delete m_TriangledIntersecitonsBuffer;
 #endif
+}
+
+void LightOcclusionRenderer::OnEntityAdded(Entity& e)
+{
+    {
+        m_OcclusionMeshGenShader->Bind();
+        e.m_Texture->Bind(0);
+        m_OcclusionMeshGenShader->SetUniform("u_Texture", 0);
+        m_OcclusionMeshOutput->Bind(1);
+        GLFunctions::Dispatch(OCCUSION_MESH_SIZE / 2);
+    }
+
+    GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
+    OcclusionMesh& mesh = m_OcclusionMeshPool[e.m_EntityID];
+
+    Vec4* ptr = (Vec4*)m_OcclusionMeshOutput->Map();
+    for (int i = 0; i < OCCUSION_MESH_SIZE / 2; i++)
+    {
+        Vec4 value = ptr[i];
+        Vec2 a = Vec2(value.x, value.y);
+        if (a.x >= -1.0 && a.x <= 1.0) mesh.push_back(a);
+    }
+
+    for (int i = (OCCUSION_MESH_SIZE/2)-1;i >=0 ; i--)
+    {
+        Vec4 value = ptr[i];
+        Vec2 a = Vec2(value.z, value.w);
+        if (a.x >= -1.0 && a.x <= 1.0) mesh.push_back(a);
+    }
+    m_OcclusionMeshOutput->Unmap();
+}
+
+void LightOcclusionRenderer::OnEntityRemoved(Entity& e)
+{
+    m_OcclusionMeshPool[e.m_EntityID].clear();
 }
 
 void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
@@ -63,14 +103,16 @@ void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
     for (size_t id = 0; id < scene->Size(); id++)
     {
         static std::vector<Vec2> aabbVertices = { {-1.0,-1.0},{1.0,-1.0},{1.0,1.0},{-1.0,1.0} };
-        Mat3 transform = (*scene)[id].GetTransformation();
-
-        for (size_t i = 0; i < aabbVertices.size(); i++)
+        Entity& e = (*scene)[id];
+        Mat3 transform = e.GetTransformation();
+        OcclusionMesh& mesh = m_OcclusionMeshPool[e.m_EntityID];
+        for (size_t i = 0; i < mesh.size(); i++)
         {
-            Vec3 a = Vec3(aabbVertices[i], 1.0) * transform;
-            size_t next_i = i + 1 == 4 ? 0 : i + 1;
-            Vec3 b = Vec3(aabbVertices[next_i], 1.0) * transform;
+            Vec3 a = Vec3(mesh[i], 1.0) * transform;
+            size_t next_i = i + 1 == mesh.size() ? 0 : i + 1;
+            Vec3 b = Vec3(mesh[next_i], 1.0) * transform;
             Vec4 lineSegment = Vec4(a.x, a.y, b.x, b.y);
+
 #ifdef GPU_OCCLUSION
             m_OcclusionLines->UploadData(&lineSegment, m_OcclusionLineCount);
 
@@ -81,7 +123,7 @@ void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
             m_RayQuery.push(e);
             m_RayQuery.push(p + e);
 #else
-            m_Segments[m_OcclusionLineCount] = lineSegment;
+            m_Segments.push_back(lineSegment);
 #endif
             m_OcclusionLineCount++;
         }
@@ -120,7 +162,7 @@ void LightOcclusionRenderer::LightOcclusion(Scene* scene)
 
     m_OcclusionShader->Bind();
     m_OcclusionShader->SetUniform("lightPosition", m_LightSource);
-    m_OcclusionShader->SetUniform("numSegments", (int)m_OcclusionLineCount);
+    m_OcclusionShader->SetUniform("numSegments", (int) m_OcclusionLineCount);
     m_IntersectionBuffer->Bind(1);
     m_OcclusionLines->Bind(2);
     m_RayQueryBuffer->Bind(3);
@@ -198,7 +240,6 @@ void LightOcclusionRenderer::LightOcclusion(Scene* scene)
     PROFILE_SCOPE("Light occlusion");
 
     m_Segments.clear();
-    m_Segments.resize(4 * scene->Size());
     SetupLineSegments(scene);
     SetupRayQuery();
     m_LightSource = GameEngine::Get()->GetInput()->GetMousePosition();

@@ -88,6 +88,9 @@ public:
 	void Bind(unsigned slot);
 	void Unbind();
 
+	void* Map();
+	void Unmap();
+
 private:
 	GLHandle m_Handle;
 

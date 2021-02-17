@@ -11,6 +11,6 @@ const float alphaTreshold = 0.01;
 void main()
 {
 	vec4 tex = texture(u_Texture, UV);
-	//if (tex.a < alphaTreshold) discard;
+	if (tex.a < alphaTreshold) discard;
 	FinalColor = tex;
 }

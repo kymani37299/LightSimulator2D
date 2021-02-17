@@ -160,6 +160,7 @@ void Renderer::CompileShaders()
     CreateCShader("light_occlusion", m_OcclusionRenderer->GetOcclusionShader());
     CreateCShader("triangulate_intersections", m_OcclusionRenderer->GetTriangulateShader());
 #endif
+    CreateCShader("occlusion_mesh_gen", m_OcclusionRenderer->GetOcclusuionMeshGenShader());
 }
 
 void Renderer::InitEntityForRender(Entity& e)
@@ -170,6 +171,7 @@ void Renderer::InitEntityForRender(Entity& e)
         e.m_Texture = tex;
         e.m_Transform.scale *= Vec2((float)tex->GetWidth() / SCREEN_WIDTH, (float)tex->GetHeight() / SCREEN_HEIGHT);
         e.m_ReadyForDraw = true;
+        m_OcclusionRenderer->OnEntityAdded(e);
     }
 }
 
@@ -178,6 +180,7 @@ void Renderer::RemoveEntityFromRenderPipeline(Entity& e)
     Texture* tex = e.m_Texture;
     if (tex) delete tex;
     e.m_ReadyForDraw = false;
+    m_OcclusionRenderer->OnEntityRemoved(e);
 }
 
 void Renderer::SetScene(Scene* scene)

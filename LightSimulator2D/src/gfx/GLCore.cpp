@@ -322,6 +322,19 @@ void ShaderStorageBuffer::Unbind()
 	}
 }
 
+void* ShaderStorageBuffer::Map()
+{
+	GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_Handle));
+	GL_CALL(void* ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY));
+	return ptr;
+}
+
+void ShaderStorageBuffer::Unmap()
+{
+	GL_CALL(glUnmapBuffer(GL_SHADER_STORAGE_BUFFER));
+	GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0));
+}
+
 // -------------------------------------------
 // ---------- Texture ------------------------
 // -------------------------------------------

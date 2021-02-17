@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <queue>
+#include <map>
 
 #include "common.h"
 #include "shaders/common.h"
@@ -11,12 +12,16 @@ class ShaderInput;
 class UniformBuffer;
 class ComputeShader;
 class Scene;
+class Entity;
 
 class LightOcclusionRenderer
 {
 public:
 	LightOcclusionRenderer();
 	~LightOcclusionRenderer();
+
+	void OnEntityAdded(Entity& e);
+	void OnEntityRemoved(Entity& e);
 
 	void RenderOcclusion(Scene* scene);
 	unsigned SetupOcclusionMeshInput();
@@ -25,6 +30,7 @@ public:
 	ComputeShader*& GetOcclusionShader() { return m_OcclusionShader; }
 	ComputeShader*& GetTriangulateShader() { return m_TriangulationShader; }
 #endif
+	ComputeShader*& GetOcclusuionMeshGenShader() { return m_OcclusionMeshGenShader; }
 
 private:
 	void SetupLineSegments(Scene* scene);
@@ -51,6 +57,12 @@ private:
 	};
 	using RayQuery = std::priority_queue<Vec2, std::vector<Vec2>, RayAngleComparator>;
 	RayQuery m_RayQuery;
+
+	using OcclusionMesh = std::vector<Vec2>;
+	std::map<unsigned, OcclusionMesh> m_OcclusionMeshPool;
+
+	ComputeShader* m_OcclusionMeshGenShader = nullptr;
+	ShaderStorageBuffer* m_OcclusionMeshOutput;
 
 #ifdef GPU_OCCLUSION
 	unsigned m_RayCount = 0;

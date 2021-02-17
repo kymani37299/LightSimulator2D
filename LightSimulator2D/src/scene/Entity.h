@@ -15,6 +15,7 @@ struct Transform
 class Entity
 {
 	friend class Renderer;
+	friend class LightOcclusionRenderer;
 
 public:
 	Entity(const std::string& texture);
