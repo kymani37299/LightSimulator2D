@@ -23,7 +23,7 @@ LightOcclusionRenderer::LightOcclusionRenderer()
     m_OcclusionMesh = m_TriangledIntersecitonsBuffer->AsShaderInput();
 #endif
 
-    m_OcclusionMeshOutput = new ShaderStorageBuffer(sizeof(Vec4), OCCUSION_MESH_SIZE / 2);
+    m_OcclusionMeshOutput = new ShaderStorageBuffer(sizeof(Vec4), OCCLUSION_MESH_SIZE / 2);
 }
 
 LightOcclusionRenderer::~LightOcclusionRenderer()
@@ -44,31 +44,52 @@ LightOcclusionRenderer::~LightOcclusionRenderer()
 
 void LightOcclusionRenderer::OnEntityAdded(Entity& e)
 {
+    unsigned oBufferSize = OCCLUSION_MESH_SIZE / 2;
     {
         m_OcclusionMeshGenShader->Bind();
         e.m_Texture->Bind(0);
         m_OcclusionMeshGenShader->SetUniform("u_Texture", 0);
         m_OcclusionMeshOutput->Bind(1);
-        GLFunctions::Dispatch(OCCUSION_MESH_SIZE / 2);
+        GLFunctions::Dispatch(oBufferSize);
     }
 
     GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
     OcclusionMesh& mesh = m_OcclusionMeshPool[e.m_EntityID];
 
     Vec4* ptr = (Vec4*)m_OcclusionMeshOutput->Map();
-    for (int i = 0; i < OCCUSION_MESH_SIZE / 2; i++)
+
+    // Left
+    for (int i = 0; i < oBufferSize / 2; i++)
     {
         Vec4 value = ptr[i];
         Vec2 a = Vec2(value.x, value.y);
         if (a.x >= -1.0 && a.x <= 1.0) mesh.push_back(a);
     }
 
-    for (int i = (OCCUSION_MESH_SIZE/2)-1;i >=0 ; i--)
+    // Top
+    for (int i = oBufferSize/2; i < oBufferSize; i++)
+    {
+        Vec4 value = ptr[i];
+        Vec2 a = Vec2(value.z, value.w);
+        if (a.y >= -1.0 && a.y <= 1.0) mesh.push_back(a);
+    }
+
+    // Right
+    for (int i = oBufferSize / 2 - 1; i > 0; i--)
     {
         Vec4 value = ptr[i];
         Vec2 a = Vec2(value.z, value.w);
         if (a.x >= -1.0 && a.x <= 1.0) mesh.push_back(a);
     }
+    
+    // Down
+    for (int i = oBufferSize - 1; i > oBufferSize / 2; i--)
+    {
+        Vec4 value = ptr[i];
+        Vec2 a = Vec2(value.x, value.y);
+        if (a.y >= -1.0 && a.y <= 1.0) mesh.push_back(a);
+    }
+
     m_OcclusionMeshOutput->Unmap();
 }
 
