@@ -4,16 +4,14 @@
 #include <map>
 
 class Window;
+
+class Entity;
+class Scene;
+
 class Shader;
 class ShaderInput;
-class Texture;
-class Scene;
-class Entity;
-class ComputeShader;
-class Image;
 class Framebuffer;
-class UniformBuffer;
-class ShaderStorageBuffer;
+
 class LightOcclusionRenderer;
 
 class Renderer
@@ -46,12 +44,10 @@ private:
 	Scene* m_Scene;
 
 	Framebuffer* m_AlbedoFB;
-	Framebuffer* m_OcclusionMaskFB;
 
 	ShaderInput* m_QuadInput;
 
 	Shader* m_OpaqueShader;
-	Shader* m_ShadowmapShader;
 	Shader* m_LightingShader;
 
 	LightOcclusionRenderer* m_OcclusionRenderer;

@@ -5,47 +5,57 @@
 #include <map>
 
 #include "common.h"
+
 #include "shaders/common.h"
+
+class Entity;
 
 class ShaderStorageBuffer;
 class ShaderInput;
 class UniformBuffer;
 class ComputeShader;
-class Entity;
+class Shader;
+
+class Framebuffer;
 
 class LightOcclusionRenderer
 {
 public:
 	LightOcclusionRenderer();
 	~LightOcclusionRenderer();
+	
+	void CompileShaders();
 
 	void OnOccluderAdded(Entity& e);
 	void OnOccluderRemoved(Entity& e);
 
 	void RenderOcclusion();
-	unsigned SetupOcclusionMeshInput();
-
-#ifdef GPU_OCCLUSION
-	ComputeShader*& GetOcclusionShader() { return m_OcclusionShader; }
-	ComputeShader*& GetTriangulateShader() { return m_TriangulationShader; }
-#endif
-	ComputeShader*& GetOcclusuionMeshGenShader() { return m_OcclusionMeshGenShader; }
+	void BindOcclusionMask(unsigned slot);
 
 private:
 	void SetupLineSegments();
 	void SetupRayQuery();
+	unsigned SetupOcclusionMeshInput();
 	
 	void LightOcclusion();
 	void TriangulateMeshes();
+	void RenderOcclusionMask();
 
 private:
 
 	static constexpr unsigned NUM_ANGLED_RAYS = 360;
 
-	unsigned m_OcclusionLineCount = 0;
 	Vec2 m_LightSource;
 
+	using OcclusionMesh = std::vector<Vec2>;
+	std::map<Entity*, OcclusionMesh> m_OcclusionMeshPool;
+
+	unsigned m_OcclusionLineCount = 0;
 	ShaderInput* m_OcclusionMesh = nullptr;
+
+	ShaderStorageBuffer* m_OcclusionMeshOutput;
+
+	Framebuffer* m_OcclusionMaskFB;
 
 	struct RayAngleComparator
 	{
@@ -57,11 +67,8 @@ private:
 	using RayQuery = std::priority_queue<Vec2, std::vector<Vec2>, RayAngleComparator>;
 	RayQuery m_RayQuery;
 
-	using OcclusionMesh = std::vector<Vec2>;
-	std::map<Entity*, OcclusionMesh> m_OcclusionMeshPool;
-
 	ComputeShader* m_OcclusionMeshGenShader = nullptr;
-	ShaderStorageBuffer* m_OcclusionMeshOutput;
+	Shader* m_ShadowmapShader = nullptr;
 
 #ifdef GPU_OCCLUSION
 	unsigned m_RayCount = 0;

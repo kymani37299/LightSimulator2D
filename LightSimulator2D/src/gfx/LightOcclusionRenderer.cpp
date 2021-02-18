@@ -8,27 +8,32 @@
 #include "gfx/GLCore.h"
 #include "scene/Entity.h"
 
+extern bool CreateShader(const std::string& name, Shader*& shader);
+extern bool CreateCShader(const std::string& name, ComputeShader*& shader);
+
 LightOcclusionRenderer::LightOcclusionRenderer()
 {
 #ifdef GPU_OCCLUSION
     m_OcclusionLines = new UniformBuffer(sizeof(Vec4), MAX_LINE_SEGMENTS);
+    m_RayQueryBuffer = new UniformBuffer(sizeof(Vec4), MAX_RAY_QUERIES);
 
     m_IntersectionBuffer = new ShaderStorageBuffer(sizeof(Vec4), MAX_RAY_QUERIES);
-
     m_TriangledIntersecitonsBuffer = new ShaderStorageBuffer(sizeof(Vec4), MAX_RAY_QUERIES * 3);
-
-    m_RayQueryBuffer = new UniformBuffer(sizeof(Vec4), MAX_RAY_QUERIES);
 
     m_OcclusionMesh = m_TriangledIntersecitonsBuffer->AsShaderInput();
 #endif
+
+    m_OcclusionMaskFB = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     m_OcclusionMeshOutput = new ShaderStorageBuffer(sizeof(Vec4), OCCLUSION_MESH_SIZE / 2);
 }
 
 LightOcclusionRenderer::~LightOcclusionRenderer()
 {
+    delete m_OcclusionMaskFB;
     delete m_OcclusionMeshGenShader;
     delete m_OcclusionMeshOutput;
+    delete m_ShadowmapShader;
 
 #ifdef GPU_OCCLUSION
     delete m_OcclusionMesh;
@@ -39,6 +44,16 @@ LightOcclusionRenderer::~LightOcclusionRenderer()
     delete m_IntersectionBuffer;
     delete m_TriangledIntersecitonsBuffer;
 #endif
+}
+
+void LightOcclusionRenderer::CompileShaders()
+{
+#ifdef GPU_OCCLUSION
+    CreateCShader("light_occlusion", m_OcclusionShader);
+    CreateCShader("triangulate_intersections", m_TriangulationShader);
+#endif
+    CreateCShader("occlusion_mesh_gen", m_OcclusionMeshGenShader);
+    CreateShader("shadowmap",m_ShadowmapShader);
 }
 
 void LightOcclusionRenderer::OnOccluderAdded(Entity& e)
@@ -101,8 +116,16 @@ void LightOcclusionRenderer::OnOccluderRemoved(Entity& e)
 
 void LightOcclusionRenderer::RenderOcclusion()
 {
+    PROFILE_SCOPE("Render occlusion");
+
     LightOcclusion();
     TriangulateMeshes();
+    RenderOcclusionMask();
+}
+
+void LightOcclusionRenderer::BindOcclusionMask(unsigned slot)
+{
+    m_OcclusionMaskFB->BindTexture(0,slot);
 }
 
 unsigned LightOcclusionRenderer::SetupOcclusionMeshInput()
@@ -142,6 +165,17 @@ void LightOcclusionRenderer::SetupLineSegments()
             m_OcclusionLineCount++;
         }
     }
+}
+
+void LightOcclusionRenderer::RenderOcclusionMask()
+{
+    PROFILE_SCOPE("Occlusion mask");
+    m_OcclusionMaskFB->ClearAndBind();
+    m_ShadowmapShader->Bind();
+    unsigned numVertices = SetupOcclusionMeshInput();
+    GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
+    GLFunctions::Draw(numVertices);
+    m_OcclusionMaskFB->Unbind();
 }
 
 #ifdef GPU_OCCLUSION
