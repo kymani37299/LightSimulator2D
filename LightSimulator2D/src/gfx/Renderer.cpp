@@ -173,7 +173,7 @@ void Renderer::RenderFrame()
             if (!e.GetDrawFlags().occluder) continue;
             m_OpaqueShader->SetUniform("u_Transform", e.GetTransformation());
             e.m_Texture->Bind(0);
-            GLFunctions::Draw(6);
+            //GLFunctions::Draw(6);
         }
     }
 }

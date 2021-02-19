@@ -36,6 +36,9 @@ private:
 	void SetupLineSegments();
 	void SetupRayQuery();
 	unsigned SetupOcclusionMeshInput();
+
+	using OcclusionMesh = std::vector<Vec2>;
+	void PopulateOcclusionMesh(OcclusionMesh& mesh);
 	
 	void LightOcclusion();
 	void TriangulateMeshes();
@@ -47,7 +50,6 @@ private:
 
 	Vec2 m_LightSource;
 
-	using OcclusionMesh = std::vector<Vec2>;
 	std::map<Entity*, OcclusionMesh> m_OcclusionMeshPool;
 
 	unsigned m_OcclusionLineCount = 0;

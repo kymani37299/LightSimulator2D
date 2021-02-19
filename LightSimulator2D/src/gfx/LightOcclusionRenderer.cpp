@@ -59,53 +59,16 @@ void LightOcclusionRenderer::CompileShaders()
 void LightOcclusionRenderer::OnOccluderAdded(Entity& e)
 {
     ASSERT(e.GetDrawFlags().occluder);
-
-    int oBufferSize = OCCLUSION_MESH_SIZE / 2;
     {
         m_OcclusionMeshGenShader->Bind();
         e.m_Texture->Bind(0);
         m_OcclusionMeshOutput->Bind(1);
-        GLFunctions::Dispatch(oBufferSize);
+        GLFunctions::Dispatch(OCCLUSION_MESH_SIZE / 2);
     }
 
     GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
     OcclusionMesh& mesh = m_OcclusionMeshPool[&e];
-
-    Vec4* ptr = (Vec4*)m_OcclusionMeshOutput->Map();
-
-    // Left
-    for (int i = 0; i < oBufferSize / 2; i++)
-    {
-        Vec4 value = ptr[i];
-        Vec2 a = Vec2(value.x, value.y);
-        if (a.x >= -1.0 && a.x <= 1.0) mesh.push_back(a);
-    }
-
-    // Top
-    for (int i = oBufferSize/2; i < oBufferSize; i++)
-    {
-        Vec4 value = ptr[i];
-        Vec2 a = Vec2(value.z, value.w);
-        if (a.y >= -1.0 && a.y <= 1.0) mesh.push_back(a);
-    }
-
-    // Right
-    for (int i = oBufferSize / 2 - 1; i > 0; i--)
-    {
-        Vec4 value = ptr[i];
-        Vec2 a = Vec2(value.z, value.w);
-        if (a.x >= -1.0 && a.x <= 1.0) mesh.push_back(a);
-    }
-    
-    // Down
-    for (int i = oBufferSize - 1; i > oBufferSize / 2; i--)
-    {
-        Vec4 value = ptr[i];
-        Vec2 a = Vec2(value.x, value.y);
-        if (a.y >= -1.0 && a.y <= 1.0) mesh.push_back(a);
-    }
-
-    m_OcclusionMeshOutput->Unmap();
+    PopulateOcclusionMesh(mesh);
 }
 
 void LightOcclusionRenderer::OnOccluderRemoved(Entity& e)
@@ -209,6 +172,113 @@ void LightOcclusionRenderer::SetupRayQuery()
         m_RayQuery.pop();
         m_RayQueryBuffer->UploadData(&ray, rayIndex);
         rayIndex++;
+    }
+}
+
+bool intersect(Vec2& intersection, Vec2 a1, Vec2 a2, Vec2 b1, Vec2 b2)
+{
+    float x = a1.x, y = a1.y, dx = a2.x, dy = a2.y;
+    float x1 = b1.x, y1 = b1.y, x2 = b2.x, y2 = b2.y;
+    float r, s, d;
+
+    if (dy / dx != (y2 - y1) / (x2 - x1))
+    {
+        d = ((dx * (y2 - y1)) - dy * (x2 - x1));
+        if (d != 0)
+        {
+            r = (((y - y1) * (x2 - x1)) - (x - x1) * (y2 - y1)) / d;
+            s = (((y - y1) * dx) - (x - x1) * dy) / d;
+            if (r >= 0 && r <= 1 && s >= 0 && s <= 1)
+            {
+                intersection.x = x + r * dx;
+                intersection.y = y + r * dy;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool findIntersecton(Vec2& intersection, std::vector<Vec2> a, std::vector<Vec2> b)
+{
+    // TODO: Optimize this
+    for (size_t i = 1; i < a.size(); i++)
+    {
+        for (size_t j = 1; j < b.size(); j++)
+        {
+            if (intersect(intersection, a[i-1], a[i], b[j-1], b[j])) return true;
+        }
+    }
+    return false;
+}
+
+void LightOcclusionRenderer::PopulateOcclusionMesh(OcclusionMesh& mesh)
+{
+    mesh.clear();
+    std::vector<Vec2> vertices[4]; // Left, top, right, down
+
+    int oBufferSize = OCCLUSION_MESH_SIZE / 2;
+    Vec4* ptr = (Vec4*)m_OcclusionMeshOutput->Map();
+    for (int i = 0; i < oBufferSize / 2; i++) // L
+    {
+        Vec4 value = ptr[i];
+        Vec2 a = Vec2(value.x, value.y);
+        if (a.x >= -1.0 && a.x <= 1.0) vertices[0].push_back(a);
+    }
+    for (int i = oBufferSize / 2; i < oBufferSize; i++) // T
+    {
+        Vec4 value = ptr[i];
+        Vec2 a = Vec2(value.z, value.w);
+        if (a.y >= -1.0 && a.y <= 1.0) vertices[1].push_back(a);
+    }
+    for (int i = oBufferSize / 2 - 1; i > 0; i--) // R
+    {
+        Vec4 value = ptr[i];
+        Vec2 a = Vec2(value.z, value.w);
+        if (a.x >= -1.0 && a.x <= 1.0) vertices[2].push_back(a);
+    }
+    for (int i = oBufferSize - 1; i > oBufferSize / 2; i--) // D
+    {
+        Vec4 value = ptr[i];
+        Vec2 a = Vec2(value.x, value.y);
+        if (a.y >= -1.0 && a.y <= 1.0) vertices[3].push_back(a);
+    }
+    m_OcclusionMeshOutput->Unmap();
+
+    // Intersectons
+    Vec2 intersection[4];
+    bool has_intersection[4]; // intersection success
+    has_intersection[0] = findIntersecton(intersection[0], vertices[0], vertices[1]);
+    has_intersection[1] = findIntersecton(intersection[1], vertices[1], vertices[2]);
+    has_intersection[2] = findIntersecton(intersection[2], vertices[2], vertices[3]);
+    has_intersection[3] = findIntersecton(intersection[3], vertices[3], vertices[0]);
+
+    for (Vec2 a : vertices[0]) // Left
+    {
+        if (has_intersection[3] && a.y < intersection[3].y) continue;
+        if (has_intersection[0] && a.y > intersection[0].y) break;
+        mesh.push_back(a);
+    }
+
+    for (Vec2 a : vertices[1]) // Top
+    {
+        if (has_intersection[0] && a.x < intersection[0].x) continue;
+        if (has_intersection[1] && a.x > intersection[1].x) break;
+        mesh.push_back(a);
+    }
+
+    for (Vec2 a : vertices[2]) // Right
+    {
+        if (has_intersection[1] && a.y > intersection[1].y) continue;
+        if (has_intersection[2] && a.y < intersection[2].y) break;
+        mesh.push_back(a);
+    }
+
+    for (Vec2 a : vertices[3]) // Down
+    {
+        if (has_intersection[2] && a.x > intersection[2].x) continue;
+        if (has_intersection[3] && a.x < intersection[3].x) break;
+        mesh.push_back(a);
     }
 }
 
