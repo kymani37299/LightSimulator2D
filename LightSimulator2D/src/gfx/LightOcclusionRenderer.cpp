@@ -132,6 +132,7 @@ void LightOcclusionRenderer::RenderOcclusionMask()
     unsigned numVertices = SetupOcclusionMeshInput();
     GLFunctions::AlphaBlending(true);
     m_ShadowmapShader->SetUniform("u_MaskStrength", m_MaskStrength);
+    m_ShadowmapShader->SetUniform("u_LightPos", m_LightSource);
     GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
     GLFunctions::Draw(numVertices);
     GLFunctions::AlphaBlending(false);
