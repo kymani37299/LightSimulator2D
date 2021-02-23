@@ -35,6 +35,7 @@ namespace GLFunctions
 	void Dispatch(unsigned groupX = 1, unsigned groupY = 1, unsigned groupZ = 1);
 	void ClearScreen(Vec3 clearColor = VEC3_ZERO);
 	void MemoryBarrier(BarrierType barrier);
+	void AlphaBlending(bool enabled);
 };
 
 // TODO: Delete copy constructors from all gl classes
@@ -200,6 +201,7 @@ public:
 	~Framebuffer();
 
 	void ClearAndBind();
+	void Clear();
 	void Bind();
 	void Unbind();
 

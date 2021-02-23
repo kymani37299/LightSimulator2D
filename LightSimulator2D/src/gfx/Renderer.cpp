@@ -162,7 +162,6 @@ void Renderer::RenderFrame()
         GLFunctions::DrawFC();
     }
 
-    // TODO: Optimize this in early steps
     {
         PROFILE_SCOPE("Draw occluders");
         m_OpaqueShader->Bind();
@@ -173,7 +172,7 @@ void Renderer::RenderFrame()
             if (!e.GetDrawFlags().occluder) continue;
             m_OpaqueShader->SetUniform("u_Transform", e.GetTransformation());
             e.m_Texture->Bind(0);
-            //GLFunctions::Draw(6);
+            GLFunctions::Draw(6);
         }
     }
 }

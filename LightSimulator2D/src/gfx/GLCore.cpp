@@ -197,6 +197,19 @@ void GLFunctions::MemoryBarrier(BarrierType barrier)
 	GL_CALL(glMemoryBarrier(glBarrier));
 }
 
+void GLFunctions::AlphaBlending(bool enabled)
+{
+	if (enabled)
+	{
+		GL_CALL(glEnable(GL_BLEND));
+		GL_CALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+	}
+	else
+	{
+		GL_CALL(glDisable(GL_BLEND));
+	}
+}
+
 // -------------------------------------------
 // ---------- ShaderInput --------------------
 // -------------------------------------------
@@ -540,6 +553,11 @@ template<> void Shader::SetUniform<int>(const std::string& key, int value) const
 	GL_CALL(glUniform1i(GetUniformLocation(m_Handle, key), value));
 }
 
+template<> void Shader::SetUniform<float>(const std::string& key, float value) const
+{
+	GL_CALL(glUniform1f(GetUniformLocation(m_Handle, key), value));
+}
+
 template<> void Shader::SetUniform<Mat3>(const std::string& key, Mat3 value) const
 {
 	GL_CALL(glUniformMatrix3fv(GetUniformLocation(m_Handle, key), 1, GL_FALSE, glm::value_ptr(value)));
@@ -669,6 +687,13 @@ void Framebuffer::ClearAndBind()
 {
 	Bind();
 	GLFunctions::ClearScreen();
+}
+
+void Framebuffer::Clear()
+{
+	Bind();
+	GLFunctions::ClearScreen();
+	Unbind();
 }
 
 void Framebuffer::Bind()

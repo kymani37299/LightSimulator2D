@@ -46,9 +46,12 @@ private:
 
 private:
 
-	static constexpr unsigned NUM_ANGLED_RAYS = 360;
+	static constexpr unsigned NUM_ANGLED_RAYS = 30;
+	static constexpr unsigned NUM_LIGHT_SAMPLES = 6;
 
 	Vec2 m_LightSource;
+	float m_LightRadius = 0.03f;
+	float m_MaskStrength = 1.0f / NUM_LIGHT_SAMPLES * 1.3f;
 
 	std::map<Entity*, OcclusionMesh> m_OcclusionMeshPool;
 

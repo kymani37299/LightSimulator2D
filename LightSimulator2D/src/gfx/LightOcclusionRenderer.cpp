@@ -81,9 +81,20 @@ void LightOcclusionRenderer::RenderOcclusion()
 {
     PROFILE_SCOPE("Render occlusion");
 
-    LightOcclusion();
-    TriangulateMeshes();
-    RenderOcclusionMask();
+    Vec2 mousePos = GameEngine::Get()->GetInput()->GetMousePosition();
+    float angleStep = 2.0f * 3.1415f / NUM_LIGHT_SAMPLES;
+
+    m_OcclusionMaskFB->Clear();
+
+    for (int i = 0; i < NUM_LIGHT_SAMPLES; i++)
+    {
+        float angle = i * angleStep;
+        m_LightSource = mousePos + Vec2(cos(angle), sin(angle)) * m_LightRadius;
+
+        LightOcclusion();
+        TriangulateMeshes();
+        RenderOcclusionMask();
+    }
 }
 
 void LightOcclusionRenderer::BindOcclusionMask(unsigned slot)
@@ -133,11 +144,14 @@ void LightOcclusionRenderer::SetupLineSegments()
 void LightOcclusionRenderer::RenderOcclusionMask()
 {
     PROFILE_SCOPE("Occlusion mask");
-    m_OcclusionMaskFB->ClearAndBind();
+    m_OcclusionMaskFB->Bind();
     m_ShadowmapShader->Bind();
     unsigned numVertices = SetupOcclusionMeshInput();
+    GLFunctions::AlphaBlending(true);
+    m_ShadowmapShader->SetUniform("u_MaskStrength", m_MaskStrength);
     GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
     GLFunctions::Draw(numVertices);
+    GLFunctions::AlphaBlending(false);
     m_OcclusionMaskFB->Unbind();
 }
 
@@ -288,7 +302,6 @@ void LightOcclusionRenderer::LightOcclusion()
 
     SetupLineSegments();
     SetupRayQuery();
-    m_LightSource = GameEngine::Get()->GetInput()->GetMousePosition();
 
     m_OcclusionShader->Bind();
     m_OcclusionShader->SetUniform("lightPosition", m_LightSource);
