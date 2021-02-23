@@ -287,8 +287,8 @@ void LightOcclusionRenderer::LightOcclusion()
     SetupRayQuery();
 
     m_OcclusionShader->Bind();
-    m_OcclusionShader->SetUniform("lightPosition", m_LightSource);
-    m_OcclusionShader->SetUniform("numSegments", (int) m_OcclusionLineCount);
+    m_OcclusionShader->SetUniform("u_LightPosition", m_LightSource);
+    m_OcclusionShader->SetUniform("u_NumSegments", (int) m_OcclusionLineCount);
     m_IntersectionBuffer->Bind(1);
     m_OcclusionLines->Bind(2);
     m_RayQueryBuffer->Bind(3);
@@ -301,8 +301,8 @@ void LightOcclusionRenderer::TriangulateMeshes()
 
     GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
     m_TriangulationShader->Bind();
-    m_TriangulationShader->SetUniform("lightPosition", m_LightSource);
-    m_TriangulationShader->SetUniform("numIntersections", (int) m_RayCount);
+    m_TriangulationShader->SetUniform("u_LightPosition", m_LightSource);
+    m_TriangulationShader->SetUniform("u_NumIntersections", (int) m_RayCount);
     m_IntersectionBuffer->Bind(1);
     m_TriangledIntersecitonsBuffer->Bind(2);
     GLFunctions::Dispatch(m_RayCount*3);

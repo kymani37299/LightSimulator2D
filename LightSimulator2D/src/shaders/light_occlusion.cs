@@ -6,22 +6,22 @@
 
 layout(local_size_x = 1) in;
 
-uniform vec2 lightPosition;
-uniform int numSegments;
+uniform vec2 u_LightPosition;
+uniform int u_NumSegments;
 
 layout(std140, binding = 1) buffer writeonly IntersectionsBuffer
 {
-    vec4 intersections[MAX_RAY_QUERIES];
+    vec4 w_Intersections[MAX_RAY_QUERIES];
 };
 
 layout(std140, binding = 2) uniform readonly LineSegmentsBuffer
 {
-    vec4 lineSegments[MAX_LINE_SEGMENTS];
+    vec4 r_LineSegments[MAX_LINE_SEGMENTS];
 };
 
-layout(std140, binding = 3) uniform writeonly RayQueryBuffer // Can this be "in" ?
+layout(std140, binding = 3) uniform readonly RayQueryBuffer // Can this be "in" ?
 {
-    vec4 rays[MAX_RAY_QUERIES];
+    vec4 r_Rays[MAX_RAY_QUERIES];
 };
 
 void calcIntersection(out vec3 intersection, vec4 ray, vec4 segment)
@@ -58,12 +58,12 @@ void intersectScreen(out vec3 intersection, vec4 ray)
 
 void main()
 {
-    vec4 ray = vec4(lightPosition, rays[gl_GlobalInvocationID.x].xy);
+    vec4 ray = vec4(u_LightPosition, r_Rays[gl_GlobalInvocationID.x].xy);
     vec3 closestIntersect = vec3(1000.0f);
 
-    for (int i = 0; i < numSegments; i++)
+    for (int i = 0; i < u_NumSegments; i++)
     {
-        calcIntersection(closestIntersect, ray, lineSegments[i]);
+        calcIntersection(closestIntersect, ray, r_LineSegments[i]);
     }
 
     if (closestIntersect.z == 1000.0f)
@@ -71,5 +71,5 @@ void main()
         intersectScreen(closestIntersect, ray);
     }
 
-    intersections[gl_GlobalInvocationID.x].xy = closestIntersect.xy;
+    w_Intersections[gl_GlobalInvocationID.x].xy = closestIntersect.xy;
 }
