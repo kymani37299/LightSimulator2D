@@ -75,7 +75,6 @@ private:
 	ComputeShader* m_OcclusionMeshGenShader = nullptr;
 	Shader* m_ShadowmapShader = nullptr;
 
-#ifdef GPU_OCCLUSION
 	unsigned m_RayCount = 0;
 
 	ShaderStorageBuffer* m_IntersectionBuffer;
@@ -85,9 +84,4 @@ private:
 
 	ComputeShader* m_OcclusionShader = nullptr;
 	ComputeShader* m_TriangulationShader = nullptr;
-#else
-	std::vector<Vec2> m_Intersections;
-	std::vector<Vec2> m_TriangledIntersections;
-	std::vector<Vec4> m_Segments;
-#endif
 };
