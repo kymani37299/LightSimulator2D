@@ -32,7 +32,7 @@ public:
 	void OnOccluderRemoved(Entity& e);
 
 	void RenderOcclusion();
-	void BindOcclusionMasks(unsigned s1 , unsigned s2);
+	void BindOcclusionMask(unsigned slot);
 
 private:
 	void SetupLineSegments();
@@ -45,8 +45,10 @@ private:
 	void LightOcclusion();
 	void TriangulateMeshes();
 	void RenderOcclusionMask();
+	void MergeMasks();
 
 	Framebuffer* GetCurrentOcclusionMask() { return m_OcclusionMaskPP ? m_OcclusionMaskFB1 : m_OcclusionMaskFB2; }
+	Framebuffer* GetOtherOcclusionMask() { return m_OcclusionMaskPP ? m_OcclusionMaskFB2 : m_OcclusionMaskFB1; }
 
 private:
 
@@ -70,6 +72,7 @@ private:
 	bool m_OcclusionMaskPP = false;
 	Framebuffer* m_OcclusionMaskFB1;
 	Framebuffer* m_OcclusionMaskFB2;
+	Framebuffer* m_OcclusionMaskFB;
 
 	struct RayAngleComparator
 	{
@@ -83,6 +86,7 @@ private:
 
 	ComputeShader* m_OcclusionMeshGenShader = nullptr;
 	Shader* m_ShadowmapShader = nullptr;
+	Shader* m_MergeShader = nullptr;
 
 	unsigned m_RayCount = 0;
 

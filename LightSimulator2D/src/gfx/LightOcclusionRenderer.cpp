@@ -23,16 +23,19 @@ LightOcclusionRenderer::LightOcclusionRenderer()
 
     m_OcclusionMaskFB1 = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
     m_OcclusionMaskFB2 = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
+    m_OcclusionMaskFB = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     m_OcclusionMeshOutput = new ShaderStorageBuffer(sizeof(Vec4), OCCLUSION_MESH_SIZE / 2);
 }
 
 LightOcclusionRenderer::~LightOcclusionRenderer()
 {
+    delete m_OcclusionMaskFB;
     delete m_OcclusionMaskFB1;
     delete m_OcclusionMaskFB2;
     delete m_OcclusionMeshGenShader;
     delete m_OcclusionMeshOutput;
+    delete m_MergeShader;
     delete m_ShadowmapShader;
     delete m_OcclusionMesh;
     delete m_RayQueryBuffer;
@@ -49,6 +52,7 @@ void LightOcclusionRenderer::CompileShaders()
     CreateCShader("triangulate_intersections", m_TriangulationShader);
     CreateCShader("occlusion_mesh_gen", m_OcclusionMeshGenShader);
     CreateShader("shadowmap",m_ShadowmapShader);
+    CreateShader("merge", m_MergeShader);
 }
 
 void LightOcclusionRenderer::OnOccluderAdded(Entity& e)
@@ -76,6 +80,8 @@ void LightOcclusionRenderer::RenderOcclusion()
 {
     PROFILE_SCOPE("Render occlusion");
 
+    MergeMasks();
+
     if (m_TimeSinceLastDraw < DRAW_INTERVAL) return;
 
     m_TimeSinceLastDraw = 0.0f;
@@ -98,10 +104,9 @@ void LightOcclusionRenderer::RenderOcclusion()
     m_OcclusionMaskPP = !m_OcclusionMaskPP;
 }
 
-void LightOcclusionRenderer::BindOcclusionMasks(unsigned s1, unsigned s2)
+void LightOcclusionRenderer::BindOcclusionMask(unsigned slot)
 {
-    m_OcclusionMaskFB1->BindTexture(0,s1);
-    m_OcclusionMaskFB2->BindTexture(0,s2);
+    m_OcclusionMaskFB->BindTexture(0,slot);
 }
 
 unsigned LightOcclusionRenderer::SetupOcclusionMeshInput()
@@ -315,4 +320,17 @@ void LightOcclusionRenderer::TriangulateMeshes()
     m_IntersectionBuffer->Bind(1);
     m_TriangledIntersecitonsBuffer->Bind(2);
     GLFunctions::Dispatch(m_RayCount*3);
+}
+
+void LightOcclusionRenderer::MergeMasks()
+{
+    PROFILE_SCOPE("Merge masks");
+
+    GLFunctions::MemoryBarrier(BarrierType::Framebuffer);
+    m_OcclusionMaskFB->ClearAndBind();
+    m_MergeShader->Bind();
+    m_MergeShader->SetUniform("u_Weight", m_TimeSinceLastDraw / DRAW_INTERVAL);
+    GetOtherOcclusionMask()->BindTexture(0,0);
+    GetCurrentOcclusionMask()->BindTexture(0,1);
+    GLFunctions::DrawFC();
 }
