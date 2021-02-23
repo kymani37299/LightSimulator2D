@@ -24,13 +24,15 @@ public:
 	LightOcclusionRenderer();
 	~LightOcclusionRenderer();
 	
+	void Update(float dt) { m_TimeSinceLastDraw += dt; }
+
 	void CompileShaders();
 
 	void OnOccluderAdded(Entity& e);
 	void OnOccluderRemoved(Entity& e);
 
 	void RenderOcclusion();
-	void BindOcclusionMask(unsigned slot);
+	void BindOcclusionMasks(unsigned s1 , unsigned s2);
 
 private:
 	void SetupLineSegments();
@@ -44,10 +46,13 @@ private:
 	void TriangulateMeshes();
 	void RenderOcclusionMask();
 
+	Framebuffer* GetCurrentOcclusionMask() { return m_OcclusionMaskPP ? m_OcclusionMaskFB1 : m_OcclusionMaskFB2; }
+
 private:
 
 	static constexpr unsigned NUM_ANGLED_RAYS = 30;
 	static constexpr unsigned NUM_LIGHT_SAMPLES = 6;
+	static constexpr float DRAW_INTERVAL = 50.0f;
 
 	Vec2 m_LightSource;
 	float m_LightRadius = 0.03f;
@@ -60,7 +65,11 @@ private:
 
 	ShaderStorageBuffer* m_OcclusionMeshOutput;
 
-	Framebuffer* m_OcclusionMaskFB;
+	float m_TimeSinceLastDraw = 0.0;
+
+	bool m_OcclusionMaskPP = false;
+	Framebuffer* m_OcclusionMaskFB1;
+	Framebuffer* m_OcclusionMaskFB2;
 
 	struct RayAngleComparator
 	{

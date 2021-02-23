@@ -108,6 +108,8 @@ void Renderer::Update(float dt)
         timeUntilLastRender = 0;
     }
 
+    m_OcclusionRenderer->Update(dt);
+
     // Reload shaders if needed
     if (m_ShouldReloadShaders)
     {
@@ -158,7 +160,7 @@ void Renderer::RenderFrame()
 
         m_LightingShader->Bind();
         m_AlbedoFB->BindTexture(0, 0);
-        m_OcclusionRenderer->BindOcclusionMask(1);
+        m_OcclusionRenderer->BindOcclusionMasks(1,2);
         GLFunctions::DrawFC();
     }
 

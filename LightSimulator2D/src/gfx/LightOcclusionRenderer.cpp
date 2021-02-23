@@ -21,14 +21,16 @@ LightOcclusionRenderer::LightOcclusionRenderer()
 
     m_OcclusionMesh = m_TriangledIntersecitonsBuffer->AsShaderInput();
 
-    m_OcclusionMaskFB = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
+    m_OcclusionMaskFB1 = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
+    m_OcclusionMaskFB2 = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     m_OcclusionMeshOutput = new ShaderStorageBuffer(sizeof(Vec4), OCCLUSION_MESH_SIZE / 2);
 }
 
 LightOcclusionRenderer::~LightOcclusionRenderer()
 {
-    delete m_OcclusionMaskFB;
+    delete m_OcclusionMaskFB1;
+    delete m_OcclusionMaskFB2;
     delete m_OcclusionMeshGenShader;
     delete m_OcclusionMeshOutput;
     delete m_ShadowmapShader;
@@ -74,10 +76,14 @@ void LightOcclusionRenderer::RenderOcclusion()
 {
     PROFILE_SCOPE("Render occlusion");
 
+    if (m_TimeSinceLastDraw < DRAW_INTERVAL) return;
+
+    m_TimeSinceLastDraw = 0.0f;
+
     Vec2 mousePos = GameEngine::Get()->GetInput()->GetMousePosition();
     float angleStep = 2.0f * 3.1415f / NUM_LIGHT_SAMPLES;
 
-    m_OcclusionMaskFB->Clear();
+    GetCurrentOcclusionMask()->Clear();
 
     for (int i = 0; i < NUM_LIGHT_SAMPLES; i++)
     {
@@ -88,11 +94,14 @@ void LightOcclusionRenderer::RenderOcclusion()
         TriangulateMeshes();
         RenderOcclusionMask();
     }
+
+    m_OcclusionMaskPP = !m_OcclusionMaskPP;
 }
 
-void LightOcclusionRenderer::BindOcclusionMask(unsigned slot)
+void LightOcclusionRenderer::BindOcclusionMasks(unsigned s1, unsigned s2)
 {
-    m_OcclusionMaskFB->BindTexture(0,slot);
+    m_OcclusionMaskFB1->BindTexture(0,s1);
+    m_OcclusionMaskFB2->BindTexture(0,s2);
 }
 
 unsigned LightOcclusionRenderer::SetupOcclusionMeshInput()
@@ -127,7 +136,7 @@ void LightOcclusionRenderer::SetupLineSegments()
 void LightOcclusionRenderer::RenderOcclusionMask()
 {
     PROFILE_SCOPE("Occlusion mask");
-    m_OcclusionMaskFB->Bind();
+    GetCurrentOcclusionMask()->Bind();
     m_ShadowmapShader->Bind();
     unsigned numVertices = SetupOcclusionMeshInput();
     GLFunctions::AlphaBlending(true);
@@ -136,7 +145,7 @@ void LightOcclusionRenderer::RenderOcclusionMask()
     GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
     GLFunctions::Draw(numVertices);
     GLFunctions::AlphaBlending(false);
-    m_OcclusionMaskFB->Unbind();
+    GetCurrentOcclusionMask()->Unbind();
 }
 
 void LightOcclusionRenderer::SetupRayQuery()
