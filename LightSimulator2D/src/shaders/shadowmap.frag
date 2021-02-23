@@ -7,10 +7,12 @@ uniform vec2 u_LightPos;
 
 layout(location = 0) out vec4 FinalColor;
 
-const float lightRadius = 1.5;
+const float lightRadius = 1.2;
 
 void main()
 {
-	float d = lightRadius - length(u_Position - u_LightPos);
+	float d = length(u_Position - u_LightPos);
+	d *= 10.0f;
+	d = lightRadius / (1.0 + 0.1 * d + 0.01 * d * d);
 	FinalColor = vec4(1.0, 1.0, 0.0, u_MaskStrength*d);
 }
