@@ -151,7 +151,7 @@ void Renderer::RenderFrame()
         m_AlbedoFB->Unbind();
     }
 
-    m_LightingRenderer->RenderLights(m_Scene);
+    m_LightingRenderer->RenderLights();
 }
 
 void Renderer::CompileShaders()
@@ -163,23 +163,26 @@ void Renderer::CompileShaders()
 
 void Renderer::InitEntityForRender(Entity& e)
 {
-    if (!e.m_ReadyForDraw)
-    {
-        Texture* tex = new Texture(e.m_TexturePath);
-        e.m_Texture = tex;
-        e.m_Transform.scale *= Vec2((float)tex->GetWidth() / SCREEN_WIDTH, (float)tex->GetHeight() / SCREEN_HEIGHT);
-        e.m_ReadyForDraw = true;
+    if (e.m_ReadyForDraw) return;
 
-        if(e.GetDrawFlags().occluder) m_OcclusionRenderer->OnOccluderAdded(e);
-    }
+    Texture* tex = new Texture(e.m_TexturePath);
+    e.m_Texture = tex;
+    e.m_Transform.scale *= Vec2((float)tex->GetWidth() / SCREEN_WIDTH, (float)tex->GetHeight() / SCREEN_HEIGHT);
+    e.m_ReadyForDraw = true;
+
+    if(e.GetDrawFlags().occluder) m_OcclusionRenderer->OnOccluderAdded(e);
+    m_LightingRenderer->OnEntityAdded(e);
 }
 
 void Renderer::RemoveEntityFromRenderPipeline(Entity& e)
 {
+    if (!e.m_ReadyForDraw) return;
+
     Texture* tex = e.m_Texture;
     if (tex) delete tex;
     e.m_ReadyForDraw = false;
     if (e.GetDrawFlags().occluder) m_OcclusionRenderer->OnOccluderRemoved(e);
+    m_LightingRenderer->OnEntityRemoved(e);
 }
 
 void Renderer::SetScene(Scene* scene)

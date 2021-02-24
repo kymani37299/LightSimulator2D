@@ -1,8 +1,11 @@
 #pragma once
 
+#include <vector>
+
 class Framebuffer;
 class Shader;
-class Scene;
+
+class Entity;
 
 class LightingRenderer
 {
@@ -12,11 +15,14 @@ public:
 
 	void CompileShaders();
 
-	void RenderLights(Scene* scene);
+	void RenderLights();
+
+	void OnEntityAdded(Entity& entity);
+	void OnEntityRemoved(Entity& entity);
 
 private:
 	void RenderLighting();
-	void RenderOccluders(Scene* scene);
+	void RenderOccluders();
 
 private:
 	Framebuffer* m_AlbedoFB;
@@ -24,4 +30,7 @@ private:
 
 	Shader* m_LightingShader = nullptr;
 	Shader* m_AlbedoShader = nullptr;
+
+	std::vector<Entity> m_Occluders;
+	std::vector<Entity> m_Emitters;
 };

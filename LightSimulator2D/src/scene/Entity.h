@@ -15,6 +15,7 @@ struct Transform
 struct DrawFlags
 {
 	bool occluder : 1;
+	bool emitter : 1;
 };
 
 class Entity
