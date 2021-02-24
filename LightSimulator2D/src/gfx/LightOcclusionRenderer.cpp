@@ -48,11 +48,13 @@ LightOcclusionRenderer::~LightOcclusionRenderer()
 
 void LightOcclusionRenderer::CompileShaders()
 {
-    CreateCShader("light_occlusion", m_OcclusionShader);
-    CreateCShader("triangulate_intersections", m_TriangulationShader);
-    CreateCShader("occlusion_mesh_gen", m_OcclusionMeshGenShader);
-    CreateShader("shadowmap",m_ShadowmapShader);
-    CreateShader("merge", m_MergeShader);
+    static std::string shader_path = "occlusion/";
+
+    CreateCShader(shader_path + "light_occlusion", m_OcclusionShader);
+    CreateCShader(shader_path + "triangulate_intersections", m_TriangulationShader);
+    CreateCShader(shader_path + "occlusion_mesh_gen", m_OcclusionMeshGenShader);
+    CreateShader (shader_path + "shadowmap",m_ShadowmapShader);
+    CreateShader (shader_path + "merge", m_MergeShader);
 }
 
 void LightOcclusionRenderer::OnOccluderAdded(Entity& e)

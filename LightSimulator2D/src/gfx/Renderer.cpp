@@ -77,7 +77,7 @@ Renderer::~Renderer()
     delete m_OcclusionRenderer;
     delete m_LightingRenderer;
 
-    delete m_OpaqueShader;
+    delete m_AlbedoShader;
 
     if (m_Scene) FreeScene();
 
@@ -139,12 +139,12 @@ void Renderer::RenderFrame()
     {
         PROFILE_SCOPE("Albedo");
         m_AlbedoFB->ClearAndBind();
-        m_OpaqueShader->Bind();
+        m_AlbedoShader->Bind();
         GLConstants::QuadInput->Bind();
         for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
         {
             Entity& e = (*it);
-            m_OpaqueShader->SetUniform("u_Transform", e.GetTransformation());
+            m_AlbedoShader->SetUniform("u_Transform", e.GetTransformation());
             e.m_Texture->Bind(0);
             GLFunctions::Draw(6);
         }
@@ -156,7 +156,7 @@ void Renderer::RenderFrame()
 
 void Renderer::CompileShaders()
 {
-    CreateShader("main", m_OpaqueShader);
+    CreateShader("albedo", m_AlbedoShader);
     m_OcclusionRenderer->CompileShaders();
     m_LightingRenderer->CompileShaders();
 }

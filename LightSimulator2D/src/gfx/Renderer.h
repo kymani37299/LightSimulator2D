@@ -45,7 +45,7 @@ private:
 
 	Framebuffer* m_AlbedoFB;
 
-	Shader* m_OpaqueShader;
+	Shader* m_AlbedoShader;
 
 	LightingRenderer* m_LightingRenderer;
 	LightOcclusionRenderer* m_OcclusionRenderer;

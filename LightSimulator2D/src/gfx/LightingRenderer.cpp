@@ -17,14 +17,16 @@ LightingRenderer::LightingRenderer(Framebuffer* albedoFB, Framebuffer* occlusion
 
 LightingRenderer::~LightingRenderer()
 {
-    delete m_OpaqueShader;
+    delete m_AlbedoShader;
 	delete m_LightingShader;
 }
 
 void LightingRenderer::CompileShaders()
 {
-	CreateShader("lighting", m_LightingShader);
-	CreateShader("main", m_OpaqueShader);
+    static std::string shader_path = "lighting/";
+
+	CreateShader(shader_path + "lighting", m_LightingShader);
+	CreateShader("albedo", m_AlbedoShader);
 }
 
 void LightingRenderer::RenderLights(Scene* scene)
@@ -48,13 +50,13 @@ void LightingRenderer::RenderLighting()
 void LightingRenderer::RenderOccluders(Scene* scene)
 {
     PROFILE_SCOPE("Draw occluders");
-    m_OpaqueShader->Bind();
+    m_AlbedoShader->Bind();
     GLConstants::QuadInput->Bind();
     for (auto it = scene->Begin(); it != scene->End(); it++)
     {
         Entity& e = (*it);
         if (!e.GetDrawFlags().occluder) continue;
-        m_OpaqueShader->SetUniform("u_Transform", e.GetTransformation());
+        m_AlbedoShader->SetUniform("u_Transform", e.GetTransformation());
         e.m_Texture->Bind(0);
         GLFunctions::Draw(6);
     }

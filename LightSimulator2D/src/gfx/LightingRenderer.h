@@ -23,5 +23,5 @@ private:
 	Framebuffer* m_OcclusionFB;
 
 	Shader* m_LightingShader = nullptr;
-	Shader* m_OpaqueShader = nullptr;
+	Shader* m_AlbedoShader = nullptr;
 };
