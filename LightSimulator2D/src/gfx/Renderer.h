@@ -9,9 +9,9 @@ class Entity;
 class Scene;
 
 class Shader;
-class ShaderInput;
 class Framebuffer;
 
+class LightingRenderer;
 class LightOcclusionRenderer;
 
 class Renderer
@@ -45,10 +45,8 @@ private:
 
 	Framebuffer* m_AlbedoFB;
 
-	ShaderInput* m_QuadInput;
-
 	Shader* m_OpaqueShader;
-	Shader* m_LightingShader;
 
+	LightingRenderer* m_LightingRenderer;
 	LightOcclusionRenderer* m_OcclusionRenderer;
 };

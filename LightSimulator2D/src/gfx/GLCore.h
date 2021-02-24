@@ -217,3 +217,8 @@ private:
 	unsigned m_Width;
 	unsigned m_Height;
 };
+
+namespace GLConstants
+{
+	extern ShaderInput* QuadInput;
+};

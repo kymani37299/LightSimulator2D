@@ -118,7 +118,7 @@ static uint32_t CompileShader(uint32_t type, const char* source)
 // ---------- GLFunctions --------------------
 // -------------------------------------------
 
-static ShaderInput* s_FCShaderInput;
+ShaderInput* GLConstants::QuadInput = nullptr;
 
 void GLFunctions::InitGL(void* procAddressGet)
 {
@@ -134,13 +134,13 @@ void GLFunctions::InitGL(void* procAddressGet)
 		{Vec2(1.0,-1.0)    ,Vec2(1.0,0.0)},
 		{Vec2(1.0,1.0)     ,Vec2(1.0,1.0)}
 	};
-
-	s_FCShaderInput = new ShaderInput(fc);
+	// Init constants
+	GLConstants::QuadInput = new ShaderInput(fc);
 }
 
 void GLFunctions::DeinitGL()
 {
-	delete s_FCShaderInput;
+	delete GLConstants::QuadInput;
 }
 
 void GLFunctions::Draw(unsigned numVertices)
@@ -150,7 +150,7 @@ void GLFunctions::Draw(unsigned numVertices)
 
 void GLFunctions::DrawFC()
 {
-	s_FCShaderInput->Bind();
+	GLConstants::QuadInput->Bind();
 	GL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
 }
 

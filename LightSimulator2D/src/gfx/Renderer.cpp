@@ -6,6 +6,7 @@
 
 #include "gfx/GLCore.h"
 #include "gfx/LightOcclusionRenderer.h"
+#include "gfx/LightingRenderer.h"
 
 #include "scene/Scene.h"
 #include "scene/Entity.h"
@@ -74,11 +75,9 @@ Renderer::~Renderer()
     delete m_AlbedoFB;
 
     delete m_OcclusionRenderer;
+    delete m_LightingRenderer;
 
-    delete m_LightingShader;
     delete m_OpaqueShader;
-
-    delete m_QuadInput;
 
     if (m_Scene) FreeScene();
 
@@ -88,13 +87,12 @@ Renderer::~Renderer()
 void Renderer::Init(Window& window)
 {
     GLFunctions::InitGL(window.GetProcessAddressHandle());
-
-    m_OcclusionRenderer = new LightOcclusionRenderer();
     m_AlbedoFB = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    CompileShaders();
+    m_OcclusionRenderer = new LightOcclusionRenderer();
+    m_LightingRenderer = new LightingRenderer(m_AlbedoFB, m_OcclusionRenderer->GetOcclusionMaskFB());
 
-    m_QuadInput = new ShaderInput(quadVertices);
+    CompileShaders();
 }
 
 void Renderer::Update(float dt)
@@ -142,7 +140,7 @@ void Renderer::RenderFrame()
         PROFILE_SCOPE("Albedo");
         m_AlbedoFB->ClearAndBind();
         m_OpaqueShader->Bind();
-        m_QuadInput->Bind();
+        GLConstants::QuadInput->Bind();
         for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
         {
             Entity& e = (*it);
@@ -153,37 +151,14 @@ void Renderer::RenderFrame()
         m_AlbedoFB->Unbind();
     }
 
-    {
-        PROFILE_SCOPE("Lighting");
-
-        GLFunctions::MemoryBarrier(BarrierType::Framebuffer);
-
-        m_LightingShader->Bind();
-        m_AlbedoFB->BindTexture(0, 0);
-        m_OcclusionRenderer->BindOcclusionMask(1);
-        GLFunctions::DrawFC();
-    }
-
-    {
-        PROFILE_SCOPE("Draw occluders");
-        m_OpaqueShader->Bind();
-        m_QuadInput->Bind();
-        for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
-        {
-            Entity& e = (*it);
-            if (!e.GetDrawFlags().occluder) continue;
-            m_OpaqueShader->SetUniform("u_Transform", e.GetTransformation());
-            e.m_Texture->Bind(0);
-            GLFunctions::Draw(6);
-        }
-    }
+    m_LightingRenderer->RenderLights(m_Scene);
 }
 
 void Renderer::CompileShaders()
 {
     CreateShader("main", m_OpaqueShader);
-    CreateShader("lighting", m_LightingShader);
     m_OcclusionRenderer->CompileShaders();
+    m_LightingRenderer->CompileShaders();
 }
 
 void Renderer::InitEntityForRender(Entity& e)

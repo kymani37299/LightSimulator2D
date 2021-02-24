@@ -21,6 +21,7 @@ class Entity
 {
 	friend class Renderer;
 	friend class LightOcclusionRenderer;
+	friend class LightingRenderer;
 
 public:
 	Entity(const std::string& texture);

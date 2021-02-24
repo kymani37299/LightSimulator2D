@@ -104,11 +104,6 @@ void LightOcclusionRenderer::RenderOcclusion()
     m_OcclusionMaskPP = !m_OcclusionMaskPP;
 }
 
-void LightOcclusionRenderer::BindOcclusionMask(unsigned slot)
-{
-    m_OcclusionMaskFB->BindTexture(0,slot);
-}
-
 unsigned LightOcclusionRenderer::SetupOcclusionMeshInput()
 {
     unsigned numIntersections = m_RayCount*3;

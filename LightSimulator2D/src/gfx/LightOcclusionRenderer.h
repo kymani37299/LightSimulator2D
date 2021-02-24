@@ -32,7 +32,8 @@ public:
 	void OnOccluderRemoved(Entity& e);
 
 	void RenderOcclusion();
-	void BindOcclusionMask(unsigned slot);
+
+	Framebuffer* GetOcclusionMaskFB() { return m_OcclusionMaskFB; }
 
 private:
 	void SetupLineSegments();
