@@ -5,7 +5,7 @@
 class Framebuffer;
 class Shader;
 
-class Entity;
+class Scene;
 
 class LightingRenderer
 {
@@ -15,14 +15,11 @@ public:
 
 	void CompileShaders();
 
-	void RenderLights();
-
-	void OnEntityAdded(Entity& entity);
-	void OnEntityRemoved(Entity& entity);
+	void RenderLights(Scene* scene);
 
 private:
 	void RenderLighting();
-	void RenderOccluders();
+	void RenderOccluders(Scene* scene);
 
 private:
 	Framebuffer* m_AlbedoFB;
@@ -30,7 +27,4 @@ private:
 
 	Shader* m_LightingShader = nullptr;
 	Shader* m_AlbedoShader = nullptr;
-
-	std::vector<Entity> m_Occluders;
-	std::vector<Entity> m_Emitters;
 };

@@ -37,14 +37,14 @@ GameEngine::~GameEngine()
 void GameEngine::Init()
 {
     // TMP
-    Entity bg{ "res/bg.png" };
-    bg.m_Transform.scale *= 1000.0f;
-    Entity e1{ "res/animals/elephant.png" };
-    e1.GetDrawFlags().occluder = true;
-    Entity e2{ "res/animals/hippo.png" };
-    e2.GetDrawFlags().occluder = true;
-    e2.m_Transform.scale *= 0.2;
-    e2.m_Transform.position = Vec2(-0.3, 0.5);
+    Entity* bg = new Entity{ "res/bg.png" };
+    bg->m_Transform.scale *= 1000.0f;
+    Entity* e1 = new Entity{ "res/animals/elephant.png" };
+    e1->GetDrawFlags().occluder = true;
+    Entity* e2 = new Entity{ "res/animals/hippo.png" };
+    e2->GetDrawFlags().occluder = true;
+    e2->m_Transform.scale *= 0.2;
+    e2->m_Transform.position = Vec2(-0.3, 0.5);
     m_Scene.AddEntity(bg);
     m_Scene.AddEntity(e1);
     m_Scene.AddEntity(e2);
@@ -55,7 +55,7 @@ void GameEngine::Init()
     m_UI.Init(&m_Window);
     m_Scene.Init(&m_Renderer);
 
-    m_Controller = new PlayerController(&m_Scene[1]);
+    m_Controller = new PlayerController(e1);
     m_Controller->Init(&m_Input);
 }
 

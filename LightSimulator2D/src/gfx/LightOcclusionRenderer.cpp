@@ -57,25 +57,25 @@ void LightOcclusionRenderer::CompileShaders()
     CreateShader (shader_path + "merge", m_MergeShader);
 }
 
-void LightOcclusionRenderer::OnOccluderAdded(Entity& e)
+void LightOcclusionRenderer::OnOccluderAdded(Entity* e)
 {
-    ASSERT(e.GetDrawFlags().occluder);
+    ASSERT(e->GetDrawFlags().occluder);
     {
         m_OcclusionMeshGenShader->Bind();
-        e.GetTexture()->Bind(0);
+        e->GetTexture()->Bind(0);
         m_OcclusionMeshOutput->Bind(1);
         GLFunctions::Dispatch(OCCLUSION_MESH_SIZE / 2);
     }
 
     GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
-    OcclusionMesh& mesh = m_OcclusionMeshPool[&e];
+    OcclusionMesh& mesh = m_OcclusionMeshPool[e];
     PopulateOcclusionMesh(mesh);
 }
 
-void LightOcclusionRenderer::OnOccluderRemoved(Entity& e)
+void LightOcclusionRenderer::OnOccluderRemoved(Entity* e)
 {
-    ASSERT(e.GetDrawFlags().occluder);
-    m_OcclusionMeshPool[&e].clear();
+    ASSERT(e->GetDrawFlags().occluder);
+    m_OcclusionMeshPool[e].clear();
 }
 
 void LightOcclusionRenderer::RenderOcclusion()

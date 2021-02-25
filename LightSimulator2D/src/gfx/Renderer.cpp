@@ -143,15 +143,15 @@ void Renderer::RenderFrame()
         GLConstants::QuadInput->Bind();
         for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
         {
-            Entity& e = (*it);
-            m_AlbedoShader->SetUniform("u_Transform", e.GetTransformation());
-            e.GetTexture()->Bind(0);
+            Entity* e = (*it);
+            m_AlbedoShader->SetUniform("u_Transform", e->GetTransformation());
+            e->GetTexture()->Bind(0);
             GLFunctions::Draw(6);
         }
         m_AlbedoFB->Unbind();
     }
 
-    m_LightingRenderer->RenderLights();
+    m_LightingRenderer->RenderLights(m_Scene);
 }
 
 void Renderer::CompileShaders()
@@ -161,28 +161,26 @@ void Renderer::CompileShaders()
     m_LightingRenderer->CompileShaders();
 }
 
-void Renderer::InitEntityForRender(Entity& e)
+void Renderer::InitEntityForRender(Entity* e)
 {
-    if (e.m_ReadyForDraw) return;
+    if (e->m_ReadyForDraw) return;
 
-    Texture* tex = new Texture(e.m_TexturePath);
-    e.m_Texture = tex;
-    e.m_Transform.scale *= Vec2((float)tex->GetWidth() / SCREEN_WIDTH, (float)tex->GetHeight() / SCREEN_HEIGHT);
-    e.m_ReadyForDraw = true;
+    Texture* tex = new Texture(e->m_TexturePath);
+    e->m_Texture = tex;
+    e->m_Transform.scale *= Vec2((float)tex->GetWidth() / SCREEN_WIDTH, (float)tex->GetHeight() / SCREEN_HEIGHT);
+    e->m_ReadyForDraw = true;
 
-    if(e.GetDrawFlags().occluder) m_OcclusionRenderer->OnOccluderAdded(e);
-    m_LightingRenderer->OnEntityAdded(e);
+    if(e->GetDrawFlags().occluder) m_OcclusionRenderer->OnOccluderAdded(e);
 }
 
-void Renderer::RemoveEntityFromRenderPipeline(Entity& e)
+void Renderer::RemoveEntityFromRenderPipeline(Entity* e)
 {
-    if (!e.m_ReadyForDraw) return;
+    if (!e->m_ReadyForDraw) return;
 
-    Texture* tex = e.m_Texture;
+    Texture* tex = e->m_Texture;
     if (tex) delete tex;
-    e.m_ReadyForDraw = false;
-    if (e.GetDrawFlags().occluder) m_OcclusionRenderer->OnOccluderRemoved(e);
-    m_LightingRenderer->OnEntityRemoved(e);
+    e->m_ReadyForDraw = false;
+    if (e->GetDrawFlags().occluder) m_OcclusionRenderer->OnOccluderRemoved(e);
 }
 
 void Renderer::SetScene(Scene* scene)
@@ -206,12 +204,12 @@ void Renderer::FreeScene()
     }
 }
 
-void Renderer::OnEntityAdded(Entity& e)
+void Renderer::OnEntityAdded(Entity* e)
 {
     InitEntityForRender(e);
 }
 
-void Renderer::OnEntityRemoved(Entity& e)
+void Renderer::OnEntityRemoved(Entity* e)
 {
     RemoveEntityFromRenderPipeline(e);
 }

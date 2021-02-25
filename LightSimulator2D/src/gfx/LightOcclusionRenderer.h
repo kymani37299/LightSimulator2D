@@ -28,8 +28,8 @@ public:
 
 	void CompileShaders();
 
-	void OnOccluderAdded(Entity& e);
-	void OnOccluderRemoved(Entity& e);
+	void OnOccluderAdded(Entity* e);
+	void OnOccluderRemoved(Entity* e);
 
 	void RenderOcclusion();
 

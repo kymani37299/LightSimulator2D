@@ -26,15 +26,15 @@ public:
 	void SetScene(Scene* scene);
 	void FreeScene();
 
-	void OnEntityAdded(Entity& e);
-	void OnEntityRemoved(Entity& e);
+	void OnEntityAdded(Entity* e);
+	void OnEntityRemoved(Entity* e);
 
 	void ReloadShaders() { m_ShouldReloadShaders = true; }
 
 private:
 	void CompileShaders();
-	void InitEntityForRender(Entity& e);
-	void RemoveEntityFromRenderPipeline(Entity& e);
+	void InitEntityForRender(Entity* e);
+	void RemoveEntityFromRenderPipeline(Entity* e);
 
 	void RenderFrame();
 
