@@ -21,14 +21,13 @@ struct DrawFlags
 class Entity
 {
 	friend class Renderer;
-	friend class LightOcclusionRenderer;
-	friend class LightingRenderer;
 
 public:
 	Entity(const std::string& texture);
 	unsigned GetID() { return m_EntityID; }
 	
-	DrawFlags& GetDrawFlags() { return m_DrawFlags; }
+	inline DrawFlags& GetDrawFlags() { return m_DrawFlags; }
+	inline Texture* GetTexture() { return m_Texture; }
 
 	// TODO: Apply rotation
 	inline Mat3 GetTransformation() const

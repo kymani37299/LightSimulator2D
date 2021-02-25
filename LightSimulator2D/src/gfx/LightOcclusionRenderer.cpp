@@ -62,7 +62,7 @@ void LightOcclusionRenderer::OnOccluderAdded(Entity& e)
     ASSERT(e.GetDrawFlags().occluder);
     {
         m_OcclusionMeshGenShader->Bind();
-        e.m_Texture->Bind(0);
+        e.GetTexture()->Bind(0);
         m_OcclusionMeshOutput->Bind(1);
         GLFunctions::Dispatch(OCCLUSION_MESH_SIZE / 2);
     }

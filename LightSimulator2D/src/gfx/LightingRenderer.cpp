@@ -31,12 +31,12 @@ void LightingRenderer::CompileShaders()
 
 void LightingRenderer::OnEntityAdded(Entity& entity)
 {
-    if (entity.m_DrawFlags.occluder)
+    if (entity.GetDrawFlags().occluder)
     {
         m_Occluders.push_back(entity);
     }
 
-    if (entity.m_DrawFlags.emitter)
+    if (entity.GetDrawFlags().emitter)
     {
         m_Emitters.push_back(entity);
     }
@@ -55,12 +55,12 @@ void RemoveFromVector(Entity& e, std::vector<Entity>& v)
 
 void LightingRenderer::OnEntityRemoved(Entity& entity)
 {
-    if (entity.m_DrawFlags.occluder)
+    if (entity.GetDrawFlags().occluder)
     {
         RemoveFromVector(entity,m_Occluders);
     }
 
-    if (entity.m_DrawFlags.emitter)
+    if (entity.GetDrawFlags().emitter)
     {
         RemoveFromVector(entity, m_Emitters);
     }
@@ -92,7 +92,7 @@ void LightingRenderer::RenderOccluders()
     for (Entity& e : m_Occluders)
     {
         m_AlbedoShader->SetUniform("u_Transform", e.GetTransformation());
-        e.m_Texture->Bind(0);
+        e.GetTexture()->Bind(0);
         GLFunctions::Draw(6);
     }
 }

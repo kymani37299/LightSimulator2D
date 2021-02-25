@@ -145,7 +145,7 @@ void Renderer::RenderFrame()
         {
             Entity& e = (*it);
             m_AlbedoShader->SetUniform("u_Transform", e.GetTransformation());
-            e.m_Texture->Bind(0);
+            e.GetTexture()->Bind(0);
             GLFunctions::Draw(6);
         }
         m_AlbedoFB->Unbind();
