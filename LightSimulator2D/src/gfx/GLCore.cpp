@@ -563,6 +563,11 @@ template<> void Shader::SetUniform<Vec2>(const std::string& key, Vec2 data) cons
 	GL_CALL(glUniform2fv(GetUniformLocation(m_Handle, key), 1, glm::value_ptr(data)));
 }
 
+template<> void Shader::SetUniform<Vec3>(const std::string& key, Vec3 data) const
+{
+	GL_CALL(glUniform3fv(GetUniformLocation(m_Handle, key), 1, glm::value_ptr(data)));
+}
+
 template<> void Shader::SetUniform<Mat3>(const std::string& key, Mat3 value) const
 {
 	GL_CALL(glUniformMatrix3fv(GetUniformLocation(m_Handle, key), 1, GL_FALSE, glm::value_ptr(value)));

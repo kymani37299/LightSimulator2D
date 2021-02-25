@@ -84,30 +84,30 @@ void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
 
     size_t numEmitters = scene->GetEmitters().size();
     if (numEmitters < 1) return;
-    if (numEmitters > 1) NOT_IMPLEMENTED;
+    //if (numEmitters > 1) NOT_IMPLEMENTED;
 
     if (m_TimeSinceLastDraw < DRAW_INTERVAL) return;
 
     m_TimeSinceLastDraw = 0.0f;
-
-    Entity* emitter = scene->GetEmitters()[0];
-    Vec2 emitterPos = emitter->m_Transform.position;
+    GetCurrentOcclusionMask()->Clear();
     float angleStep = 2.0f * 3.1415f / NUM_LIGHT_SAMPLES;
 
-    GetCurrentOcclusionMask()->Clear();
-
-    m_CurrentQuery.color = emitter->GetEmissionProperties().color;
-    m_CurrentQuery.radius = emitter->GetEmissionProperties().radius;
-    m_CurrentQuery.strength = (1.0f / NUM_LIGHT_SAMPLES * 1.3f) / numEmitters;
-
-    for (int i = 0; i < NUM_LIGHT_SAMPLES; i++)
+    for (Entity* emitter : scene->GetEmitters())
     {
-        float angle = i * angleStep;
-        m_CurrentQuery.position = emitterPos + Vec2(cos(angle), sin(angle)) * m_CurrentQuery.radius;
+        Vec2 emitterPos = emitter->m_Transform.position;
+        m_CurrentQuery.color = emitter->GetEmissionProperties().color;
+        m_CurrentQuery.radius = emitter->GetEmissionProperties().radius;
+        m_CurrentQuery.strength = (1.0f / NUM_LIGHT_SAMPLES * 1.3f);
 
-        LightOcclusion();
-        TriangulateMeshes();
-        RenderOcclusionMask();
+        for (int i = 0; i < NUM_LIGHT_SAMPLES; i++)
+        {
+            float angle = i * angleStep;
+            m_CurrentQuery.position = emitterPos + Vec2(cos(angle), sin(angle)) * m_CurrentQuery.radius;
+
+            LightOcclusion();
+            TriangulateMeshes();
+            RenderOcclusionMask();
+        }
     }
 
     m_OcclusionMaskPP = !m_OcclusionMaskPP;
@@ -151,6 +151,7 @@ void LightOcclusionRenderer::RenderOcclusionMask()
     GLFunctions::AlphaBlending(true);
     m_ShadowmapShader->SetUniform("u_MaskStrength", m_CurrentQuery.strength);
     m_ShadowmapShader->SetUniform("u_LightPos", m_CurrentQuery.position);
+    m_ShadowmapShader->SetUniform("u_LightColor", m_CurrentQuery.color);
     GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
     GLFunctions::Draw(numVertices);
     GLFunctions::AlphaBlending(false);

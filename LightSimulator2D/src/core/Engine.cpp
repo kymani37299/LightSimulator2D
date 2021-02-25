@@ -51,9 +51,11 @@ void GameEngine::Init()
     e1->AddComponent(controllerComponent);
 
     Entity* e2 = new Entity{ "res/animals/hippo.png" };
-    e2->GetDrawFlags().occluder = true;
+    e2->GetDrawFlags().emitter = true;
     e2->m_Transform.scale *= 0.2;
     e2->m_Transform.position = Vec2(-0.3, 0.5);
+    e2->GetEmissionProperties().color = Vec3(1.0, 0.0, 0.0);
+    e2->GetEmissionProperties().radius = 0.05f;
 
     Entity* e3 = new Entity{ "res/animals/giraffe.png" };
     e3->AddComponent(new FollowMouseComponent());
@@ -61,7 +63,6 @@ void GameEngine::Init()
     e3->GetDrawFlags().emitter = true;
     e3->GetEmissionProperties().color = Vec3(1.0, 1.0, 0.0);
     e3->GetEmissionProperties().radius = 0.1f;
-
 
     m_Scene.AddEntity(bg);
     m_Scene.AddEntity(e1);
