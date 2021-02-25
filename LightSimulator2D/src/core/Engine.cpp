@@ -59,6 +59,9 @@ void GameEngine::Init()
     e3->AddComponent(new FollowMouseComponent());
     e3->m_Transform.scale *= 0.3;
     e3->GetDrawFlags().emitter = true;
+    e3->GetEmissionProperties().color = Vec3(1.0, 1.0, 0.0);
+    e3->GetEmissionProperties().radius = 0.1f;
+
 
     m_Scene.AddEntity(bg);
     m_Scene.AddEntity(e1);

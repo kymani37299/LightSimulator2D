@@ -22,6 +22,12 @@ struct DrawFlags
 	bool emitter : 1;
 };
 
+struct EmissionProperties
+{
+	Vec3 color;
+	float radius;
+};
+
 class Entity
 {
 	friend class Renderer;
@@ -35,6 +41,7 @@ public:
 	unsigned GetID() { return m_EntityID; }
 	
 	inline DrawFlags& GetDrawFlags() { return m_DrawFlags; }
+	inline EmissionProperties& GetEmissionProperties() { return m_EmissionProperties; }
 	inline Texture* GetTexture() { return m_Texture; }
 
 	void AddComponent(Component* component);
@@ -57,6 +64,7 @@ private:
 
 	bool m_ReadyForDraw = false;
 	DrawFlags m_DrawFlags = {0};
+	EmissionProperties m_EmissionProperties{ VEC3_ZERO,0 };
 
 	std::vector<Component*> m_Components;
 };

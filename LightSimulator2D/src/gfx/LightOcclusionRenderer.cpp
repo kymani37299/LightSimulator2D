@@ -90,15 +90,20 @@ void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
 
     m_TimeSinceLastDraw = 0.0f;
 
-    Vec2 emitterPos = scene->GetEmitters()[0]->m_Transform.position;
+    Entity* emitter = scene->GetEmitters()[0];
+    Vec2 emitterPos = emitter->m_Transform.position;
     float angleStep = 2.0f * 3.1415f / NUM_LIGHT_SAMPLES;
 
     GetCurrentOcclusionMask()->Clear();
 
+    m_CurrentQuery.color = emitter->GetEmissionProperties().color;
+    m_CurrentQuery.radius = emitter->GetEmissionProperties().radius;
+    m_CurrentQuery.strength = (1.0f / NUM_LIGHT_SAMPLES * 1.3f) / numEmitters;
+
     for (int i = 0; i < NUM_LIGHT_SAMPLES; i++)
     {
         float angle = i * angleStep;
-        m_LightSource = emitterPos + Vec2(cos(angle), sin(angle)) * m_LightRadius;
+        m_CurrentQuery.position = emitterPos + Vec2(cos(angle), sin(angle)) * m_CurrentQuery.radius;
 
         LightOcclusion();
         TriangulateMeshes();
@@ -144,8 +149,8 @@ void LightOcclusionRenderer::RenderOcclusionMask()
     m_ShadowmapShader->Bind();
     unsigned numVertices = SetupOcclusionMeshInput();
     GLFunctions::AlphaBlending(true);
-    m_ShadowmapShader->SetUniform("u_MaskStrength", m_MaskStrength);
-    m_ShadowmapShader->SetUniform("u_LightPos", m_LightSource);
+    m_ShadowmapShader->SetUniform("u_MaskStrength", m_CurrentQuery.strength);
+    m_ShadowmapShader->SetUniform("u_LightPos", m_CurrentQuery.position);
     GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
     GLFunctions::Draw(numVertices);
     GLFunctions::AlphaBlending(false);
@@ -300,7 +305,7 @@ void LightOcclusionRenderer::LightOcclusion()
     SetupRayQuery();
 
     m_OcclusionShader->Bind();
-    m_OcclusionShader->SetUniform("u_LightPosition", m_LightSource);
+    m_OcclusionShader->SetUniform("u_LightPosition", m_CurrentQuery.position);
     m_OcclusionShader->SetUniform("u_NumSegments", (int) m_OcclusionLineCount);
     m_IntersectionBuffer->Bind(1);
     m_OcclusionLines->Bind(2);
@@ -314,7 +319,7 @@ void LightOcclusionRenderer::TriangulateMeshes()
 
     GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
     m_TriangulationShader->Bind();
-    m_TriangulationShader->SetUniform("u_LightPosition", m_LightSource);
+    m_TriangulationShader->SetUniform("u_LightPosition", m_CurrentQuery.position);
     m_TriangulationShader->SetUniform("u_NumIntersections", (int) m_RayCount);
     m_IntersectionBuffer->Bind(1);
     m_TriangledIntersecitonsBuffer->Bind(2);

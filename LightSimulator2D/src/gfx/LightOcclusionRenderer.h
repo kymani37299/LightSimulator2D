@@ -19,6 +19,14 @@ class Shader;
 
 class Framebuffer;
 
+struct OcclusionQuery
+{
+	Vec2 position;
+	Vec3 color;
+	float radius;
+	float strength;
+};
+
 class LightOcclusionRenderer
 {
 public:
@@ -58,9 +66,7 @@ private:
 	static constexpr unsigned NUM_LIGHT_SAMPLES = 6;
 	static constexpr float DRAW_INTERVAL = 50.0f;
 
-	Vec2 m_LightSource;
-	float m_LightRadius = 0.03f;
-	float m_MaskStrength = 1.0f / NUM_LIGHT_SAMPLES * 1.3f;
+	OcclusionQuery m_CurrentQuery;
 
 	std::map<Entity*, OcclusionMesh> m_OcclusionMeshPool;
 
