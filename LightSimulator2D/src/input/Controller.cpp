@@ -4,17 +4,7 @@
 
 #include "input/PlayerControls.h"
 
-#include "scene/Entity.h"
-
-void PlayerController::Update(float dt)
-{
-    dt /= 1000.0f;
-
-    const Vec2 dir = m_Movedir == VEC2_ZERO ? VEC2_ZERO : glm::normalize(m_Movedir);
-    const Vec2 walkVector = m_Movedir * m_PlayerMovementSpeed * dt;
-    if(walkVector!=VEC2_ZERO)
-        m_PlayerEntity->m_Transform.position += walkVector;
-}
+#include "scene/components/PlayerControllerComponent.h"
 
 void PlayerController::_Init()
 {
@@ -25,4 +15,9 @@ void PlayerController::_Init()
 
     m_Input->AddKeyPressedCallback(GLFW_KEY_ESCAPE, PLAYER_KEY_CALLBACK(EscapeCallback));
     m_Input->AddKeyPressedCallback(GLFW_KEY_R, PLAYER_KEY_CALLBACK(ReloadShadersCallback));
+}
+
+Vec2& PlayerController::GetMoveDir()
+{
+    return m_ControllerComponent->GetMoveDir();
 }

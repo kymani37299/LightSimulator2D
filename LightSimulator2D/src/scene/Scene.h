@@ -30,6 +30,7 @@ public:
     }
 
     void Init(Renderer* renderer);
+    void Update(float dt);
 
     std::vector<Entity*>::iterator Begin() { return m_Entites.begin(); }
     std::vector<Entity*>::iterator End() { return m_Entites.end(); }

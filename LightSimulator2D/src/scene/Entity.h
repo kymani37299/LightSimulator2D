@@ -2,8 +2,12 @@
 
 #include "common.h"
 
+#include <vector>
+
 class Texture;
 class Renderer;
+
+class Component;
 
 struct Transform
 {
@@ -24,10 +28,16 @@ class Entity
 
 public:
 	Entity(const std::string& texture);
+	~Entity();
+
+	void Update(float dt);
+
 	unsigned GetID() { return m_EntityID; }
 	
 	inline DrawFlags& GetDrawFlags() { return m_DrawFlags; }
 	inline Texture* GetTexture() { return m_Texture; }
+
+	void AddComponent(Component* component);
 
 	// TODO: Apply rotation
 	inline Mat3 GetTransformation() const
@@ -47,4 +57,6 @@ private:
 
 	bool m_ReadyForDraw = false;
 	DrawFlags m_DrawFlags = {0};
+
+	std::vector<Component*> m_Components;
 };

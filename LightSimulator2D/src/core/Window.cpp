@@ -40,7 +40,7 @@ bool Window::Active()
 void Window::UpdateGraphic()
 {
 	m_Fps = 1.0f / timeAccumulator * 1000.0f;
-	timeAccumulator = 0.0f;
+	timeAccumulator = 0.0001f;
 	glfwSwapBuffers(m_Window);
 }
 

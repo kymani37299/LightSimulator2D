@@ -6,13 +6,13 @@ enum class KeyState;
 class Input;
 class PlayerCamera;
 
-class Entity;
+class PlayerControllerComponent;
 
 class Controller
 {
 public:
 	void Init(Input* input) { m_Input = input; _Init(); }
-	virtual void Update(float dt) = 0;
+	virtual void Update(float dt) {};
 
 private:
 	virtual void _Init() = 0;
@@ -24,16 +24,12 @@ protected:
 class PlayerController : public Controller
 {
 public:
-	PlayerController(Entity* playerEntity) : m_PlayerEntity(playerEntity) {}
+	PlayerController(PlayerControllerComponent* controllerComponent) : m_ControllerComponent(controllerComponent) {}
 
-	void Update(float dt);
-
-	Vec2& GetMoveDir() { return m_Movedir; }
+	Vec2& GetMoveDir();
 
 private:
 	void _Init();
 
-	Entity* m_PlayerEntity;
-	float m_PlayerMovementSpeed = 1.0f;
-	Vec2 m_Movedir = VEC2_ZERO;
+	PlayerControllerComponent* m_ControllerComponent;
 };

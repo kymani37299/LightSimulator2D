@@ -5,6 +5,7 @@
 
 #include "input/Controller.h"
 #include "scene/Entity.h"
+#include "scene/components/PlayerControllerComponent.h"
 
 #include "util/Profiler.h"
 
@@ -32,15 +33,19 @@ void GameEngine::Delete()
 
 GameEngine::~GameEngine()
 {
+    delete m_Controller;
 }
 
 void GameEngine::Init()
 {
     // TMP
+    PlayerControllerComponent* controllerComponent = new PlayerControllerComponent();
+
     Entity* bg = new Entity{ "res/bg.png" };
     bg->m_Transform.scale *= 1000.0f;
     Entity* e1 = new Entity{ "res/animals/elephant.png" };
     e1->GetDrawFlags().occluder = true;
+    e1->AddComponent(controllerComponent);
     Entity* e2 = new Entity{ "res/animals/hippo.png" };
     e2->GetDrawFlags().occluder = true;
     e2->GetDrawFlags().emitter = true;
@@ -56,7 +61,7 @@ void GameEngine::Init()
     m_UI.Init(&m_Window);
     m_Scene.Init(&m_Renderer);
 
-    m_Controller = new PlayerController(e1);
+    m_Controller = new PlayerController(controllerComponent);
     m_Controller->Init(&m_Input);
 }
 
@@ -67,6 +72,7 @@ void GameEngine::EngineLoop()
     m_Running = m_Window.Active();
     UpdateDT();
     m_Controller->Update(m_DT);
+    m_Scene.Update(m_DT);
     m_UI.Update(m_DT);
     m_Renderer.Update(m_DT);
     if (m_Renderer.RenderIfNeeded())

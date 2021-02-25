@@ -27,6 +27,14 @@ void Scene::Init(Renderer* renderer)
 	m_Renderer->SetScene(this);
 }
 
+void Scene::Update(float dt)
+{
+	for (Entity* e : m_Entites)
+	{
+		e->Update(dt);
+	}
+}
+
 void Scene::OnEntityAdded(Entity* e)
 {
 	if(m_Renderer)
