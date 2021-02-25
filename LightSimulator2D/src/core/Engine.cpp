@@ -43,6 +43,7 @@ void GameEngine::Init()
     e1->GetDrawFlags().occluder = true;
     Entity* e2 = new Entity{ "res/animals/hippo.png" };
     e2->GetDrawFlags().occluder = true;
+    e2->GetDrawFlags().emitter = true;
     e2->m_Transform.scale *= 0.2;
     e2->m_Transform.position = Vec2(-0.3, 0.5);
     m_Scene.AddEntity(bg);

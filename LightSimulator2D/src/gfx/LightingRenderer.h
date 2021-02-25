@@ -20,6 +20,7 @@ public:
 private:
 	void RenderLighting();
 	void RenderOccluders(Scene* scene);
+	void RenderEmitters(Scene* scene);
 
 private:
 	Framebuffer* m_AlbedoFB;
@@ -27,4 +28,5 @@ private:
 
 	Shader* m_LightingShader = nullptr;
 	Shader* m_AlbedoShader = nullptr;
+	Shader* m_EmitterShader = nullptr;
 };

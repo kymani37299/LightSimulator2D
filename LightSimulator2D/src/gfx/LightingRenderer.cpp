@@ -26,6 +26,7 @@ void LightingRenderer::CompileShaders()
     static std::string shader_path = "lighting/";
 
     CreateShader(shader_path + "lighting", m_LightingShader);
+    CreateShader(shader_path + "emitter", m_EmitterShader);
     CreateShader("albedo", m_AlbedoShader);
 }
 
@@ -33,6 +34,7 @@ void LightingRenderer::RenderLights(Scene* scene)
 {
     RenderLighting();
     RenderOccluders(scene);
+    RenderEmitters(scene);
 }
 
 void LightingRenderer::RenderLighting()
@@ -55,6 +57,20 @@ void LightingRenderer::RenderOccluders(Scene* scene)
     for (Entity* e : scene->GetOccluders())
     {
         m_AlbedoShader->SetUniform("u_Transform", e->GetTransformation());
+        e->GetTexture()->Bind(0);
+        GLFunctions::Draw(6);
+    }
+}
+
+void LightingRenderer::RenderEmitters(Scene* scene)
+{
+    PROFILE_SCOPE("Draw emitters");
+
+    m_EmitterShader->Bind();
+    GLConstants::QuadInput->Bind();
+    for (Entity* e : scene->GetEmitters())
+    {
+        m_EmitterShader->SetUniform("u_Transform", e->GetTransformation());
         e->GetTexture()->Bind(0);
         GLFunctions::Draw(6);
     }
