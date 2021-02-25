@@ -5,7 +5,9 @@
 
 #include "input/Controller.h"
 #include "scene/Entity.h"
+
 #include "scene/components/PlayerControllerComponent.h"
+#include "scene/components/FollowMouseComponent.h"
 
 #include "util/Profiler.h"
 
@@ -43,17 +45,25 @@ void GameEngine::Init()
 
     Entity* bg = new Entity{ "res/bg.png" };
     bg->m_Transform.scale *= 1000.0f;
+
     Entity* e1 = new Entity{ "res/animals/elephant.png" };
     e1->GetDrawFlags().occluder = true;
     e1->AddComponent(controllerComponent);
+
     Entity* e2 = new Entity{ "res/animals/hippo.png" };
     e2->GetDrawFlags().occluder = true;
-    e2->GetDrawFlags().emitter = true;
     e2->m_Transform.scale *= 0.2;
     e2->m_Transform.position = Vec2(-0.3, 0.5);
+
+    Entity* e3 = new Entity{ "res/animals/giraffe.png" };
+    e3->AddComponent(new FollowMouseComponent());
+    e3->m_Transform.scale *= 0.3;
+    e3->GetDrawFlags().emitter = true;
+
     m_Scene.AddEntity(bg);
     m_Scene.AddEntity(e1);
     m_Scene.AddEntity(e2);
+    m_Scene.AddEntity(e3);
     //
 
     m_Window.SetInput(&m_Input);

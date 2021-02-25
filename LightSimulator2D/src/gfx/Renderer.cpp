@@ -133,25 +133,25 @@ void Renderer::RenderFrame()
     PROFILE_SCOPE("RenderFrame");
 
     GLFunctions::ClearScreen();
-
-    m_OcclusionRenderer->RenderOcclusion();
-
-    {
-        PROFILE_SCOPE("Albedo");
-        m_AlbedoFB->ClearAndBind();
-        m_AlbedoShader->Bind();
-        GLConstants::QuadInput->Bind();
-        for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
-        {
-            Entity* e = (*it);
-            m_AlbedoShader->SetUniform("u_Transform", e->GetTransformation());
-            e->GetTexture()->Bind(0);
-            GLFunctions::Draw(6);
-        }
-        m_AlbedoFB->Unbind();
-    }
-
+    m_OcclusionRenderer->RenderOcclusion(m_Scene);
+    RenderAlbedo();
     m_LightingRenderer->RenderLights(m_Scene);
+}
+
+void Renderer::RenderAlbedo()
+{
+    PROFILE_SCOPE("Albedo");
+    m_AlbedoFB->ClearAndBind();
+    m_AlbedoShader->Bind();
+    GLConstants::QuadInput->Bind();
+    for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
+    {
+        Entity* e = (*it);
+        m_AlbedoShader->SetUniform("u_Transform", e->GetTransformation());
+        e->GetTexture()->Bind(0);
+        GLFunctions::Draw(6);
+    }
+    m_AlbedoFB->Unbind();
 }
 
 void Renderer::CompileShaders()

@@ -9,6 +9,7 @@
 #include "shaders/common.h"
 
 class Entity;
+class Scene;
 
 class ShaderStorageBuffer;
 class ShaderInput;
@@ -31,7 +32,7 @@ public:
 	void OnOccluderAdded(Entity* e);
 	void OnOccluderRemoved(Entity* e);
 
-	void RenderOcclusion();
+	void RenderOcclusion(Scene* scene);
 
 	Framebuffer* GetOcclusionMaskFB() { return m_OcclusionMaskFB; }
 

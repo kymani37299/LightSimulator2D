@@ -38,6 +38,8 @@ private:
 
 	void RenderFrame();
 
+	void RenderAlbedo();
+
 private:
 	bool m_ShouldReloadShaders = false;
 	bool m_ShouldRender = true;

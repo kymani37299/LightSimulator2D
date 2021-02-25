@@ -2,10 +2,8 @@
 
 #include "util/Profiler.h"
 
-#include "core/Engine.h"
-#include "input/Input.h"
-
 #include "gfx/GLCore.h"
+#include "scene/Scene.h"
 #include "scene/Entity.h"
 
 extern bool CreateShader(const std::string& name, Shader*& shader);
@@ -78,17 +76,21 @@ void LightOcclusionRenderer::OnOccluderRemoved(Entity* e)
     m_OcclusionMeshPool[e].clear();
 }
 
-void LightOcclusionRenderer::RenderOcclusion()
+void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
 {
     PROFILE_SCOPE("Render occlusion");
 
     MergeMasks();
 
+    size_t numEmitters = scene->GetEmitters().size();
+    if (numEmitters < 1) return;
+    if (numEmitters > 1) NOT_IMPLEMENTED;
+
     if (m_TimeSinceLastDraw < DRAW_INTERVAL) return;
 
     m_TimeSinceLastDraw = 0.0f;
 
-    Vec2 mousePos = GameEngine::Get()->GetInput()->GetMousePosition();
+    Vec2 emitterPos = scene->GetEmitters()[0]->m_Transform.position;
     float angleStep = 2.0f * 3.1415f / NUM_LIGHT_SAMPLES;
 
     GetCurrentOcclusionMask()->Clear();
@@ -96,7 +98,7 @@ void LightOcclusionRenderer::RenderOcclusion()
     for (int i = 0; i < NUM_LIGHT_SAMPLES; i++)
     {
         float angle = i * angleStep;
-        m_LightSource = mousePos + Vec2(cos(angle), sin(angle)) * m_LightRadius;
+        m_LightSource = emitterPos + Vec2(cos(angle), sin(angle)) * m_LightRadius;
 
         LightOcclusion();
         TriangulateMeshes();
