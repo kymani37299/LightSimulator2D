@@ -50,7 +50,7 @@ private:
 	unsigned SetupOcclusionMeshInput();
 
 	using OcclusionMesh = std::vector<Vec2>;
-	void PopulateOcclusionMesh(OcclusionMesh& mesh);
+	void PopulateOcclusionMesh(OcclusionMesh& mesh, int meshSize);
 	
 	void LightOcclusion();
 	void TriangulateMeshes();

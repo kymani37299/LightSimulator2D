@@ -24,8 +24,20 @@ struct DrawFlags
 
 struct EmissionProperties
 {
-	Vec3 color;
-	float radius;
+	Vec3 color = VEC3_ZERO;
+	float radius = 0.0f;
+};
+
+enum class OccluderShape
+{
+	Rect,
+	Mesh
+};
+
+struct OcclusionProperties
+{
+	OccluderShape shape = OccluderShape::Rect;
+	unsigned meshLod = 0;
 };
 
 class Entity
@@ -42,6 +54,7 @@ public:
 	
 	inline DrawFlags& GetDrawFlags() { return m_DrawFlags; }
 	inline EmissionProperties& GetEmissionProperties() { return m_EmissionProperties; }
+	inline OcclusionProperties& GetOcclusionProperties() { return m_OcclusionProperties; }
 	inline Texture* GetTexture() { return m_Texture; }
 
 	void AddComponent(Component* component);
@@ -64,7 +77,8 @@ private:
 
 	bool m_ReadyForDraw = false;
 	DrawFlags m_DrawFlags = {0};
-	EmissionProperties m_EmissionProperties{ VEC3_ZERO,0 };
+	EmissionProperties m_EmissionProperties;
+	OcclusionProperties m_OcclusionProperties;
 
 	std::vector<Component*> m_Components;
 };

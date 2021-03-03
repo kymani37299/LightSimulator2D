@@ -23,7 +23,7 @@ LightOcclusionRenderer::LightOcclusionRenderer()
     m_OcclusionMaskFB2 = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
     m_OcclusionMaskFB = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    m_OcclusionMeshOutput = new ShaderStorageBuffer(sizeof(Vec4), OCCLUSION_MESH_SIZE / 2);
+    m_OcclusionMeshOutput = new ShaderStorageBuffer(sizeof(Vec4), MAX_OCCLUSION_MESH_SIZE);
 }
 
 LightOcclusionRenderer::~LightOcclusionRenderer()
@@ -58,16 +58,42 @@ void LightOcclusionRenderer::CompileShaders()
 void LightOcclusionRenderer::OnOccluderAdded(Entity* e)
 {
     ASSERT(e->GetDrawFlags().occluder);
-    {
-        m_OcclusionMeshGenShader->Bind();
-        e->GetTexture()->Bind(0);
-        m_OcclusionMeshOutput->Bind(1);
-        GLFunctions::Dispatch(OCCLUSION_MESH_SIZE / 2);
-    }
 
-    GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
-    OcclusionMesh& mesh = m_OcclusionMeshPool[e];
-    PopulateOcclusionMesh(mesh);
+    OcclusionProperties& props = e->GetOcclusionProperties();
+
+    switch (props.shape)
+    {
+    case OccluderShape::Mesh:
+    {
+        int meshSize = 20 * (int) pow(2, props.meshLod);
+        if (meshSize > 2*MAX_OCCLUSION_MESH_SIZE)
+        {
+            LOG("[Warrning][LightOcclusionRenderer] Occlusion mesh size is too big!");
+            meshSize = 2*MAX_OCCLUSION_MESH_SIZE;
+        }
+
+        {
+            m_OcclusionMeshGenShader->Bind();
+            e->GetTexture()->Bind(0);
+            m_OcclusionMeshOutput->Bind(1);
+            m_OcclusionMeshGenShader->SetUniform("u_MeshSize", meshSize);
+            GLFunctions::Dispatch(meshSize / 2);
+        }
+
+        GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
+        OcclusionMesh& mesh = m_OcclusionMeshPool[e];
+        PopulateOcclusionMesh(mesh, meshSize);
+
+    } break;
+    case OccluderShape::Rect:
+    {
+        static OcclusionMesh rectMesh = { Vec2(-1.0,-1.0),Vec2(-1.0,1.0),Vec2(1.0,1.0),Vec2(1.0,-1.0) };
+        m_OcclusionMeshPool[e] = rectMesh;
+    } break;
+    default:
+        NOT_IMPLEMENTED;
+        break;
+    }
 }
 
 void LightOcclusionRenderer::OnOccluderRemoved(Entity* e)
@@ -84,7 +110,6 @@ void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
 
     size_t numEmitters = scene->GetEmitters().size();
     if (numEmitters < 1) return;
-    //if (numEmitters > 1) NOT_IMPLEMENTED;
 
     if (m_TimeSinceLastDraw < DRAW_INTERVAL) return;
 
@@ -228,12 +253,12 @@ bool findIntersecton(Vec2& intersection, std::vector<Vec2> a, std::vector<Vec2> 
     return false;
 }
 
-void LightOcclusionRenderer::PopulateOcclusionMesh(OcclusionMesh& mesh)
+void LightOcclusionRenderer::PopulateOcclusionMesh(OcclusionMesh& mesh, int meshSize)
 {
     mesh.clear();
     std::vector<Vec2> vertices[4]; // Left, top, right, down
 
-    int oBufferSize = OCCLUSION_MESH_SIZE / 2;
+    int oBufferSize = meshSize;
     Vec4* ptr = (Vec4*)m_OcclusionMeshOutput->Map();
     for (int i = 0; i < oBufferSize / 2; i++) // L
     {
