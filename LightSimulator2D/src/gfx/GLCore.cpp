@@ -79,9 +79,9 @@ static bool LoadShader(std::string path, std::string& shaderCode)
 	return true;
 }
 
-static uint32_t CompileShader(uint32_t type, const char* source)
+static GLHandle CompileShader(uint32_t type, const char* source)
 {
-	GL_CALL(uint32_t id = glCreateShader(type));
+	GL_CALL(GLHandle id = glCreateShader(type));
 	GL_CALL(glShaderSource(id, 1, &source, nullptr));
 	GL_CALL(glCompileShader(id));
 
@@ -286,7 +286,7 @@ UniformBuffer::UniformBuffer(unsigned stride, unsigned count)
 
 	GL_CALL(glGenBuffers(1, &m_Handle));
 	GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, m_Handle));
-	GL_CALL(glBufferData(GL_UNIFORM_BUFFER, stride * count, NULL, GL_DYNAMIC_DRAW)); // TODO: Investigate alternatives to dynamic draw
+	GL_CALL(glBufferData(GL_UNIFORM_BUFFER, stride * count, NULL, GL_DYNAMIC_DRAW));
 	GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 
 	m_Stride = stride;
@@ -333,7 +333,7 @@ ShaderStorageBuffer::ShaderStorageBuffer(unsigned stride, unsigned count):
 {
 	GL_CALL(glGenBuffers(1, &m_Handle));
 	GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_Handle));
-	GL_CALL(glBufferData(GL_SHADER_STORAGE_BUFFER, stride*count, NULL, GL_DYNAMIC_COPY /* TODO: Check if this is right */));
+	GL_CALL(glBufferData(GL_SHADER_STORAGE_BUFFER, stride*count, NULL, GL_DYNAMIC_COPY));
 	GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0));
 }
 

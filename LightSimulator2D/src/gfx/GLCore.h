@@ -38,10 +38,9 @@ namespace GLFunctions
 	void AlphaBlending(bool enabled);
 };
 
-// TODO: Delete copy constructors from all gl classes
-
 class ShaderInput
 {
+	DELETE_COPY_CONSTRUCTOR(ShaderInput);
 public:
 	ShaderInput(std::vector<Vertex> vertices);
 	ShaderInput(std::vector<Vec2> vertices);
@@ -64,6 +63,7 @@ private:
 
 class UniformBuffer
 {
+	DELETE_COPY_CONSTRUCTOR(UniformBuffer);
 public:
 	UniformBuffer(unsigned stride, unsigned count = 1);
 	~UniformBuffer();
@@ -83,6 +83,7 @@ private:
 
 class ShaderStorageBuffer
 {
+	DELETE_COPY_CONSTRUCTOR(ShaderStorageBuffer);
 public:
 	ShaderStorageBuffer(unsigned stride, unsigned count = 1);
 	~ShaderStorageBuffer();
@@ -106,6 +107,7 @@ private:
 
 class Texture
 {
+	DELETE_COPY_CONSTRUCTOR(Texture);
 public:
 	Texture(const std::string& path);
 	~Texture();
@@ -134,6 +136,7 @@ enum ImageFlags
 
 class Image
 {
+	DELETE_COPY_CONSTRUCTOR(Image);
 public:
 	Image(unsigned width, unsigned height, unsigned flags);
 	~Image();
@@ -152,6 +155,7 @@ private:
 
 class Shader
 {
+	DELETE_COPY_CONSTRUCTOR(Shader);
 public:
 	Shader(const std::string& vert, const std::string& frag);
 	~Shader();
@@ -171,6 +175,8 @@ private:
 
 class ComputeShader
 {
+	DELETE_COPY_CONSTRUCTOR(ComputeShader);
+
 	static bool s_InitializedHW;
 	static void InitializeHW();
 
@@ -195,6 +201,8 @@ private:
 
 class Framebuffer
 {
+	DELETE_COPY_CONSTRUCTOR(Framebuffer);
+
 	static constexpr int MAX_COLOR_ATTACHMENTS = 5;
 public:
 	Framebuffer(unsigned width, unsigned height, unsigned numColorAttachments = 1);
