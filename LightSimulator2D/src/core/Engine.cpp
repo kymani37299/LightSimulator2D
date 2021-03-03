@@ -50,7 +50,7 @@ void GameEngine::Init()
     e1->GetDrawFlags().occluder = true;
     e1->GetOcclusionProperties().shape = OccluderShape::Mesh;
     e1->GetOcclusionProperties().meshLod = 2;
-
+    e1->m_Transform.rotation = 3.1415f / 4.0f;
     e1->AddComponent(controllerComponent);
 
     Entity* e2 = new Entity{ "res/animals/hippo.png" };

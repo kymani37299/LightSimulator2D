@@ -59,13 +59,23 @@ public:
 
 	void AddComponent(Component* component);
 
-	// TODO: Apply rotation
 	inline Mat3 GetTransformation() const
 	{
-		return Mat3({
+		float angle = -m_Transform.rotation;
+
+		Mat3 scaleTranslation = {
 			m_Transform.scale.x,0.0,m_Transform.position.x,
 			0.0,m_Transform.scale.y,m_Transform.position.y,
-			0.0,0.0,1.0 });
+			0.0,0.0,1.0 };
+
+		if (angle == 0.0) return scaleTranslation;
+
+		Mat3 rotation = {
+			cos(angle),-sin(angle),0.0,
+			sin(angle),cos(angle),0.0,
+			0.0,0.0,1.0 };
+
+		return rotation * scaleTranslation;
 	}
 
 	Transform m_Transform;
