@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <queue>
 #include <map>
 
 #include "common.h"
@@ -82,15 +81,7 @@ private:
 	Framebuffer* m_OcclusionMaskFB2;
 	Framebuffer* m_OcclusionMaskFB;
 
-	struct RayAngleComparator
-	{
-		bool operator () (const Vec2& l, const Vec2& r)
-		{
-			return glm::atan(l.y, l.x) < glm::atan(r.y, r.x);
-		}
-	};
-	using RayQuery = std::priority_queue<Vec2, std::vector<Vec2>, RayAngleComparator>;
-	RayQuery m_RayQuery;
+	std::vector<Vec2> m_RayQuery;
 
 	ComputeShader* m_OcclusionMeshGenShader = nullptr;
 	Shader* m_ShadowmapShader = nullptr;

@@ -1,5 +1,7 @@
 #include "LightOcclusionRenderer.h"
 
+#include <algorithm>
+
 #include "util/Profiler.h"
 
 #include "gfx/GLCore.h"
@@ -183,13 +185,15 @@ void LightOcclusionRenderer::RenderOcclusionMask()
     GetCurrentOcclusionMask()->Unbind();
 }
 
+bool angleComparator(const Vec2& l, const Vec2& r) { return glm::atan(l.y, l.x) < glm::atan(r.y, r.x); }
+
 void LightOcclusionRenderer::SetupRayQuery()
 {
     for (size_t i = 0; i < NUM_ANGLED_RAYS; i++)
     {
         float angle = i * (2.0f * 6.283f / NUM_ANGLED_RAYS);
         Vec2 dir = Vec2(cos(angle), sin(angle));
-        m_RayQuery.push(dir);
+        m_RayQuery.push_back(dir);
     }
 
     const Vec2 e = Vec2(0.01f);
@@ -198,22 +202,25 @@ void LightOcclusionRenderer::SetupRayQuery()
         OcclusionMesh& mesh = it->second;
         for (Vec2 p : mesh)
         {
-            m_RayQuery.push(p - e);
-            m_RayQuery.push(e);
-            m_RayQuery.push(p + e);
+            m_RayQuery.push_back(p - e);
+            m_RayQuery.push_back(e);
+            m_RayQuery.push_back(p + e);
         }
     }
 
-    // TODO: Optimize this, upload all at same time
-    size_t rayIndex = 0;
+    std::sort(m_RayQuery.begin(), m_RayQuery.end(), &angleComparator);
+
     m_RayCount = m_RayQuery.size();
-    while (!m_RayQuery.empty())
+
+    for (size_t i = 0; i < m_RayCount; i++)
     {
-        Vec2 ray = m_RayQuery.top();
-        m_RayQuery.pop();
-        m_RayQueryBuffer->UploadData(&ray, rayIndex);
-        rayIndex++;
+        m_RayQueryBuffer->UploadData(&m_RayQuery[i], i);
     }
+
+    // TODO: Use this instead, right now multielement upload do not work like it should
+    //m_RayQueryBuffer->UploadData(m_RayQuery.data(), 0, m_RayCount);
+
+    m_RayQuery.clear();
 }
 
 bool intersect(Vec2& intersection, Vec2 a1, Vec2 a2, Vec2 b1, Vec2 b2)
