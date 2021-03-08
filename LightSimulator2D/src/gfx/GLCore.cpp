@@ -548,6 +548,11 @@ static int GetUniformLocation(GLHandle shader, const std::string& name)
 	return location;
 }
 
+template<> void Shader::SetUniform<bool>(const std::string& key, bool value) const
+{
+	GL_CALL(glUniform1i(GetUniformLocation(m_Handle, key), value));
+}
+
 template<> void Shader::SetUniform<int>(const std::string& key, int value) const
 {
 	GL_CALL(glUniform1i(GetUniformLocation(m_Handle, key), value));

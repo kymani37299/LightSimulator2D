@@ -45,7 +45,7 @@ class Entity
 	friend class Renderer;
 
 public:
-	Entity(const std::string& texture);
+	Entity(const std::string& texture, const std::string& normal_map = "");
 	~Entity();
 
 	void Update(float dt);
@@ -56,6 +56,7 @@ public:
 	inline EmissionProperties& GetEmissionProperties() { return m_EmissionProperties; }
 	inline OcclusionProperties& GetOcclusionProperties() { return m_OcclusionProperties; }
 	inline Texture* GetTexture() { return m_Texture; }
+	inline Texture* GetNormalMap() { return m_NormalMap; }
 
 	void AddComponent(Component* component);
 
@@ -84,6 +85,9 @@ private:
 
 	std::string m_TexturePath;
 	Texture* m_Texture;
+
+	std::string m_NormalMapPath;
+	Texture* m_NormalMap = nullptr;
 
 	bool m_ReadyForDraw = false;
 	DrawFlags m_DrawFlags = {0};

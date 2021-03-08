@@ -2,7 +2,7 @@
 
 #include "scene/Component.h"
 
-Entity::Entity(const std::string& texture)
+Entity::Entity(const std::string& texture, const std::string& normal_map)
 {
 	static unsigned autoInc = 1;
 	m_EntityID = autoInc++;
@@ -12,6 +12,7 @@ Entity::Entity(const std::string& texture)
 	m_Transform.rotation = 0.0f;
 
 	m_TexturePath = texture;
+	m_NormalMapPath = normal_map;
 }
 
 Entity::~Entity()

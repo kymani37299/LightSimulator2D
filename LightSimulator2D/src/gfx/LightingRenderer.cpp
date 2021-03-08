@@ -12,12 +12,11 @@ LightingRenderer::LightingRenderer(Framebuffer* albedoFB, Framebuffer* occlusion
 	m_AlbedoFB(albedoFB),
 	m_OcclusionFB(occlusionFB)
 {
-
 }
 
 LightingRenderer::~LightingRenderer()
 {
-    delete m_AlbedoShader;
+    delete m_OccluderShader;
 	delete m_LightingShader;
 }
 
@@ -27,7 +26,7 @@ void LightingRenderer::CompileShaders()
 
     CreateShader(shader_path + "lighting", m_LightingShader);
     CreateShader(shader_path + "emitter", m_EmitterShader);
-    CreateShader("albedo", m_AlbedoShader);
+    CreateShader(shader_path + "occluder", m_OccluderShader);
 }
 
 void LightingRenderer::RenderLights(Scene* scene)
@@ -52,12 +51,22 @@ void LightingRenderer::RenderLighting()
 void LightingRenderer::RenderOccluders(Scene* scene)
 {
     PROFILE_SCOPE("Draw occluders");
-    m_AlbedoShader->Bind();
+    m_OccluderShader->Bind();
+
+    // TODO: No emitters and multiple emitters
+    Vec2 lightSource = scene->GetEmitters()[0]->m_Transform.position;
+    m_OccluderShader->SetUniform("u_LightSource", lightSource);
+
     GLConstants::QuadInput->Bind();
     for (Entity* e : scene->GetOccluders())
     {
-        m_AlbedoShader->SetUniform("u_Transform", e->GetTransformation());
+        m_OccluderShader->SetUniform("u_Transform", e->GetTransformation());
         e->GetTexture()->Bind(0);
+
+        Texture* normalMap = e->GetNormalMap();
+        if (normalMap) normalMap->Bind(1);
+        m_OccluderShader->SetUniform("u_NormalEnabled", normalMap != nullptr);
+
         GLFunctions::Draw(6);
     }
 }

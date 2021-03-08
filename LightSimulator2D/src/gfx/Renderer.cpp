@@ -170,6 +170,11 @@ void Renderer::InitEntityForRender(Entity* e)
     e->m_Transform.scale *= Vec2((float)tex->GetWidth() / SCREEN_WIDTH, (float)tex->GetHeight() / SCREEN_HEIGHT);
     e->m_ReadyForDraw = true;
 
+    if (!e->m_NormalMapPath.empty())
+    {
+        e->m_NormalMap = new Texture(e->m_NormalMapPath);
+    }
+
     if(e->GetDrawFlags().occluder) m_OcclusionRenderer->OnOccluderAdded(e);
 }
 
@@ -177,8 +182,8 @@ void Renderer::RemoveEntityFromRenderPipeline(Entity* e)
 {
     if (!e->m_ReadyForDraw) return;
 
-    Texture* tex = e->m_Texture;
-    if (tex) delete tex;
+    SAFE_DELETE(e->m_Texture);
+    SAFE_DELETE(e->m_NormalMap);
     e->m_ReadyForDraw = false;
     if (e->GetDrawFlags().occluder) m_OcclusionRenderer->OnOccluderRemoved(e);
 }

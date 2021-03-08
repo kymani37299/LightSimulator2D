@@ -5,7 +5,7 @@
 
 #include <glm/glm.hpp>
 
-#define SAFE_DELETE(X) if((X)) delete (X)
+#define SAFE_DELETE(X) if((X)) { delete (X); (X) = nullptr; }
 
 #ifdef DEBUG
 #define ASSERT(X) if(!(X)) __debugbreak()
