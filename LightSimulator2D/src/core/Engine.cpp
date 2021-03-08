@@ -16,6 +16,36 @@ void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int 
     GameEngine::Get()->GetMainWindow()->KeyPressedCallback(window, key, scancode, action, mods);
 }
 
+static void SetupTestScene(Scene* scene, PlayerControllerComponent* playerController)
+{
+    Entity* bg = new Entity{ "res/bg.png" };
+    bg->m_Transform.scale *= 1000.0f;
+
+    Entity* e1 = new Entity{ "res/animals/elephant.png" , "res/animals/elephant_normal.jpg" };
+    e1->GetDrawFlags().occluder = true;
+    e1->GetOcclusionProperties().shape = OccluderShape::Mesh;
+    e1->GetOcclusionProperties().meshLod = 2;
+    e1->m_Transform.rotation = 3.1415f / 4.0f;
+    e1->AddComponent(playerController);
+
+    Entity* e2 = new Entity{ "res/animals/hippo.png" };
+    e2->GetDrawFlags().occluder = true;
+    e2->m_Transform.scale *= 0.2;
+    e2->m_Transform.position = Vec2(-0.3, 0.5);
+
+    Entity* e3 = new Entity{ "res/animals/giraffe.png" };
+    e3->AddComponent(new FollowMouseComponent());
+    e3->m_Transform.scale *= 0.3;
+    e3->GetDrawFlags().emitter = true;
+    e3->GetEmissionProperties().color = Vec3(1.0, 1.0, 0.0);
+    e3->GetEmissionProperties().radius = 0.1f;
+
+    scene->AddEntity(bg);
+    scene->AddEntity(e1);
+    scene->AddEntity(e2);
+    scene->AddEntity(e3);
+}
+
 GameEngine* GameEngine::s_Instance = nullptr;
 
 GameEngine* GameEngine::Get()
@@ -40,36 +70,8 @@ GameEngine::~GameEngine()
 
 void GameEngine::Init()
 {
-    // TMP
     PlayerControllerComponent* controllerComponent = new PlayerControllerComponent();
-
-    Entity* bg = new Entity{ "res/bg.png" };
-    bg->m_Transform.scale *= 1000.0f;
-
-    Entity* e1 = new Entity{ "res/animals/elephant.png" , "res/animals/elephant_normal.jpg"};
-    e1->GetDrawFlags().occluder = true;
-    e1->GetOcclusionProperties().shape = OccluderShape::Mesh;
-    e1->GetOcclusionProperties().meshLod = 2;
-    e1->m_Transform.rotation = 3.1415f / 4.0f;
-    e1->AddComponent(controllerComponent);
-
-    Entity* e2 = new Entity{ "res/animals/hippo.png" };
-    e2->GetDrawFlags().occluder = true;
-    e2->m_Transform.scale *= 0.2;
-    e2->m_Transform.position = Vec2(-0.3, 0.5);
-
-    Entity* e3 = new Entity{ "res/animals/giraffe.png" };
-    e3->AddComponent(new FollowMouseComponent());
-    e3->m_Transform.scale *= 0.3;
-    e3->GetDrawFlags().emitter = true;
-    e3->GetEmissionProperties().color = Vec3(1.0, 1.0, 0.0);
-    e3->GetEmissionProperties().radius = 0.1f;
-
-    m_Scene.AddEntity(bg);
-    m_Scene.AddEntity(e1);
-    m_Scene.AddEntity(e2);
-    m_Scene.AddEntity(e3);
-    //
+    SetupTestScene(&m_Scene, controllerComponent);
 
     m_Window.SetInput(&m_Input);
     m_Renderer.Init(m_Window);
