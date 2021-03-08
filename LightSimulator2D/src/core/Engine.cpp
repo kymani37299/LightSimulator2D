@@ -46,7 +46,7 @@ void GameEngine::Init()
     Entity* bg = new Entity{ "res/bg.png" };
     bg->m_Transform.scale *= 1000.0f;
 
-    Entity* e1 = new Entity{ "res/animals/elephant.png" , "res/animals/elephant_normal.png"};
+    Entity* e1 = new Entity{ "res/animals/elephant.png" , "res/animals/elephant_normal.jpg"};
     e1->GetDrawFlags().occluder = true;
     e1->GetOcclusionProperties().shape = OccluderShape::Mesh;
     e1->GetOcclusionProperties().meshLod = 2;
