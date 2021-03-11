@@ -31,6 +31,7 @@ namespace GLFunctions
 	void InitGL(void* procAddressGet);
 	void DeinitGL();
 	void Draw(unsigned numVertices);
+	void DrawPoints(unsigned numPoints);
 	void DrawFC();
 	void Dispatch(unsigned groupX = 1, unsigned groupY = 1, unsigned groupZ = 1);
 	void ClearScreen(Vec3 clearColor = VEC3_ZERO);

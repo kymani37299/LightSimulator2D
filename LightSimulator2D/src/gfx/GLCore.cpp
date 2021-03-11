@@ -72,6 +72,11 @@ void GLFunctions::Draw(unsigned numVertices)
 	GL_CALL(glDrawArrays(GL_TRIANGLES, 0, numVertices));
 }
 
+void GLFunctions::DrawPoints(unsigned numPoints)
+{
+	GL_CALL(glDrawArrays(GL_POINTS, 0, numPoints));
+}
+
 void GLFunctions::DrawFC()
 {
 	GLConstants::QuadInput->Bind();
@@ -405,6 +410,23 @@ void Image::Unbind()
 // ---------- Shader -------------------------
 // -------------------------------------------
 
+std::string GetTag(GLenum type)
+{
+	switch (type)
+	{
+	case GL_VERTEX_SHADER:
+		return "[VS]";
+	case GL_FRAGMENT_SHADER:
+		return "[FS]";
+	case GL_COMPUTE_SHADER:
+		return "[CS]";
+	case GL_GEOMETRY_SHADER:
+		return "[GS]";
+	default:
+		return "[Unknown shader type]";
+	}
+}
+
 static GLHandle CompileShader(uint32_t type, const char* source)
 {
 	GL_CALL(GLHandle id = glCreateShader(type));
@@ -419,20 +441,7 @@ static GLHandle CompileShader(uint32_t type, const char* source)
 		GL_CALL(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
 		char* message = (char*)alloca(length * sizeof(char));
 		GL_CALL(glGetShaderInfoLog(id, length, &length, message));
-		std::string error_tag;
-		switch (type)
-		{
-		case GL_VERTEX_SHADER:
-			error_tag = "[VS]";
-			break;
-		case GL_FRAGMENT_SHADER:
-			error_tag = "[FS]";
-			break;
-		case GL_COMPUTE_SHADER:
-			error_tag = "[CS]";
-			break;
-		}
-		LOG(error_tag + " " + message);
+		LOG(GetTag(type) + " " + message);
 		GL_CALL(glDeleteShader(id));
 		return 0;
 	}
@@ -445,6 +454,7 @@ GLenum MacroToShaderType(const std::string macro)
 	if (macro.find("#start VERTEX") != std::string::npos) return GL_VERTEX_SHADER;
 	if (macro.find("#start FRAGMENT") != std::string::npos) return GL_FRAGMENT_SHADER;
 	if (macro.find("#start COMPUTE") != std::string::npos) return GL_COMPUTE_SHADER;
+	if (macro.find("#start GEOMETRY") != std::string::npos) return GL_GEOMETRY_SHADER;
 	return 0;
 }
 

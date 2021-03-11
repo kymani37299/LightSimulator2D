@@ -120,13 +120,12 @@ void Renderer::RenderAlbedo()
     PROFILE_SCOPE("Albedo");
     m_AlbedoFB->ClearAndBind();
     m_AlbedoShader->Bind();
-    GLConstants::QuadInput->Bind();
     for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
     {
         Entity* e = (*it);
         m_AlbedoShader->SetUniform("u_Transform", e->GetTransformation());
         e->GetTexture()->Bind(0);
-        GLFunctions::Draw(6);
+        GLFunctions::DrawPoints(1);
     }
     m_AlbedoFB->Unbind();
 }

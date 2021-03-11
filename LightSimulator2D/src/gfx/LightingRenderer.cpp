@@ -75,11 +75,10 @@ void LightingRenderer::RenderEmitters(Scene* scene)
     PROFILE_SCOPE("Draw emitters");
 
     m_EmitterShader->Bind();
-    GLConstants::QuadInput->Bind();
     for (Entity* e : scene->GetEmitters())
     {
         m_EmitterShader->SetUniform("u_Transform", e->GetTransformation());
         e->GetTexture()->Bind(0);
-        GLFunctions::Draw(6);
+        GLFunctions::DrawPoints(1);
     }
 }
