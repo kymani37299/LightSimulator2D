@@ -24,5 +24,5 @@ layout(location = 0) out vec4 FinalColor;
 
 void main()
 {
-	FinalColor = ((texture(u_Sampler1, UV) * u_Weight) + (texture(u_Sampler2, UV) * (1.0f - u_Weight))) / 2.0f;
+	FinalColor = ((texture(u_Sampler1, UV) * u_Weight) + (texture(u_Sampler2, UV) * (1.0f - u_Weight)));
 }

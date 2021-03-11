@@ -26,7 +26,7 @@ const float lightRadius = 1.2;
 
 void main()
 {
-	float d = 5.0 * length(POS - u_LightPos);
+	float d = 10.0 * length(POS - u_LightPos);
 	d *= 10.0f;
 	d = lightRadius / (1.0 + 0.1 * d + 0.01 * d * d);
 	FinalColor = vec4(u_LightColor, u_MaskStrength*d);
