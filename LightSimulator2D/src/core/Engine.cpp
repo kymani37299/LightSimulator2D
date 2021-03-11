@@ -18,11 +18,11 @@ void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int 
 
 static void SetupTestScene(Scene* scene, PlayerControllerComponent* playerController)
 {
-    Entity* bg = new Entity{ "res/animals/giraffe.png" , "res/animals/elephant_normal.jpg" };
+    Entity* bg = new Entity{ "res/bg.png" , "res/animals/elephant_normal.jpg" };
     bg->GetDrawFlags().background = true;
     bg->GetBackgroundProperties().textureScale = 5.0f;
 
-    Entity* e1 = new Entity{ "res/animals/elephant.png" , "res/animals/elephant_normal.jpg" };
+    Entity* e1 = new Entity{ "res/animals/elephant.png" };
     e1->GetDrawFlags().occluder = true;
     e1->GetOcclusionProperties().shape = OccluderShape::Mesh;
     e1->GetOcclusionProperties().meshLod = 2;

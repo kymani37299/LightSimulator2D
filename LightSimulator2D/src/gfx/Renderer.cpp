@@ -184,6 +184,12 @@ void Renderer::InitEntityForRender(Entity* e)
         e->m_NormalMap = new Texture(e->m_NormalMapPath);
     }
 
+    if (e->GetDrawFlags().background)
+    {
+        e->m_Texture->SetRepeatedScaling(true);
+        if (e->m_NormalMap) e->m_NormalMap->SetRepeatedScaling(true);
+    }
+
     if(e->GetDrawFlags().occluder) m_OcclusionRenderer->OnOccluderAdded(e);
 }
 

@@ -313,6 +313,8 @@ Texture::Texture(const std::string& path)
 {
 	ImageData* imageData = ImageUtil::LoadImage(path.c_str(), true);
 
+	ASSERT(imageData->data);
+
 	m_Width = imageData->width;
 	m_Height = imageData->height;
 
@@ -353,6 +355,19 @@ void Texture::Unbind()
 		m_CurrentSlot = -1;
 	}
 
+}
+
+void Texture::SetRepeatedScaling(bool value)
+{
+	GLenum scaling = value ? GL_REPEAT : GL_CLAMP_TO_EDGE;
+
+	GL_CALL(glActiveTexture(GL_TEXTURE0));
+	GL_CALL(glBindTexture(GL_TEXTURE_2D, m_Handle));
+
+	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, scaling));
+	GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, scaling));
+
+	GL_CALL(glBindTexture(GL_TEXTURE_2D, 0));
 }
 
 // -------------------------------------------

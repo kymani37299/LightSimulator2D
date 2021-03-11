@@ -28,7 +28,6 @@ void main()
 {
 	vec2 uv = UV + u_UVOffset;
 	uv *= u_UVScale;
-	uv = mod(uv,1.0);
 
 	vec4 tex = texture(u_Texture, uv);
 	if (tex.a < alphaTreshold) discard;

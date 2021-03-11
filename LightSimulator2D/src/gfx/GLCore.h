@@ -116,6 +116,8 @@ public:
 	void Bind(unsigned slot);
 	void Unbind();
 
+	void SetRepeatedScaling(bool value);
+
 	inline unsigned GetWidth() const { return m_Width; }
 	inline unsigned GetHeight() const { return m_Height; }
 
