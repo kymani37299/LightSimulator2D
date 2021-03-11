@@ -1,4 +1,4 @@
-#version 430
+#start COMPUTE
 
 #include "common.h"
 

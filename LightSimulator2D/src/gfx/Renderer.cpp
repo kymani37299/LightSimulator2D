@@ -26,7 +26,7 @@ static std::vector<Vertex> quadVertices =
 
 bool CreateShader(const std::string& name, Shader*& shader)
 {
-    Shader* _shader = new Shader(name + ".vert", name + ".frag");
+    Shader* _shader = new Shader(name + ".glsl");
     if (_shader->IsValid())
     {
         SAFE_DELETE(shader);
@@ -34,29 +34,6 @@ bool CreateShader(const std::string& name, Shader*& shader)
         return true;
     }
     else if(shader)
-    {
-        delete _shader;
-        LOG("[CREATE_SHADER] Reloading shader " + name + "failed.");
-        return false;
-    }
-    else
-    {
-        delete _shader;
-        ASSERT(0);
-        return false;
-    }
-}
-
-bool CreateCShader(const std::string& name, ComputeShader*& shader)
-{
-    ComputeShader* _shader = new ComputeShader(name + ".cs");
-    if (_shader->IsValid())
-    {
-        SAFE_DELETE(shader);
-        shader = _shader;
-        return true;
-    }
-    else if (shader)
     {
         delete _shader;
         LOG("[CREATE_SHADER] Reloading shader " + name + "failed.");

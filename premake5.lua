@@ -20,8 +20,7 @@ project "LightSimulator2D"
 
 	files
 	{
-		"%{prj.name}/src/**.vert",
-		"%{prj.name}/src/**.frag",
+		"%{prj.name}/src/**.glsl",
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
 		"%{prj.name}/src/**.cs"

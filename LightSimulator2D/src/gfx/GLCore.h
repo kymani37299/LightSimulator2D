@@ -157,7 +157,7 @@ class Shader
 {
 	DELETE_COPY_CONSTRUCTOR(Shader);
 public:
-	Shader(const std::string& vert, const std::string& frag);
+	Shader(const std::string path);
 	~Shader();
 
 	void Bind();
@@ -166,32 +166,6 @@ public:
 	inline bool IsValid() const { return m_Valid; }
 
 	void SetUniformBlock(const std::string& block_name, unsigned int slot) const;
-	template<typename T> void SetUniform(const std::string& key, T value) const;
-
-private:
-	GLHandle m_Handle;
-	bool m_Valid = true;
-};
-
-class ComputeShader
-{
-	DELETE_COPY_CONSTRUCTOR(ComputeShader);
-
-	static bool s_InitializedHW;
-	static void InitializeHW();
-
-	static int s_MaxGroupSize[3];
-	static int s_MaxGroupInvocations;
-	
-public:
-	ComputeShader(const std::string& cs);
-	~ComputeShader();
-
-	void Bind();
-	void Unbind();
-
-	inline bool IsValid() const { return m_Valid; }
-
 	template<typename T> void SetUniform(const std::string& key, T value) const;
 
 private:

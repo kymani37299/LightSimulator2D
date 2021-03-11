@@ -9,7 +9,6 @@
 #include "scene/Entity.h"
 
 extern bool CreateShader(const std::string& name, Shader*& shader);
-extern bool CreateCShader(const std::string& name, ComputeShader*& shader);
 
 LightOcclusionRenderer::LightOcclusionRenderer()
 {
@@ -53,12 +52,12 @@ void LightOcclusionRenderer::CompileShaders()
 {
     static std::string shader_path = "occlusion/";
 
-    CreateCShader(shader_path + "light_occlusion", m_OcclusionShader);
-    CreateCShader(shader_path + "triangulate_intersections", m_TriangulationShader);
-    CreateCShader(shader_path + "occlusion_mesh_gen", m_OcclusionMeshGenShader);
-    CreateShader (shader_path + "shadowmap",m_ShadowmapShader);
-    CreateShader (shader_path + "merge", m_MergeShader);
-    CreateShader (shader_path + "blur", m_BlurShader);
+    CreateShader(shader_path + "light_occlusion", m_OcclusionShader);
+    CreateShader(shader_path + "triangulate_intersections", m_TriangulationShader);
+    CreateShader(shader_path + "occlusion_mesh_gen", m_OcclusionMeshGenShader);
+    CreateShader(shader_path + "shadowmap",m_ShadowmapShader);
+    CreateShader(shader_path + "merge", m_MergeShader);
+    CreateShader(shader_path + "blur", m_BlurShader);
 }
 
 void LightOcclusionRenderer::OnOccluderAdded(Entity* e)

@@ -38,82 +38,6 @@ static bool GLCheckError()
 #define GL_CALL(X) X
 #endif // DEBUG
 
-static bool LoadShader(std::string path, std::string& shaderCode)
-{
-	shaderCode = "";
-	path = SHADER_PATH + path;
-
-	std::vector<std::string> shaderContent;
-	if (!FileUtil::ReadFile(path, shaderContent))
-	{
-		LOG("[SHADER_LOAD] Failed to load a file: " + path);
-		return false;
-	}
-
-	std::set<std::string> loadedFiles = {};
-	for (size_t i = 0; i < shaderContent.size(); i++)
-	{
-		std::string& line = shaderContent[i];
-		if (line.find("#include") != std::string::npos)
-		{
-			std::string fileName = line;
-			StringUtil::ReplaceAll(fileName, "#include", "");
-			StringUtil::ReplaceAll(fileName, " ", "");
-			StringUtil::ReplaceAll(fileName, "\"", "");
-
-			if (loadedFiles.count(fileName)) continue;
-			loadedFiles.insert(fileName);
-
-			std::vector<std::string> _c;
-			if (!FileUtil::ReadFile(SHADER_PATH + fileName, _c))
-			{
-				LOG("[SHADER_LOAD] Failed to include " + fileName + " in " + path);
-			}
-			shaderContent.insert((shaderContent.begin() + (i + 1)), _c.begin(), _c.end());
-		}
-		else
-		{
-			shaderCode.append(line + "\n");
-		}
-	}
-	return true;
-}
-
-static GLHandle CompileShader(uint32_t type, const char* source)
-{
-	GL_CALL(GLHandle id = glCreateShader(type));
-	GL_CALL(glShaderSource(id, 1, &source, nullptr));
-	GL_CALL(glCompileShader(id));
-
-	int result;
-	GL_CALL(glGetShaderiv(id, GL_COMPILE_STATUS, &result));
-	if (!result)
-	{
-		int length;
-		GL_CALL(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
-		char* message = (char*)alloca(length * sizeof(char));
-		GL_CALL(glGetShaderInfoLog(id, length, &length, message));
-		std::string error_tag;
-		switch (type)
-		{
-		case GL_VERTEX_SHADER:
-			error_tag = "[VS]";
-			break;
-		case GL_FRAGMENT_SHADER:
-			error_tag = "[FS]";
-			break;
-		case GL_COMPUTE_SHADER:
-			error_tag = "[CS]";
-			break;
-		}
-		LOG(error_tag + " " + message);
-		GL_CALL(glDeleteShader(id));
-		return 0;
-	}
-
-	return id;
-}
-
 // -------------------------------------------
 // ---------- GLFunctions --------------------
 // -------------------------------------------
@@ -481,41 +405,136 @@ void Image::Unbind()
 // ---------- Shader -------------------------
 // -------------------------------------------
 
-Shader::Shader(const std::string& vert, const std::string& frag)
+static GLHandle CompileShader(uint32_t type, const char* source)
+{
+	GL_CALL(GLHandle id = glCreateShader(type));
+	GL_CALL(glShaderSource(id, 1, &source, nullptr));
+	GL_CALL(glCompileShader(id));
+
+	int result;
+	GL_CALL(glGetShaderiv(id, GL_COMPILE_STATUS, &result));
+	if (!result)
+	{
+		int length;
+		GL_CALL(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
+		char* message = (char*)alloca(length * sizeof(char));
+		GL_CALL(glGetShaderInfoLog(id, length, &length, message));
+		std::string error_tag;
+		switch (type)
+		{
+		case GL_VERTEX_SHADER:
+			error_tag = "[VS]";
+			break;
+		case GL_FRAGMENT_SHADER:
+			error_tag = "[FS]";
+			break;
+		case GL_COMPUTE_SHADER:
+			error_tag = "[CS]";
+			break;
+		}
+		LOG(error_tag + " " + message);
+		GL_CALL(glDeleteShader(id));
+		return 0;
+	}
+
+	return id;
+}
+
+GLenum MacroToShaderType(const std::string macro)
+{
+	if (macro.find("#start VERTEX") != std::string::npos) return GL_VERTEX_SHADER;
+	if (macro.find("#start FRAGMENT") != std::string::npos) return GL_FRAGMENT_SHADER;
+	if (macro.find("#start COMPUTE") != std::string::npos) return GL_COMPUTE_SHADER;
+	return 0;
+}
+
+static bool LoadAndCompileShader(std::string path, GLHandle& shaderHandle)
+{
+	std::string code = "";
+	GLenum type = 0;
+	path = SHADER_PATH + path;
+
+	std::vector<std::string> shaderContent;
+
+	if (!FileUtil::ReadFile(path, shaderContent))
+	{
+		LOG("[SHADER_LOAD] Failed to load a file: " + path);
+		return false;
+	}
+
+	std::set<std::string> loadedFiles = {};
+
+	std::vector<GLHandle> shaderModules;
+	for (size_t i = 0; i < shaderContent.size(); i++)
+	{
+		std::string& line = shaderContent[i];
+
+		GLenum next_type = MacroToShaderType(line);
+		if (next_type != 0)
+		{
+			if (!code.empty())
+			{
+				GLHandle shaderModule = CompileShader(type, code.c_str());
+				if (shaderModule == 0) return false;
+				shaderModules.push_back(shaderModule);
+			}
+			code = "#version 430\n";
+			type = next_type;
+			continue;
+		}
+
+		if (type == 0) continue; // TODO: Add common code
+
+		if (line.find("#include") != std::string::npos)
+		{
+			std::string fileName = line;
+			StringUtil::ReplaceAll(fileName, "#include", "");
+			StringUtil::ReplaceAll(fileName, " ", "");
+			StringUtil::ReplaceAll(fileName, "\"", "");
+
+			if (loadedFiles.count(fileName)) continue;
+			loadedFiles.insert(fileName);
+
+			std::vector<std::string> _c;
+			if (!FileUtil::ReadFile(SHADER_PATH + fileName, _c))
+			{
+				LOG("[SHADER_LOAD] Failed to include " + fileName + " in " + path);
+			}
+			shaderContent.insert((shaderContent.begin() + (i + 1)), _c.begin(), _c.end());
+		}
+		else
+		{
+			code.append(line + "\n");
+		}
+	}
+
+	GLHandle shaderModule = CompileShader(type, code.c_str());
+	if (shaderModule == 0) return false;
+	shaderModules.push_back(shaderModule);
+
+	if (shaderModules.size() == 0) return false;
+
+	for (GLHandle sm : shaderModules) { GL_CALL(glAttachShader(shaderHandle, sm)); }
+	GL_CALL(glLinkProgram(shaderHandle));
+
+	GLint validLinking;
+	GL_CALL(glGetProgramiv(shaderHandle, GL_LINK_STATUS, (int*)&validLinking));
+	GL_CALL(glValidateProgram(shaderHandle));
+
+#ifdef DEBUG
+	for (GLHandle sm : shaderModules) { GL_CALL(glDetachShader(shaderHandle, sm)); }
+#else
+	for (GLHandle sm : shaderModules) { GL_CALL(glDeleteShader(sm)); }
+#endif
+
+	return validLinking;
+}
+
+Shader::Shader(const std::string path)
 {
 	GL_CALL(m_Handle = glCreateProgram());
 
-	std::string vertexCode;
-	std::string fragmentCode;
-
-	if (!LoadShader(vert, vertexCode) || !LoadShader(frag, fragmentCode))
-	{
-		m_Valid = false;
-		return;
-	}
-
-	unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexCode.c_str());
-	unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentCode.c_str());
-
-	if (!vs || !fs)
-	{
-		m_Valid = false;
-		return;
-	}
-
-	GL_CALL(glAttachShader(m_Handle, vs));
-	GL_CALL(glAttachShader(m_Handle, fs));
-	// TODO: Validate linking
-	GL_CALL(glLinkProgram(m_Handle));
-	GL_CALL(glValidateProgram(m_Handle));
-
-#ifdef DEBUG
-	GL_CALL(glDetachShader(m_Handle, vs));
-	GL_CALL(glDetachShader(m_Handle, fs));
-#else
-	GL_CALL(glDeleteShader(vs));
-	GL_CALL(glDeleteShader(fs));
-#endif
+	m_Valid = LoadAndCompileShader(path, m_Handle);
 }
 
 Shader::~Shader()
@@ -576,85 +595,6 @@ template<> void Shader::SetUniform<Vec3>(const std::string& key, Vec3 data) cons
 template<> void Shader::SetUniform<Mat3>(const std::string& key, Mat3 value) const
 {
 	GL_CALL(glUniformMatrix3fv(GetUniformLocation(m_Handle, key), 1, GL_FALSE, glm::value_ptr(value)));
-}
-
-// -------------------------------------------
-// ---------- ComputeShader ------------------
-// -------------------------------------------
-
-bool ComputeShader::s_InitializedHW = false;
-int  ComputeShader::s_MaxGroupSize[3] = { 0 };
-int  ComputeShader::s_MaxGroupInvocations = 0;
-
-void ComputeShader::InitializeHW()
-{
-	GL_CALL(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &s_MaxGroupSize[0]));
-	GL_CALL(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &s_MaxGroupSize[1]));
-	GL_CALL(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &s_MaxGroupSize[2]));
-
-	GL_CALL(glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &s_MaxGroupInvocations));
-	
-	LOG("[ComputeShader][HWInit] Max group size is (" + std::to_string(s_MaxGroupSize[0]) + "," + std::to_string(s_MaxGroupSize[1]) + "," + std::to_string(s_MaxGroupSize[2]) + ")");
-	LOG("[ComputeShader][HWInit] Max local group invoactions is " + std::to_string(s_MaxGroupInvocations));
-
-	s_InitializedHW = true;
-}
-
-ComputeShader::ComputeShader(const std::string& cs)
-{
-	if (!s_InitializedHW) InitializeHW();
-
-	std::string csCode;
-	if (!LoadShader(cs, csCode))
-	{
-		m_Valid = false;
-		return;
-	}
-
-	GL_CALL(m_Handle = glCreateProgram());
-
-	GLHandle csHandle = CompileShader(GL_COMPUTE_SHADER, csCode.c_str());
-
-	if (!csHandle)
-	{
-		m_Valid = false;
-		return;
-	}
-
-	GL_CALL(glAttachShader(m_Handle, csHandle));
-	GL_CALL(glLinkProgram(m_Handle));
-	GL_CALL(glValidateProgram(m_Handle));
-
-#ifdef DEBUG
-	GL_CALL(glDetachShader(m_Handle, csHandle));
-#else
-	GL_CALL(glDeleteShader(csHandle));
-#endif
-}
-
-ComputeShader::~ComputeShader()
-{
-	GL_CALL(glDeleteProgram(m_Handle));
-}
-
-void ComputeShader::Bind()
-{
-	GL_CALL(glUseProgram(m_Handle));
-}
-
-void ComputeShader::Unbind()
-{
-	GL_CALL(glUseProgram(0));
-}
-
-template<> void ComputeShader::SetUniform<int>(const std::string& key, int value) const
-{
-	GL_CALL(glUniform1i(GetUniformLocation(m_Handle, key), value));
-}
-
-template<> void ComputeShader::SetUniform<Vec2>(const std::string& key, Vec2 value) const
-{
-	GL_CALL(glUniform2fv(GetUniformLocation(m_Handle, key), 1 ,glm::value_ptr(value)));
 }
 
 // -------------------------------------------

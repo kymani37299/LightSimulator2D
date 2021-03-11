@@ -13,7 +13,6 @@ class Scene;
 class ShaderStorageBuffer;
 class ShaderInput;
 class UniformBuffer;
-class ComputeShader;
 class Shader;
 
 class Framebuffer;
@@ -85,7 +84,7 @@ private:
 
 	std::vector<Vec2> m_RayQuery;
 
-	ComputeShader* m_OcclusionMeshGenShader = nullptr;
+	Shader* m_OcclusionMeshGenShader = nullptr;
 	Shader* m_ShadowmapShader = nullptr;
 	Shader* m_MergeShader = nullptr;
 	Shader* m_BlurShader = nullptr;
@@ -97,6 +96,6 @@ private:
 	UniformBuffer* m_OcclusionLines;
 	UniformBuffer* m_RayQueryBuffer;
 
-	ComputeShader* m_OcclusionShader = nullptr;
-	ComputeShader* m_TriangulationShader = nullptr;
+	Shader* m_OcclusionShader = nullptr;
+	Shader* m_TriangulationShader = nullptr;
 };

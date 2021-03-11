@@ -6,7 +6,6 @@
 #include "util/Profiler.h"
 
 extern bool CreateShader(const std::string& name, Shader*& shader);
-extern bool CreateCShader(const std::string& name, ComputeShader*& shader);
 
 LightingRenderer::LightingRenderer(Framebuffer* albedoFB, Framebuffer* occlusionFB):
 	m_AlbedoFB(albedoFB),
