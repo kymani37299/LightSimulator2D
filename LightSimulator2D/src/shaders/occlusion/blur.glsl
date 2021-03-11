@@ -22,8 +22,8 @@ layout(binding = 0) uniform sampler2D u_Input;
 layout(location = 0) out vec4 FinalColor;
 
 const float directions = 16.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
-const float quality = 3.0; // BLUR QUALITY (Default 3.0 - More is better but slower)
-const float size = 8.0; // BLUR SIZE (Radius)
+const float quality = 4.0; // BLUR QUALITY (Default 3.0 - More is better but slower)
+const float size = 16.0; // BLUR SIZE (Radius)
 
 void main()
 {
