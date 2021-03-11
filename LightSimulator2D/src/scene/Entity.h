@@ -20,6 +20,7 @@ struct DrawFlags
 {
 	bool occluder : 1;
 	bool emitter : 1;
+	bool background : 1;
 };
 
 struct EmissionProperties
@@ -40,6 +41,11 @@ struct OcclusionProperties
 	unsigned meshLod = 0;
 };
 
+struct BackgroundProperties
+{
+	float textureScale = 1.0;
+};
+
 class Entity
 {
 	friend class Renderer;
@@ -55,6 +61,7 @@ public:
 	inline DrawFlags& GetDrawFlags() { return m_DrawFlags; }
 	inline EmissionProperties& GetEmissionProperties() { return m_EmissionProperties; }
 	inline OcclusionProperties& GetOcclusionProperties() { return m_OcclusionProperties; }
+	inline BackgroundProperties& GetBackgroundProperties() { return m_BackgroundProperties; }
 	inline Texture* GetTexture() { return m_Texture; }
 	inline Texture* GetNormalMap() { return m_NormalMap; }
 
@@ -93,6 +100,7 @@ private:
 	DrawFlags m_DrawFlags = {0};
 	EmissionProperties m_EmissionProperties;
 	OcclusionProperties m_OcclusionProperties;
+	BackgroundProperties m_BackgroundProperties;
 
 	std::vector<Component*> m_Components;
 };

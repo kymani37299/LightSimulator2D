@@ -40,6 +40,7 @@ public:
 
     inline std::vector<Entity*>& GetOccluders() { return m_Occluders; }
     inline std::vector<Entity*>& GetEmitters() { return m_Emitters; }
+    inline Entity* GetBackground() { return m_Background; }
 
     size_t FindById(unsigned id) 
     {
@@ -65,4 +66,5 @@ private:
 
     std::vector<Entity*> m_Occluders;
     std::vector<Entity*> m_Emitters;
+    Entity* m_Background;
 };

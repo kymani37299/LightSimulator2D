@@ -43,6 +43,7 @@ void Scene::OnEntityAdded(Entity* e)
 	DrawFlags df = e->GetDrawFlags();
 	if (df.occluder) m_Occluders.push_back(e);
 	if (df.emitter) m_Emitters.push_back(e);
+	if (df.background) m_Background = e;
 }
 
 void Scene::OnEntityRemoved(Entity* e)

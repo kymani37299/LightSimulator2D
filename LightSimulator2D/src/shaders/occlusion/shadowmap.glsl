@@ -1,7 +1,5 @@
 #start VERTEX
 
-#include "common.h"
-
 layout(location = 0) in vec4 in_Position;
 
 out vec2 POS;

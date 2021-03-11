@@ -115,6 +115,30 @@ void Renderer::RenderFrame()
     m_LightingRenderer->RenderLights(m_Scene);
 }
 
+inline void RenderEntity(Shader* shader, Entity* e)
+{
+    if (e->GetDrawFlags().background)
+    {
+        shader->SetUniform("u_Transform", MAT3_IDENTITY);
+        shader->SetUniform("u_UVScale", e->GetBackgroundProperties().textureScale);
+        shader->SetUniform("u_UVOffset", e->m_Transform.position);
+    }
+    else
+    {
+        shader->SetUniform("u_Transform", e->GetTransformation());
+        shader->SetUniform("u_UVScale", 1.0f);
+        shader->SetUniform("u_UVOffset", VEC2_ZERO);
+    }
+
+    e->GetTexture()->Bind(0);
+
+    Texture* normal = e->GetNormalMap();
+    if (normal) normal->Bind(1);
+    shader->SetUniform("u_NormalEnabled", normal != nullptr);
+
+    GLFunctions::DrawPoints(1);
+}
+
 void Renderer::RenderAlbedo()
 {
     PROFILE_SCOPE("Albedo");
@@ -125,15 +149,16 @@ void Renderer::RenderAlbedo()
     Vec2 lightSource = m_Scene->GetEmitters()[0]->m_Transform.position;
     m_AlbedoShader->SetUniform("u_LightSource", lightSource);
 
+    // Render background
+    Entity* bg = m_Scene->GetBackground();
+    if (bg) RenderEntity(m_AlbedoShader, bg);
+
     for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
     {
         Entity* e = (*it);
-        m_AlbedoShader->SetUniform("u_Transform", e->GetTransformation());
-        e->GetTexture()->Bind(0);
-        Texture* normal = e->GetNormalMap();
-        if (normal) normal->Bind(1);
-        m_AlbedoShader->SetUniform("u_NormalEnabled", normal != nullptr);
-        GLFunctions::DrawPoints(1);
+        if (e == bg) continue;
+
+        RenderEntity(m_AlbedoShader, e);
     }
     m_AlbedoFB->Unbind();
 }

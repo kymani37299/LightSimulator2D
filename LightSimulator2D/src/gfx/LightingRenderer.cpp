@@ -6,6 +6,7 @@
 #include "util/Profiler.h"
 
 extern bool CreateShader(const std::string& name, Shader*& shader);
+extern inline void RenderEntity(Shader* shader, Entity* entity);
 
 LightingRenderer::LightingRenderer(Framebuffer* albedoFB, Framebuffer* occlusionFB):
 	m_AlbedoFB(albedoFB),
@@ -56,17 +57,9 @@ void LightingRenderer::RenderOccluders(Scene* scene)
     Vec2 lightSource = scene->GetEmitters()[0]->m_Transform.position;
     m_OccluderShader->SetUniform("u_LightSource", lightSource);
 
-    GLConstants::QuadInput->Bind();
     for (Entity* e : scene->GetOccluders())
     {
-        m_OccluderShader->SetUniform("u_Transform", e->GetTransformation());
-        e->GetTexture()->Bind(0);
-
-        Texture* normalMap = e->GetNormalMap();
-        if (normalMap) normalMap->Bind(1);
-        m_OccluderShader->SetUniform("u_NormalEnabled", normalMap != nullptr);
-
-        GLFunctions::DrawPoints(1);
+        RenderEntity(m_OccluderShader, e);
     }
 }
 

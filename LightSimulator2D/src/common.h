@@ -34,6 +34,8 @@ using Mat4 = glm::mat4;
 
 #define VEC3_ZERO Vec3(0.0f,0.0f,0.0f)
 
+#define MAT3_IDENTITY Mat3(1.0)
+
 #define DELETE_COPY_CONSTRUCTOR(X) \
 X(X const&) = delete; \
 X& operator=(X const&) = delete;
