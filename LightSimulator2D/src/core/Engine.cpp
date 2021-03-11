@@ -40,10 +40,15 @@ static void SetupTestScene(Scene* scene, PlayerControllerComponent* playerContro
     e3->GetEmissionProperties().color = Vec3(1.0, 1.0, 0.0);
     e3->GetEmissionProperties().radius = 0.1f;
 
+    Entity* e4 = new Entity{ "res/animals/elephant.png" , "res/animals/elephant_normal.jpg" };
+    e4->m_Transform.scale *= 0.8;
+    e4->m_Transform.position = Vec2(0.8, 0.8);
+
     scene->AddEntity(bg);
     scene->AddEntity(e1);
     scene->AddEntity(e2);
     scene->AddEntity(e3);
+    scene->AddEntity(e4);
 }
 
 GameEngine* GameEngine::s_Instance = nullptr;

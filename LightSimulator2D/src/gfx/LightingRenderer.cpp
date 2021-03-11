@@ -25,7 +25,7 @@ void LightingRenderer::CompileShaders()
 
     CreateShader(shader_path + "lighting", m_LightingShader);
     CreateShader(shader_path + "emitter", m_EmitterShader);
-    CreateShader(shader_path + "occluder", m_OccluderShader);
+    CreateShader("albedo", m_OccluderShader);
 }
 
 void LightingRenderer::RenderLights(Scene* scene)
@@ -66,7 +66,7 @@ void LightingRenderer::RenderOccluders(Scene* scene)
         if (normalMap) normalMap->Bind(1);
         m_OccluderShader->SetUniform("u_NormalEnabled", normalMap != nullptr);
 
-        GLFunctions::Draw(6);
+        GLFunctions::DrawPoints(1);
     }
 }
 

@@ -8,6 +8,7 @@ void main() { }
 
 #start FRAGMENT
 
+in vec2 POS;
 in vec2 UV;
 
 layout(binding = 0) uniform sampler2D u_Texture;
