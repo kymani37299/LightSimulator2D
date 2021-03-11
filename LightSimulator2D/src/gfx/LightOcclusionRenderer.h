@@ -41,7 +41,7 @@ public:
 
 	void RenderOcclusion(Scene* scene);
 
-	Framebuffer* GetOcclusionMaskFB() { return m_OcclusionMaskFB; }
+	Framebuffer* GetOcclusionMaskFB() { return m_OcclusionMaskFinal; }
 
 private:
 	void SetupLineSegments();
@@ -55,6 +55,7 @@ private:
 	void TriangulateMeshes();
 	void RenderOcclusionMask();
 	void MergeMasks();
+	void BlurMask();
 
 	Framebuffer* GetCurrentOcclusionMask() { return m_OcclusionMaskPP ? m_OcclusionMaskFB1 : m_OcclusionMaskFB2; }
 	Framebuffer* GetOtherOcclusionMask() { return m_OcclusionMaskPP ? m_OcclusionMaskFB2 : m_OcclusionMaskFB1; }
@@ -80,12 +81,14 @@ private:
 	Framebuffer* m_OcclusionMaskFB1;
 	Framebuffer* m_OcclusionMaskFB2;
 	Framebuffer* m_OcclusionMaskFB;
+	Framebuffer* m_OcclusionMaskFinal;
 
 	std::vector<Vec2> m_RayQuery;
 
 	ComputeShader* m_OcclusionMeshGenShader = nullptr;
 	Shader* m_ShadowmapShader = nullptr;
 	Shader* m_MergeShader = nullptr;
+	Shader* m_BlurShader = nullptr;
 
 	unsigned m_RayCount = 0;
 

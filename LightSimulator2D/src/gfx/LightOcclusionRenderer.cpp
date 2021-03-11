@@ -24,12 +24,15 @@ LightOcclusionRenderer::LightOcclusionRenderer()
     m_OcclusionMaskFB1 = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
     m_OcclusionMaskFB2 = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
     m_OcclusionMaskFB = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
+    m_OcclusionMaskFinal = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     m_OcclusionMeshOutput = new ShaderStorageBuffer(sizeof(Vec4), MAX_OCCLUSION_MESH_SIZE);
 }
 
 LightOcclusionRenderer::~LightOcclusionRenderer()
 {
+    delete m_BlurShader;
+    delete m_OcclusionMaskFinal;
     delete m_OcclusionMaskFB;
     delete m_OcclusionMaskFB1;
     delete m_OcclusionMaskFB2;
@@ -55,6 +58,7 @@ void LightOcclusionRenderer::CompileShaders()
     CreateCShader(shader_path + "occlusion_mesh_gen", m_OcclusionMeshGenShader);
     CreateShader (shader_path + "shadowmap",m_ShadowmapShader);
     CreateShader (shader_path + "merge", m_MergeShader);
+    CreateShader (shader_path + "blur", m_BlurShader);
 }
 
 void LightOcclusionRenderer::OnOccluderAdded(Entity* e)
@@ -109,6 +113,7 @@ void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
     PROFILE_SCOPE("Render occlusion");
 
     MergeMasks();
+    BlurMask();
 
     size_t numEmitters = scene->GetEmitters().size();
     if (numEmitters < 1) return;
@@ -369,5 +374,16 @@ void LightOcclusionRenderer::MergeMasks()
     m_MergeShader->SetUniform("u_Weight", m_TimeSinceLastDraw / DRAW_INTERVAL);
     GetOtherOcclusionMask()->BindTexture(0,0);
     GetCurrentOcclusionMask()->BindTexture(0,1);
+    GLFunctions::DrawFC();
+}
+
+void LightOcclusionRenderer::BlurMask()
+{
+    PROFILE_SCOPE("Blur mask");
+
+    GLFunctions::MemoryBarrier(BarrierType::Framebuffer);
+    m_OcclusionMaskFinal->ClearAndBind();
+    m_BlurShader->Bind();
+    m_OcclusionMaskFB->BindTexture(0, 0);
     GLFunctions::DrawFC();
 }
