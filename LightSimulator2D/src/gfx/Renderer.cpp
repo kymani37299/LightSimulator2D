@@ -149,9 +149,11 @@ void Renderer::RenderAlbedo()
     Vec2 lightSource = m_Scene->GetEmitters()[0]->m_Transform.position;
     m_AlbedoShader->SetUniform("u_LightSource", lightSource);
 
+    m_AlbedoShader->SetUniform("u_View", m_Scene->GetCamera().GetTransformation());
+
     // Render background
     Entity* bg = m_Scene->GetBackground();
-    if (bg) RenderEntity(m_AlbedoShader, bg);
+    if (bg) RenderEntity(m_AlbedoShader, bg); // TODO: Sync this with camera pos
 
     for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
     {

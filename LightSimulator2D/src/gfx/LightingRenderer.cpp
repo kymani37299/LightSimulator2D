@@ -68,6 +68,7 @@ void LightingRenderer::RenderEmitters(Scene* scene)
     PROFILE_SCOPE("Draw emitters");
 
     m_EmitterShader->Bind();
+    m_EmitterShader->SetUniform("u_View", scene->GetCamera().GetTransformation());
     for (Entity* e : scene->GetEmitters())
     {
         m_EmitterShader->SetUniform("u_Transform", e->GetTransformation());

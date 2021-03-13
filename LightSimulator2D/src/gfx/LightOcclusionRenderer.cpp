@@ -123,9 +123,12 @@ void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
     GetCurrentOcclusionMask()->Clear();
     float angleStep = 2.0f * 3.1415f / NUM_LIGHT_SAMPLES;
 
+    const Camera& cam = scene->GetCamera();
+
     for (Entity* emitter : scene->GetEmitters())
     {
         Vec2 emitterPos = emitter->m_Transform.position;
+        emitterPos = cam.GetViewSpacePosition(emitterPos);
         m_CurrentQuery.color = emitter->GetEmissionProperties().color;
         m_CurrentQuery.radius = emitter->GetEmissionProperties().radius;
         m_CurrentQuery.strength = (1.0f / NUM_LIGHT_SAMPLES * 1.3f);
@@ -135,7 +138,7 @@ void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
             float angle = i * angleStep;
             m_CurrentQuery.position = emitterPos + Vec2(cos(angle), sin(angle)) * m_CurrentQuery.radius;
 
-            LightOcclusion();
+            LightOcclusion(scene);
             TriangulateMeshes();
             RenderOcclusionMask();
         }
@@ -152,13 +155,14 @@ unsigned LightOcclusionRenderer::SetupOcclusionMeshInput()
     return numIntersections;
 }
 
-void LightOcclusionRenderer::SetupLineSegments()
+void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
 {
     m_OcclusionLineCount = 0;
+    const Mat3 view = scene->GetCamera().GetTransformation();
     for (auto it = m_OcclusionMeshPool.begin(); it != m_OcclusionMeshPool.end(); it++)
     {
         const Entity* e = it->first;
-        const Mat3 transform = e->GetTransformation();
+        const Mat3 transform = e->GetTransformation() * view;
         const OcclusionMesh& mesh = it->second;
         for (size_t i = 0; i < mesh.size(); i++)
         {
@@ -207,7 +211,7 @@ void LightOcclusionRenderer::SetupRayQuery()
         for (Vec2 p : mesh)
         {
             m_RayQuery.push_back(p - e);
-            m_RayQuery.push_back(e);
+            m_RayQuery.push_back(e); // TODO: e -> p ???
             m_RayQuery.push_back(p + e);
         }
     }
@@ -334,11 +338,11 @@ void LightOcclusionRenderer::PopulateOcclusionMesh(OcclusionMesh& mesh, int mesh
     }
 }
 
-void LightOcclusionRenderer::LightOcclusion()
+void LightOcclusionRenderer::LightOcclusion(Scene* scene)
 {
     PROFILE_SCOPE("Light occlusion");
 
-    SetupLineSegments();
+    SetupLineSegments(scene);
     SetupRayQuery();
 
     m_OcclusionShader->Bind();

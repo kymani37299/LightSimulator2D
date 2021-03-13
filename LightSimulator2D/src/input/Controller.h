@@ -27,6 +27,7 @@ public:
 	PlayerController(PlayerControllerComponent* controllerComponent) : m_ControllerComponent(controllerComponent) {}
 
 	Vec2& GetMoveDir();
+	Vec2& GetCameraDir();
 
 private:
 	void _Init();

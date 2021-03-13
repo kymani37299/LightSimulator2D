@@ -15,9 +15,19 @@ void PlayerController::_Init()
 
     m_Input->AddKeyPressedCallback(GLFW_KEY_ESCAPE, PLAYER_KEY_CALLBACK(EscapeCallback));
     m_Input->AddKeyPressedCallback(GLFW_KEY_R, PLAYER_KEY_CALLBACK(ReloadShadersCallback));
+
+    m_Input->AddStateChangedCallback(GLFW_KEY_UP, PLAYER_KEY_CALLBACK(CamForwardCallback));
+    m_Input->AddStateChangedCallback(GLFW_KEY_DOWN, PLAYER_KEY_CALLBACK(CamBackCallback));
+    m_Input->AddStateChangedCallback(GLFW_KEY_LEFT, PLAYER_KEY_CALLBACK(CamLeftCallback));
+    m_Input->AddStateChangedCallback(GLFW_KEY_RIGHT, PLAYER_KEY_CALLBACK(CamRightCallback));
 }
 
 Vec2& PlayerController::GetMoveDir()
 {
     return m_ControllerComponent->GetMoveDir();
+}
+
+Vec2& PlayerController::GetCameraDir()
+{
+    return m_ControllerComponent->GetCameraDir();
 }

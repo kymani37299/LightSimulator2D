@@ -43,14 +43,14 @@ public:
 	Framebuffer* GetOcclusionMaskFB() { return m_OcclusionMaskFinal; }
 
 private:
-	void SetupLineSegments();
+	void SetupLineSegments(Scene* scene);
 	void SetupRayQuery();
 	unsigned SetupOcclusionMeshInput();
 
 	using OcclusionMesh = std::vector<Vec2>;
 	void PopulateOcclusionMesh(OcclusionMesh& mesh, int meshSize);
 	
-	void LightOcclusion();
+	void LightOcclusion(Scene* scene);
 	void TriangulateMeshes();
 	void RenderOcclusionMask();
 	void MergeMasks();

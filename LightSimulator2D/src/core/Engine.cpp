@@ -22,7 +22,7 @@ static void SetupTestScene(Scene* scene, PlayerControllerComponent* playerContro
     bg->GetDrawFlags().background = true;
     bg->GetBackgroundProperties().textureScale = 5.0f;
 
-    Entity* e1 = new Entity{ "res/animals/elephant.png" };
+    Entity* e1 = new Entity{ "res/animals/elephant.png", "res/animals/elephant_normal3.jpg" };
     e1->GetDrawFlags().occluder = true;
     e1->GetOcclusionProperties().shape = OccluderShape::Mesh;
     e1->GetOcclusionProperties().meshLod = 2;
@@ -30,7 +30,9 @@ static void SetupTestScene(Scene* scene, PlayerControllerComponent* playerContro
     e1->AddComponent(playerController);
 
     Entity* e2 = new Entity{ "res/animals/hippo.png" };
-    e2->GetDrawFlags().occluder = true;
+    //e2->GetDrawFlags().emitter = true;
+    e2->GetEmissionProperties().color = Vec3(0.0, 0.0, 1.0);
+    e2->GetEmissionProperties().radius = 0.05f;
     e2->m_Transform.scale *= 0.2;
     e2->m_Transform.position = Vec2(-0.3, 0.5);
 
@@ -76,7 +78,7 @@ GameEngine::~GameEngine()
 
 void GameEngine::Init()
 {
-    PlayerControllerComponent* controllerComponent = new PlayerControllerComponent();
+    PlayerControllerComponent* controllerComponent = new PlayerControllerComponent(m_Scene.GetCamera());
     SetupTestScene(&m_Scene, controllerComponent);
 
     m_Window.SetInput(&m_Input);

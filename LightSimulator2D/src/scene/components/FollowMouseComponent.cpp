@@ -7,5 +7,5 @@
 
 void FollowMouseComponent::Update(float dt)
 {
-	m_Parent->m_Transform.position = GameEngine::Get()->GetInput()->GetMousePosition();
+	m_Parent->m_Transform.position = GameEngine::Get()->GetInput()->GetMousePosition(); // TODO: Sync this pos with camera pos
 }
