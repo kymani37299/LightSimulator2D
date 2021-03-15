@@ -21,6 +21,7 @@ public:
 	Window* GetMainWindow() { return &m_Window; }
 	Renderer* GetRenderer() { return &m_Renderer; }
 	Input* GetInput() { return &m_Input; }
+	Camera& GetCamera() { return m_Scene.GetCamera(); }
 
 public:
 	void Run();
