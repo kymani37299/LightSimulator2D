@@ -30,7 +30,7 @@ static void SetupTestScene(Scene* scene, PlayerControllerComponent* playerContro
     e1->AddComponent(playerController);
 
     Entity* e2 = new Entity{ "res/animals/hippo.png" };
-    //e2->GetDrawFlags().emitter = true;
+    e2->GetDrawFlags().emitter = true;
     e2->GetEmissionProperties().color = Vec3(0.0, 0.0, 1.0);
     e2->GetEmissionProperties().radius = 0.05f;
     e2->m_Transform.scale *= 0.2;

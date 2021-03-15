@@ -136,9 +136,14 @@ void Renderer::RenderAlbedo()
     m_AlbedoFB->ClearAndBind();
     m_AlbedoShader->Bind();
 
-    // TODO: No emitters and multiple emitters
-    Vec2 lightSource = m_Scene->GetEmitters()[0]->m_Transform.position + cam.position;
-    m_AlbedoShader->SetUniform("u_LightSource", lightSource);
+    // Setup light sources
+    m_AlbedoShader->SetUniform("u_NumLightSources", (int)m_Scene->GetEmitters().size());
+    unsigned index = 0;
+    for (Entity* e : m_Scene->GetEmitters())
+    {
+        m_AlbedoShader->SetUniform("u_LightSources[" + std::to_string(index) + "]", e->m_Transform.position + cam.position);
+        index++;
+    }
 
     m_AlbedoShader->SetUniform("u_View", MAT3_IDENTITY);
     m_AlbedoShader->SetUniform("u_Transform", MAT3_IDENTITY);

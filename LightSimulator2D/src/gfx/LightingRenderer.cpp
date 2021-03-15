@@ -55,9 +55,14 @@ void LightingRenderer::RenderOccluders(Scene* scene)
 
     const Camera& cam = scene->GetCamera();
 
-    // TODO: No emitters and multiple emitters
-    Vec2 lightSource = scene->GetEmitters()[0]->m_Transform.position;
-    m_OccluderShader->SetUniform("u_LightSource", lightSource);
+    // Setup light sources
+    m_OccluderShader->SetUniform("u_NumLightSources", (int)scene->GetEmitters().size());
+    unsigned index = 0;
+    for (Entity* e : scene->GetEmitters())
+    {
+        m_OccluderShader->SetUniform("u_LightSources[" + std::to_string(index) + "]", e->m_Transform.position);
+        index++;
+    }
 
     m_OccluderShader->SetUniform("u_View", cam.GetTransformation());
     m_OccluderShader->SetUniform("u_UVScale", 1.0f);
