@@ -146,7 +146,7 @@ void Renderer::RenderAlbedo()
     // Render background
     Entity* bg = m_Scene->GetBackground();
     m_AlbedoShader->SetUniform("u_UVScale", bg->GetBackgroundProperties().textureScale / cam.zoom);
-    m_AlbedoShader->SetUniform("u_UVOffset", cam.position + bg->m_Transform.position);
+    m_AlbedoShader->SetUniform("u_UVOffset", -(cam.position + bg->m_Transform.position)/2.0f);
     if (bg) RenderEntity(m_AlbedoShader, bg);
 
     m_AlbedoShader->SetUniform("u_View", cam.GetTransformation());
