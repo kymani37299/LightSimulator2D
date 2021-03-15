@@ -65,7 +65,7 @@ void LightingRenderer::RenderOccluders(Scene* scene)
     }
 
     m_OccluderShader->SetUniform("u_View", cam.GetTransformation());
-    m_OccluderShader->SetUniform("u_UVScale", 1.0f);
+    m_OccluderShader->SetUniform("u_UVScale", VEC2_ONE);
     m_OccluderShader->SetUniform("u_UVOffset", VEC2_ZERO);
 
     for (Entity* e : scene->GetOccluders())

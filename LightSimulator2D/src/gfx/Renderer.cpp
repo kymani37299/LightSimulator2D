@@ -150,12 +150,14 @@ void Renderer::RenderAlbedo()
 
     // Render background
     Entity* bg = m_Scene->GetBackground();
-    m_AlbedoShader->SetUniform("u_UVScale", bg->GetBackgroundProperties().textureScale / cam.zoom);
+    float texScale = bg->GetBackgroundProperties().textureScale / cam.zoom;
+    Vec2 texScale2D = Vec2(texScale * SCREEN_ASPECT_RATIO, texScale);
+    m_AlbedoShader->SetUniform("u_UVScale", texScale2D);
     m_AlbedoShader->SetUniform("u_UVOffset", -(cam.position + bg->m_Transform.position)/2.0f);
     if (bg) RenderEntity(m_AlbedoShader, bg);
 
     m_AlbedoShader->SetUniform("u_View", cam.GetTransformation());
-    m_AlbedoShader->SetUniform("u_UVScale", 1.0f);
+    m_AlbedoShader->SetUniform("u_UVScale", VEC2_ONE);
     m_AlbedoShader->SetUniform("u_UVOffset", VEC2_ZERO);
 
     for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)

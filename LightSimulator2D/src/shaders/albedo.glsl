@@ -21,7 +21,7 @@ uniform vec2 u_LightSources[MAX_LIGHT_SOURCES];
 
 uniform bool u_NormalEnabled;
 
-uniform float u_UVScale = 1.0;
+uniform vec2 u_UVScale = vec2(1.0,1.0);
 uniform vec2 u_UVOffset = vec2(0.0,0.0);
 
 uniform mat3 u_View;
