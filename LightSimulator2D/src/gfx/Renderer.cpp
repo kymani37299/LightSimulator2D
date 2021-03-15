@@ -161,7 +161,8 @@ void Renderer::RenderAlbedo()
     for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
     {
         Entity* e = (*it);
-        if (e == bg) continue;
+        DrawFlags df = e->GetDrawFlags();
+        if (df.background || df.emitter || df.occluder) continue;
 
         RenderEntity(m_AlbedoShader, e);
     }
