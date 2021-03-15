@@ -53,9 +53,15 @@ void LightingRenderer::RenderOccluders(Scene* scene)
     PROFILE_SCOPE("Draw occluders");
     m_OccluderShader->Bind();
 
+    const Camera& cam = scene->GetCamera();
+
     // TODO: No emitters and multiple emitters
     Vec2 lightSource = scene->GetEmitters()[0]->m_Transform.position;
     m_OccluderShader->SetUniform("u_LightSource", lightSource);
+
+    m_OccluderShader->SetUniform("u_View", cam.GetTransformation());
+    m_OccluderShader->SetUniform("u_UVScale", 1.0f);
+    m_OccluderShader->SetUniform("u_UVOffset", VEC2_ZERO);
 
     for (Entity* e : scene->GetOccluders())
     {

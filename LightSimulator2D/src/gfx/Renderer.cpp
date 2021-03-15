@@ -117,18 +117,7 @@ void Renderer::RenderFrame()
 
 inline void RenderEntity(Shader* shader, Entity* e)
 {
-    if (e->GetDrawFlags().background)
-    {
-        shader->SetUniform("u_Transform", MAT3_IDENTITY);
-        shader->SetUniform("u_UVScale", e->GetBackgroundProperties().textureScale);
-        shader->SetUniform("u_UVOffset", e->m_Transform.position);
-    }
-    else
-    {
-        shader->SetUniform("u_Transform", e->GetTransformation());
-        shader->SetUniform("u_UVScale", 1.0f);
-        shader->SetUniform("u_UVOffset", VEC2_ZERO);
-    }
+    if (!e->GetDrawFlags().background) shader->SetUniform("u_Transform", e->GetTransformation());
 
     e->GetTexture()->Bind(0);
 
@@ -141,19 +130,28 @@ inline void RenderEntity(Shader* shader, Entity* e)
 
 void Renderer::RenderAlbedo()
 {
+    Camera& cam = m_Scene->GetCamera();
+
     PROFILE_SCOPE("Albedo");
     m_AlbedoFB->ClearAndBind();
     m_AlbedoShader->Bind();
 
     // TODO: No emitters and multiple emitters
-    Vec2 lightSource = m_Scene->GetEmitters()[0]->m_Transform.position;
+    Vec2 lightSource = m_Scene->GetEmitters()[0]->m_Transform.position + cam.position;
     m_AlbedoShader->SetUniform("u_LightSource", lightSource);
 
-    m_AlbedoShader->SetUniform("u_View", m_Scene->GetCamera().GetTransformation());
+    m_AlbedoShader->SetUniform("u_View", MAT3_IDENTITY);
+    m_AlbedoShader->SetUniform("u_Transform", MAT3_IDENTITY);
 
     // Render background
     Entity* bg = m_Scene->GetBackground();
-    if (bg) RenderEntity(m_AlbedoShader, bg); // TODO: Sync this with camera pos
+    m_AlbedoShader->SetUniform("u_UVScale", bg->GetBackgroundProperties().textureScale / cam.zoom);
+    m_AlbedoShader->SetUniform("u_UVOffset", cam.position + bg->m_Transform.position);
+    if (bg) RenderEntity(m_AlbedoShader, bg);
+
+    m_AlbedoShader->SetUniform("u_View", cam.GetTransformation());
+    m_AlbedoShader->SetUniform("u_UVScale", 1.0f);
+    m_AlbedoShader->SetUniform("u_UVOffset", VEC2_ZERO);
 
     for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
     {
