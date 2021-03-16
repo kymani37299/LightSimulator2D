@@ -1,24 +1,11 @@
-#include <chrono>
-
 #include "core/Engine.h"
+
+#include "util/StringUtil.h"
 
 int main(int argc, char* argv[])
 {
     int sceneIndex = 0;
-
-    if (argc > 1)
-    {
-        try 
-        {
-            sceneIndex = std::stoi(argv[1]);
-        }
-        catch (std::exception const& e) 
-        { 
-            (void)e;
-            sceneIndex = 0;
-        }
-    }
-
+    if (argc > 1) StringUtil::ParseInt(argv[1], sceneIndex);
 
     GameEngine* engine = GameEngine::Get();
     engine->Init(sceneIndex);

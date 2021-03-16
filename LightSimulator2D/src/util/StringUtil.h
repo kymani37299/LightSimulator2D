@@ -4,11 +4,13 @@
 
 namespace StringUtil
 {
-    static void ReplaceAll(std::string& str, const std::string& from, const std::string& to) {
+    static void ReplaceAll(std::string& str, const std::string& from, const std::string& to) 
+    {
         if (from.empty())
             return;
         size_t start_pos = 0;
-        while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        while ((start_pos = str.find(from, start_pos)) != std::string::npos) 
+        {
             str.replace(start_pos, from.length(), to);
             start_pos += to.length();
         }
@@ -20,6 +22,17 @@ namespace StringUtil
         {
             std::string stdStr = std::string(str);
             value = std::stof(stdStr);
+        }
+        catch (const std::exception&) { return false; }
+        return true;
+    }
+
+    static bool ParseInt(const char* str, int& value)
+    {
+        try
+        {
+            std::string stdStr = std::string(str);
+            value = std::stoi(stdStr);
         }
         catch (const std::exception&) { return false; }
         return true;
