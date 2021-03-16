@@ -24,6 +24,7 @@ public:
 	Camera& GetCamera() { return m_Scene.GetCamera(); }
 
 public:
+	void Init(unsigned demoIndex = 0);
 	void Run();
 	void Stop() { m_Running = false; }
 
@@ -31,7 +32,6 @@ private:
 	GameEngine() = default;
 	~GameEngine();
 
-	void Init();
 	void EngineLoop();
 
 	void UpdateDT();

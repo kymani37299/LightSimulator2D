@@ -19,7 +19,6 @@ GameEngine* GameEngine::Get()
     if (!s_Instance)
     {
         s_Instance = new GameEngine();
-        s_Instance->Init();
     }
     return s_Instance;
 }
@@ -34,9 +33,9 @@ GameEngine::~GameEngine()
     delete m_Controller;
 }
 
-void GameEngine::Init()
+void GameEngine::Init(unsigned demoIndex)
 {
-    PlayerControllerComponent* controllerComponent = Demo::SetupDemoScene(&m_Scene, 1);
+    PlayerControllerComponent* controllerComponent = Demo::SetupDemoScene(&m_Scene, demoIndex);
 
     m_Window.SetInput(&m_Input);
     m_Renderer.Init(m_Window);
