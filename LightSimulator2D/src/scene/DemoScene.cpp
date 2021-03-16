@@ -23,6 +23,20 @@ PlayerControllerComponent* Demo::SetupDemoScene(Scene* scene, unsigned index)
     return controller;
 }
 
+// Between -2.0 and 2.0
+static float RandFloat(float min, float max)
+{
+    return (float)rand() / RAND_MAX * (max-min) + min;
+}
+
+static Vec2 RandPos(float min, float max)
+{
+    Vec2 randPos;
+    randPos.x = RandFloat(min, max);
+    randPos.y = RandFloat(min, max);
+    return randPos;
+}
+
 static void Scene1(Scene* scene, PlayerControllerComponent* controller)
 {
     // Entities
@@ -108,11 +122,16 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
     scene->AddEntity(tree_down);
 
     // Instances
-
     const Vec2 treeOffset = Vec2(0.01, -0.2);
+    const unsigned numTrees = 20;
 
     bg->Instance();
     emitter->Instance()->ApplyScale(0.01f);
-    EntityInstance* tu = tree_up->Instance();
-    tree_down->Instance()->SetPosition(tu->GetPosition() + treeOffset);
+
+    for (unsigned i = 0; i < numTrees; i++)
+    {
+        EntityInstance* tu = tree_up->Instance();
+        tu->SetPosition(RandPos(-2.0f, 2.0f));
+        tree_down->Instance()->SetPosition(tu->GetPosition() + treeOffset);
+    }
 }
