@@ -102,36 +102,74 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
 
     Entity* emitter = new Entity{ P("bg_diffuse.png"), P("bg_normal.png") };
     emitter->AddComponent(new FollowMouseComponent());
+    emitter->AddComponent(controller);
     emitter->GetDrawFlags().emitter = true;
     emitter->GetEmissionProperties().color = Vec3(1.0, 1.0, 0.0);
     emitter->GetEmissionProperties().radius = 0.15f;
 
-    Entity* tree_up = new Entity{ P("tree1_up.png") };
-    tree_up->GetDrawFlags().foreground = true;
-    tree_up->AddComponent(controller);
+    Entity* tree1_up = new Entity{ P("tree1/tree1_up.png") };
+    tree1_up->GetDrawFlags().foreground = true;
 
-    Entity* tree_down = new Entity{P("tree1_down.png")};
-    tree_down->GetDrawFlags().occluder = true;
-    tree_down->GetOcclusionProperties().shape = OccluderShape::Rect;
+    Entity* tree1_down = new Entity{P("tree1/tree1_down.png")};
+    tree1_down->GetDrawFlags().occluder = true;
+    tree1_down->GetOcclusionProperties().shape = OccluderShape::Rect;
+
+    Entity* tree2_up = new Entity{ P("tree2/tree2_up.png") };
+    tree2_up->GetDrawFlags().foreground = true;
+
+    Entity* tree2_down = new Entity{ P("tree2/tree2_down.png") };
+    tree2_down->GetDrawFlags().occluder = true;
+    tree2_down->GetOcclusionProperties().shape = OccluderShape::Rect;
+
+    Entity* bush = new Entity{ P("bush_diffuse.png") };
 
 #undef P
 
     scene->AddEntity(bg);
     scene->AddEntity(emitter);
-    scene->AddEntity(tree_up);
-    scene->AddEntity(tree_down);
+    scene->AddEntity(tree1_up);
+    scene->AddEntity(tree1_down);
+    scene->AddEntity(tree2_up);
+    scene->AddEntity(tree2_down);
+    scene->AddEntity(bush);
 
     // Instances
-    const Vec2 treeOffset = Vec2(0.01, -0.2);
-    const unsigned numTrees = 20;
+    const Vec2 tree1Offset = Vec2(0.01, -0.2);
+    const Vec2 tree2Offset = Vec2(0.0, -0.27);
+    const unsigned numBushes = 100;
+    const Vec2 numTrees = VEC2_ONE * 5.0f;
 
     bg->Instance();
     emitter->Instance()->ApplyScale(0.01f);
 
-    for (unsigned i = 0; i < numTrees; i++)
+    for (unsigned i = 0; i < numBushes; i++)
     {
-        EntityInstance* tu = tree_up->Instance();
-        tu->SetPosition(RandPos(-2.0f, 2.0f));
-        tree_down->Instance()->SetPosition(tu->GetPosition() + treeOffset);
+        bush->Instance()->SetPosition(RandPos(-2.0f,2.0f));
     }
+
+    for (unsigned i = 0; i < (unsigned) numTrees.x; i++)
+    {
+        for (unsigned j = 0; j < (unsigned)numTrees.y; j++)
+        {
+            const float randVar = 0.1f;
+            const Vec2 treeStep = 4.0f / numTrees;
+            Vec2 treePos = Vec2(i, j) * treeStep - 2.0f;
+            treePos += Vec2(RandFloat(-randVar, randVar), RandFloat(-randVar, randVar));
+            float treeDecider = RandFloat(0.0f, 1.0f);
+
+            if (treeDecider > 0.3f)
+            {
+                tree1_up->Instance()->SetPosition(treePos);
+                tree1_down->Instance()->SetPosition(treePos + tree1Offset);
+            }
+            else
+            {
+                tree2_up->Instance()->SetPosition(treePos);
+                tree2_down->Instance()->SetPosition(treePos + tree2Offset);
+            }
+
+        }
+    }
+
+
 }
