@@ -2,6 +2,7 @@
 
 #include "util/StringUtil.h"
 
+#include <iostream>
 #include <time.h>
 
 int main(int argc, char* argv[])
@@ -10,6 +11,11 @@ int main(int argc, char* argv[])
 
     int sceneIndex = 0;
     if (argc > 1) StringUtil::ParseInt(argv[1], sceneIndex);
+    else
+    {
+        std::cout << "Select scene: ";
+        std::cin >> sceneIndex;
+    }
 
     GameEngine* engine = GameEngine::Get();
     engine->Init(sceneIndex);
