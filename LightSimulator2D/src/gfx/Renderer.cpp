@@ -113,6 +113,7 @@ void Renderer::RenderFrame()
     m_OcclusionRenderer->RenderOcclusion(m_Scene);
     RenderAlbedo();
     m_LightingRenderer->RenderLights(m_Scene);
+    RenderForeground();
 }
 
 inline void RenderEntity(Shader* shader, Entity* e)
@@ -164,11 +165,35 @@ void Renderer::RenderAlbedo()
     {
         Entity* e = (*it);
         DrawFlags df = e->GetDrawFlags();
-        if (df.background || df.emitter || df.occluder) continue;
+        if (df.background || df.emitter || df.occluder || df.foreground) continue;
 
         RenderEntity(m_AlbedoShader, e);
     }
     m_AlbedoFB->Unbind();
+}
+
+void Renderer::RenderForeground()
+{
+    PROFILE_SCOPE("Foreground");
+
+    m_AlbedoShader->Bind();
+
+    m_AlbedoShader->SetUniform("u_NumLightSources", (int)m_Scene->GetEmitters().size());
+    unsigned index = 0;
+    for (Entity* e : m_Scene->GetEmitters())
+    {
+        m_AlbedoShader->SetUniform("u_LightSources[" + std::to_string(index) + "]", e->m_Transform.position);
+        index++;
+    }
+
+    m_AlbedoShader->SetUniform("u_View", m_Scene->GetCamera().GetTransformation());
+    m_AlbedoShader->SetUniform("u_UVScale", VEC2_ONE);
+    m_AlbedoShader->SetUniform("u_UVOffset", VEC2_ZERO);
+
+    for (Entity* e : m_Scene->GetForeground())
+    {
+        RenderEntity(m_AlbedoShader, e);
+    }
 }
 
 void Renderer::CompileShaders()

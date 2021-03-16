@@ -39,6 +39,7 @@ private:
 	void RenderFrame();
 
 	void RenderAlbedo();
+	void RenderForeground();
 
 private:
 	bool m_ShouldReloadShaders = false;

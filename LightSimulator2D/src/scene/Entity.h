@@ -21,6 +21,7 @@ struct DrawFlags
 	bool occluder : 1;
 	bool emitter : 1;
 	bool background : 1;
+	bool foreground : 1;
 };
 
 struct EmissionProperties

@@ -73,6 +73,7 @@ public:
 
     inline std::vector<Entity*>& GetOccluders() { return m_Occluders; }
     inline std::vector<Entity*>& GetEmitters() { return m_Emitters; }
+    inline std::vector<Entity*>& GetForeground() { return m_Foreground; }
     inline Entity* GetBackground() { return m_Background; }
     inline Camera& GetCamera() { return m_Camera; }
 
@@ -100,6 +101,7 @@ private:
 
     std::vector<Entity*> m_Occluders;
     std::vector<Entity*> m_Emitters;
+    std::vector<Entity*> m_Foreground;
     Entity* m_Background;
     Camera m_Camera;
 };

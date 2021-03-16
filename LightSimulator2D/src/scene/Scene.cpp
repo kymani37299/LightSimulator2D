@@ -44,6 +44,7 @@ void Scene::OnEntityAdded(Entity* e)
 	if (df.occluder) m_Occluders.push_back(e);
 	if (df.emitter) m_Emitters.push_back(e);
 	if (df.background) m_Background = e;
+	if (df.foreground) m_Foreground.push_back(e);
 }
 
 void Scene::OnEntityRemoved(Entity* e)
@@ -54,4 +55,6 @@ void Scene::OnEntityRemoved(Entity* e)
 	DrawFlags df = e->GetDrawFlags();
 	if (df.occluder) RemoveEntityFromVector(e, m_Occluders);
 	if (df.emitter) RemoveEntityFromVector(e, m_Emitters);
+	if (df.background && e == m_Background) m_Background = nullptr;
+	if (df.foreground) RemoveEntityFromVector(e, m_Foreground);
 }
