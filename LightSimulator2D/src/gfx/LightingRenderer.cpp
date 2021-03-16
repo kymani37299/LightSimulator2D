@@ -48,8 +48,11 @@ void LightingRenderer::RenderEmitters(Scene* scene)
     m_EmitterShader->SetUniform("u_View", scene->GetCamera().GetTransformation());
     for (Entity* e : scene->GetEmitters())
     {
-        m_EmitterShader->SetUniform("u_Transform", e->GetTransformation());
-        e->GetTexture()->Bind(0);
-        GLFunctions::DrawPoints(1);
+        for (EntityInstance* ei : e->GetInstances())
+        {
+            m_EmitterShader->SetUniform("u_Transform", ei->GetTransformation());
+            e->GetTexture()->Bind(0);
+            GLFunctions::DrawPoints(1);
+        }
     }
 }

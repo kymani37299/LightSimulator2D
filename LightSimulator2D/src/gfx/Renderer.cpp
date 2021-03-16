@@ -120,7 +120,11 @@ void Renderer::InitEntityForRender(Entity* e)
 
     Texture* tex = new Texture(e->m_TexturePath);
     e->m_Texture = tex;
-    e->m_Transform.scale *= Vec2((float)tex->GetWidth() / SCREEN_WIDTH, (float)tex->GetHeight() / SCREEN_HEIGHT);
+    Vec2 texScale = Vec2((float)tex->GetWidth() / SCREEN_WIDTH, (float)tex->GetHeight() / SCREEN_HEIGHT);
+    for (EntityInstance* et : e->GetInstances())
+    {
+        et->ApplyScale(texScale);
+    }
     e->m_ReadyForDraw = true;
 
     if (!e->m_NormalMapPath.empty())

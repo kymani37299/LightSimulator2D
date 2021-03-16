@@ -28,6 +28,9 @@ void AlbedoRenderer::CompileShaders()
 
 void AlbedoRenderer::RenderBackground(Scene* scene)
 {
+    Entity* bg = scene->GetBackground();
+    if (bg == nullptr) return;
+
     const Camera& cam = scene->GetCamera();
 
     PROFILE_SCOPE("Albedo-Background");
@@ -39,11 +42,13 @@ void AlbedoRenderer::RenderBackground(Scene* scene)
     m_AlbedoShader->SetUniform("u_View", MAT3_IDENTITY);
     m_AlbedoShader->SetUniform("u_Transform", MAT3_IDENTITY);
 
-    Entity* bg = scene->GetBackground();
+    ASSERT(bg->GetInstances().size() == 1);
+
+    EntityInstance* bgi = bg->GetInstances()[0];
     float texScale = bg->GetBackgroundProperties().textureScale / cam.zoom;
     Vec2 texScale2D = Vec2(texScale * SCREEN_ASPECT_RATIO, texScale);
     m_AlbedoShader->SetUniform("u_UVScale", texScale2D);
-    m_AlbedoShader->SetUniform("u_UVOffset", -(cam.position + bg->m_Transform.position) / 2.0f);
+    m_AlbedoShader->SetUniform("u_UVOffset", -(cam.position + bgi->GetPosition()) / 2.0f);
     if (bg) RenderEntity(bg);
 
     m_AlbedoFB->Unbind();
@@ -110,26 +115,32 @@ void AlbedoRenderer::RenderForeground(Scene* scene)
 
 void AlbedoRenderer::RenderEntity(Entity* entity)
 {
-	if (!entity->GetDrawFlags().background) m_AlbedoShader->SetUniform("u_Transform", entity->GetTransformation());
+    entity->GetTexture()->Bind(0);
+    Texture* normal = entity->GetNormalMap();
+    if (normal) normal->Bind(1);
+    m_AlbedoShader->SetUniform("u_NormalEnabled", normal != nullptr);
 
-	entity->GetTexture()->Bind(0);
+    const bool bindTranform = !entity->GetDrawFlags().background;
 
-	Texture* normal = entity->GetNormalMap();
-	if (normal) normal->Bind(1);
-	m_AlbedoShader->SetUniform("u_NormalEnabled", normal != nullptr);
-
-	GLFunctions::DrawPoints(1);
+    for (EntityInstance* ei : entity->GetInstances())
+    {
+        if (bindTranform) m_AlbedoShader->SetUniform("u_Transform", ei->GetTransformation());
+        GLFunctions::DrawPoints(1);
+    }
 }
 
 void AlbedoRenderer::SetupLightSources(Scene* scene, bool ignoreCam)
 {
 	Vec2 camPos = ignoreCam ? VEC2_ZERO : scene->GetCamera().position;
 
-	m_AlbedoShader->SetUniform("u_NumLightSources", (int)scene->GetEmitters().size());
 	unsigned index = 0;
 	for (Entity* e : scene->GetEmitters())
 	{
-		m_AlbedoShader->SetUniform("u_LightSources[" + std::to_string(index) + "]", e->m_Transform.position + camPos);
-		index++;
+        for (EntityInstance* ei : e->GetInstances())
+        {
+            m_AlbedoShader->SetUniform("u_LightSources[" + std::to_string(index) + "]", ei->GetPosition() + camPos);
+            index++;
+        }
 	}
+    m_AlbedoShader->SetUniform("u_NumLightSources", (int)index);
 }

@@ -127,20 +127,23 @@ void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
 
     for (Entity* emitter : scene->GetEmitters())
     {
-        Vec2 emitterPos = emitter->m_Transform.position;
-        emitterPos = cam.GetViewSpacePosition(emitterPos);
-        m_CurrentQuery.color = emitter->GetEmissionProperties().color;
-        m_CurrentQuery.radius = emitter->GetEmissionProperties().radius;
-        m_CurrentQuery.strength = (1.0f / NUM_LIGHT_SAMPLES * 1.3f);
-
-        for (int i = 0; i < NUM_LIGHT_SAMPLES; i++)
+        for (EntityInstance* emitter_ei : emitter->GetInstances())
         {
-            float angle = i * angleStep;
-            m_CurrentQuery.position = emitterPos + Vec2(cos(angle), sin(angle)) * m_CurrentQuery.radius;
+            Vec2 emitterPos = emitter_ei->GetPosition();
+            emitterPos = cam.GetViewSpacePosition(emitterPos);
+            m_CurrentQuery.color = emitter->GetEmissionProperties().color;
+            m_CurrentQuery.radius = emitter->GetEmissionProperties().radius;
+            m_CurrentQuery.strength = (1.0f / NUM_LIGHT_SAMPLES * 1.3f);
 
-            LightOcclusion(scene);
-            TriangulateMeshes();
-            RenderOcclusionMask();
+            for (int i = 0; i < NUM_LIGHT_SAMPLES; i++)
+            {
+                float angle = i * angleStep;
+                m_CurrentQuery.position = emitterPos + Vec2(cos(angle), sin(angle)) * m_CurrentQuery.radius;
+
+                LightOcclusion(scene);
+                TriangulateMeshes();
+                RenderOcclusionMask();
+            }
         }
     }
 
@@ -161,18 +164,22 @@ void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
     const Mat3 view = scene->GetCamera().GetTransformation();
     for (auto it = m_OcclusionMeshPool.begin(); it != m_OcclusionMeshPool.end(); it++)
     {
-        const Entity* e = it->first;
-        const Mat3 transform = e->GetTransformation() * view;
+        Entity* e = it->first;
         const OcclusionMesh& mesh = it->second;
-        for (size_t i = 0; i < mesh.size(); i++)
-        {
-            Vec3 a = Vec3(mesh[i], 1.0) * transform;
-            size_t next_i = i + 1 == mesh.size() ? 0 : i + 1;
-            Vec3 b = Vec3(mesh[next_i], 1.0) * transform;
-            Vec4 lineSegment = Vec4(a.x, a.y, b.x, b.y);
 
-            m_OcclusionLines->UploadData(&lineSegment, m_OcclusionLineCount);
-            m_OcclusionLineCount++;
+        for (EntityInstance* ei : e->GetInstances())
+        {
+            const Mat3 transform = ei->GetTransformation() * view;
+            for (size_t i = 0; i < mesh.size(); i++)
+            {
+                Vec3 a = Vec3(mesh[i], 1.0) * transform;
+                size_t next_i = i + 1 == mesh.size() ? 0 : i + 1;
+                Vec3 b = Vec3(mesh[next_i], 1.0) * transform;
+                Vec4 lineSegment = Vec4(a.x, a.y, b.x, b.y);
+
+                m_OcclusionLines->UploadData(&lineSegment, m_OcclusionLineCount);
+                m_OcclusionLineCount++;
+            }
         }
     }
 }
