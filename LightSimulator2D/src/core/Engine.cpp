@@ -4,54 +4,12 @@
 #include <chrono>
 
 #include "input/Controller.h"
-#include "scene/Entity.h"
-
-#include "scene/components/PlayerControllerComponent.h"
-#include "scene/components/FollowMouseComponent.h"
-
 #include "util/Profiler.h"
+#include "scene/DemoScene.h"
 
 void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     GameEngine::Get()->GetMainWindow()->KeyPressedCallback(window, key, scancode, action, mods);
-}
-
-static void SetupTestScene(Scene* scene, PlayerControllerComponent* playerController)
-{
-    Entity* bg = new Entity{ "res/bg.png" , "res/animals/elephant_normal.jpg" };
-    bg->GetDrawFlags().background = true;
-    bg->GetBackgroundProperties().textureScale = 5.0f;
-
-    Entity* e1 = new Entity{ "res/animals/elephant.png", "res/animals/elephant_normal3.jpg" };
-    e1->GetDrawFlags().occluder = true;
-    e1->GetOcclusionProperties().shape = OccluderShape::Mesh;
-    e1->GetOcclusionProperties().meshLod = 2;
-    e1->m_Transform.rotation = 3.1415f / 4.0f;
-    e1->AddComponent(playerController);
-
-    Entity* e2 = new Entity{ "res/animals/hippo.png" };
-    e2->GetDrawFlags().emitter = true;
-    e2->GetEmissionProperties().color = Vec3(0.0, 0.0, 1.0);
-    e2->GetEmissionProperties().radius = 0.05f;
-    e2->m_Transform.scale *= 0.2;
-    e2->m_Transform.position = Vec2(-0.3, 0.5);
-
-    Entity* e3 = new Entity{ "res/animals/giraffe.png" };
-    e3->AddComponent(new FollowMouseComponent());
-    e3->m_Transform.scale *= 0.3;
-    e3->GetDrawFlags().emitter = true;
-    e3->GetEmissionProperties().color = Vec3(1.0, 1.0, 0.0);
-    e3->GetEmissionProperties().radius = 0.1f;
-
-    Entity* e4 = new Entity{ "res/animals/elephant.png" , "res/animals/elephant_normal.jpg" };
-    e4->m_Transform.scale *= 0.8;
-    e4->m_Transform.position = Vec2(0.8, 0.8);
-
-    scene->AddEntity(bg);
-    scene->AddEntity(e1);
-    scene->AddEntity(e2);
-    scene->AddEntity(e3);
-    scene->AddEntity(e4);
 }
 
 GameEngine* GameEngine::s_Instance = nullptr;
@@ -78,8 +36,7 @@ GameEngine::~GameEngine()
 
 void GameEngine::Init()
 {
-    PlayerControllerComponent* controllerComponent = new PlayerControllerComponent(m_Scene.GetCamera());
-    SetupTestScene(&m_Scene, controllerComponent);
+    PlayerControllerComponent* controllerComponent = Demo::SetupDemoScene(&m_Scene, 1);
 
     m_Window.SetInput(&m_Input);
     m_Renderer.Init(m_Window);
