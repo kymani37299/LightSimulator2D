@@ -8,11 +8,9 @@ class Window;
 class Entity;
 class Scene;
 
-class Shader;
-class Framebuffer;
-
 class LightingRenderer;
 class LightOcclusionRenderer;
+class AlbedoRenderer;
 
 class Renderer
 {
@@ -38,18 +36,12 @@ private:
 
 	void RenderFrame();
 
-	void RenderAlbedo();
-	void RenderForeground();
-
 private:
 	bool m_ShouldReloadShaders = false;
 	bool m_ShouldRender = true;
 	Scene* m_Scene;
 
-	Framebuffer* m_AlbedoFB;
-
-	Shader* m_AlbedoShader;
-
+	AlbedoRenderer* m_AlbedoRenderer;
 	LightingRenderer* m_LightingRenderer;
 	LightOcclusionRenderer* m_OcclusionRenderer;
 };

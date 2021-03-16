@@ -7,22 +7,12 @@
 #include "gfx/GLCore.h"
 #include "gfx/LightOcclusionRenderer.h"
 #include "gfx/LightingRenderer.h"
+#include "gfx/AlbedoRenderer.h"
 
 #include "scene/Scene.h"
 #include "scene/Entity.h"
 
 #include "util/Profiler.h"
-
-static std::vector<Vertex> quadVertices = 
-{
-    {Vec2(-1.0,-1.0)   ,Vec2(0.0,0.0)},
-    {Vec2(1.0,-1.0)    ,Vec2(1.0,0.0)},
-    {Vec2(-1.0,1.0)    ,Vec2(0.0,1.0)},
-
-    {Vec2(-1.0,1.0)    ,Vec2(0.0,1.0)},
-    {Vec2(1.0,-1.0)    ,Vec2(1.0,0.0)},
-    {Vec2(1.0,1.0)     ,Vec2(1.0,1.0)}
-};
 
 bool CreateShader(const std::string& name, Shader*& shader)
 {
@@ -49,12 +39,9 @@ bool CreateShader(const std::string& name, Shader*& shader)
 
 Renderer::~Renderer()
 {
-    delete m_AlbedoFB;
-
+    delete m_AlbedoRenderer;
     delete m_OcclusionRenderer;
     delete m_LightingRenderer;
-
-    delete m_AlbedoShader;
 
     if (m_Scene) FreeScene();
 
@@ -64,10 +51,10 @@ Renderer::~Renderer()
 void Renderer::Init(Window& window)
 {
     GLFunctions::InitGL(window.GetProcessAddressHandle());
-    m_AlbedoFB = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     m_OcclusionRenderer = new LightOcclusionRenderer();
-    m_LightingRenderer = new LightingRenderer(m_AlbedoFB, m_OcclusionRenderer->GetOcclusionMaskFB());
+    m_AlbedoRenderer = new AlbedoRenderer();
+    m_LightingRenderer = new LightingRenderer(m_AlbedoRenderer->GetAlbedoFB(), m_OcclusionRenderer->GetOcclusionMaskFB());
 
     CompileShaders();
 }
@@ -110,95 +97,19 @@ void Renderer::RenderFrame()
     PROFILE_SCOPE("RenderFrame");
 
     GLFunctions::ClearScreen();
-    m_OcclusionRenderer->RenderOcclusion(m_Scene);
-    RenderAlbedo();
-    m_LightingRenderer->RenderLights(m_Scene);
-    RenderForeground();
-}
 
-inline void RenderEntity(Shader* shader, Entity* e)
-{
-    if (!e->GetDrawFlags().background) shader->SetUniform("u_Transform", e->GetTransformation());
-
-    e->GetTexture()->Bind(0);
-
-    Texture* normal = e->GetNormalMap();
-    if (normal) normal->Bind(1);
-    shader->SetUniform("u_NormalEnabled", normal != nullptr);
-
-    GLFunctions::DrawPoints(1);
-}
-
-void Renderer::RenderAlbedo()
-{
-    Camera& cam = m_Scene->GetCamera();
-
-    PROFILE_SCOPE("Albedo");
-    m_AlbedoFB->ClearAndBind();
-    m_AlbedoShader->Bind();
-
-    // Setup light sources
-    m_AlbedoShader->SetUniform("u_NumLightSources", (int)m_Scene->GetEmitters().size());
-    unsigned index = 0;
-    for (Entity* e : m_Scene->GetEmitters())
-    {
-        m_AlbedoShader->SetUniform("u_LightSources[" + std::to_string(index) + "]", e->m_Transform.position + cam.position);
-        index++;
-    }
-
-    m_AlbedoShader->SetUniform("u_View", MAT3_IDENTITY);
-    m_AlbedoShader->SetUniform("u_Transform", MAT3_IDENTITY);
-
-    // Render background
-    Entity* bg = m_Scene->GetBackground();
-    float texScale = bg->GetBackgroundProperties().textureScale / cam.zoom;
-    Vec2 texScale2D = Vec2(texScale * SCREEN_ASPECT_RATIO, texScale);
-    m_AlbedoShader->SetUniform("u_UVScale", texScale2D);
-    m_AlbedoShader->SetUniform("u_UVOffset", -(cam.position + bg->m_Transform.position)/2.0f);
-    if (bg) RenderEntity(m_AlbedoShader, bg);
-
-    m_AlbedoShader->SetUniform("u_View", cam.GetTransformation());
-    m_AlbedoShader->SetUniform("u_UVScale", VEC2_ONE);
-    m_AlbedoShader->SetUniform("u_UVOffset", VEC2_ZERO);
-
-    for (auto it = m_Scene->Begin(); it != m_Scene->End(); it++)
-    {
-        Entity* e = (*it);
-        DrawFlags df = e->GetDrawFlags();
-        if (df.background || df.emitter || df.occluder || df.foreground) continue;
-
-        RenderEntity(m_AlbedoShader, e);
-    }
-    m_AlbedoFB->Unbind();
-}
-
-void Renderer::RenderForeground()
-{
-    PROFILE_SCOPE("Foreground");
-
-    m_AlbedoShader->Bind();
-
-    m_AlbedoShader->SetUniform("u_NumLightSources", (int)m_Scene->GetEmitters().size());
-    unsigned index = 0;
-    for (Entity* e : m_Scene->GetEmitters())
-    {
-        m_AlbedoShader->SetUniform("u_LightSources[" + std::to_string(index) + "]", e->m_Transform.position);
-        index++;
-    }
-
-    m_AlbedoShader->SetUniform("u_View", m_Scene->GetCamera().GetTransformation());
-    m_AlbedoShader->SetUniform("u_UVScale", VEC2_ONE);
-    m_AlbedoShader->SetUniform("u_UVOffset", VEC2_ZERO);
-
-    for (Entity* e : m_Scene->GetForeground())
-    {
-        RenderEntity(m_AlbedoShader, e);
-    }
+    m_OcclusionRenderer->   RenderOcclusion     (m_Scene);
+    m_AlbedoRenderer->      RenderBackground    (m_Scene);
+    m_AlbedoRenderer->      RenderBase          (m_Scene);
+    m_LightingRenderer->    RenderLighting      (m_Scene);
+    m_AlbedoRenderer->      RenderOccluders     (m_Scene);
+    m_LightingRenderer->    RenderEmitters      (m_Scene);
+    m_AlbedoRenderer->      RenderForeground    (m_Scene);
 }
 
 void Renderer::CompileShaders()
 {
-    CreateShader("albedo", m_AlbedoShader);
+    m_AlbedoRenderer->CompileShaders();
     m_OcclusionRenderer->CompileShaders();
     m_LightingRenderer->CompileShaders();
 }

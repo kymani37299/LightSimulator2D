@@ -15,11 +15,7 @@ public:
 
 	void CompileShaders();
 
-	void RenderLights(Scene* scene);
-
-private:
-	void RenderLighting();
-	void RenderOccluders(Scene* scene);
+	void RenderLighting(Scene* scene);
 	void RenderEmitters(Scene* scene);
 
 private:

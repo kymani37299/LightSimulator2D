@@ -6,7 +6,6 @@
 #include "util/Profiler.h"
 
 extern bool CreateShader(const std::string& name, Shader*& shader);
-extern inline void RenderEntity(Shader* shader, Entity* entity);
 
 LightingRenderer::LightingRenderer(Framebuffer* albedoFB, Framebuffer* occlusionFB):
 	m_AlbedoFB(albedoFB),
@@ -29,14 +28,7 @@ void LightingRenderer::CompileShaders()
     CreateShader("albedo", m_OccluderShader);
 }
 
-void LightingRenderer::RenderLights(Scene* scene)
-{
-    RenderLighting();
-    RenderOccluders(scene);
-    RenderEmitters(scene);
-}
-
-void LightingRenderer::RenderLighting()
+void LightingRenderer::RenderLighting(Scene*)
 {
     PROFILE_SCOPE("Lighting");
 
@@ -46,32 +38,6 @@ void LightingRenderer::RenderLighting()
     m_AlbedoFB->BindTexture(0, 0);
     m_OcclusionFB->BindTexture(0, 1);
     GLFunctions::DrawFC();
-}
-
-void LightingRenderer::RenderOccluders(Scene* scene)
-{
-    PROFILE_SCOPE("Draw occluders");
-    m_OccluderShader->Bind();
-
-    const Camera& cam = scene->GetCamera();
-
-    // Setup light sources
-    m_OccluderShader->SetUniform("u_NumLightSources", (int)scene->GetEmitters().size());
-    unsigned index = 0;
-    for (Entity* e : scene->GetEmitters())
-    {
-        m_OccluderShader->SetUniform("u_LightSources[" + std::to_string(index) + "]", e->m_Transform.position);
-        index++;
-    }
-
-    m_OccluderShader->SetUniform("u_View", cam.GetTransformation());
-    m_OccluderShader->SetUniform("u_UVScale", VEC2_ONE);
-    m_OccluderShader->SetUniform("u_UVOffset", VEC2_ZERO);
-
-    for (Entity* e : scene->GetOccluders())
-    {
-        RenderEntity(m_OccluderShader, e);
-    }
 }
 
 void LightingRenderer::RenderEmitters(Scene* scene)
