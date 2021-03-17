@@ -9,6 +9,7 @@ void main() { }
 #start FRAGMENT
 
 #include "common.h"
+#include "attenuation.h"
 
 in vec2 POS;
 in vec2 UV;
@@ -31,6 +32,8 @@ layout(location = 0) out vec4 FinalColor;
 
 const float alphaTreshold = 0.01;
 
+const vec3 ambientLight = vec3(0.0,0.05,0.0);
+
 void main()
 {
 	vec2 uv = UV + u_UVOffset;
@@ -39,47 +42,34 @@ void main()
 	vec4 tex = texture(u_Texture, uv);
 	if (tex.a < alphaTreshold) discard;
 
-	if (u_NormalEnabled || u_DistanceBasedLight)
+	if(u_DistanceBasedLight)
 	{
-		float normalMask = 0.0;
-		float lengthSum = 0.0;
-		float lengths[MAX_LIGHT_SOURCES];
-		vec2 dirs[MAX_LIGHT_SOURCES];
-		vec2 normal = 2.0 * texture(u_Normal, uv).rg - 1.0;
-		float minDist = 10.0f;
-
+		float lightFactor = 0.0;
 		for(int i=0;i<u_NumLightSources;i++)
 		{
 			vec2 lightSource = (vec3(u_LightSources[i],1.0) * u_View).xy;
-			vec2 dir = lightSource - POS;
-			lengths[i] = 1.0/length(dir);
-			dirs[i] = normalize(dir);
-			lengthSum += lengths[i];
-			minDist = min(lengths[i],minDist);
+			float dist = length(POS - lightSource);
+			lightFactor += Attenuate(dist);
 		}
-
-		if(u_DistanceBasedLight)
-		{
-			float lightFactor = minDist;
-			lightFactor /= 12.0f;
-			tex.rgb *= lightFactor;
-		}
-
-		if(u_NormalEnabled)
-		{
-			for(int i=0;i<u_NumLightSources;i++)
-			{
-				float lightMask = dot(dirs[i], normal) - 0.5;
-				float lightFactor = (lengths[i]/lengthSum)*0.8;
-				normalMask += lightFactor * lightMask;
-			}
-
-			tex.rgb += normalMask;
-		}
-
-		tex.rgb = clamp(tex.rgb,0.0,1.0);
-
+		lightFactor = clamp(lightFactor,0.0,1.0);
+		tex.rgb = ambientLight + tex.rgb*lightFactor;
 	}
 
+	if (u_NormalEnabled)
+	{
+		vec2 normal = 2.0 * texture(u_Normal, uv).rg - 1.0f;
+
+		vec3 normalFactor = vec3(0.0,0.0,0.0);
+		for(int i=0;i<u_NumLightSources;i++)
+		{
+			vec2 lightSource = (vec3(u_LightSources[i],1.0) * u_View).xy;
+			vec2 dir = normalize(lightSource - POS);
+			float dist = length(POS - lightSource);
+			float attenuation = Attenuate(dist);
+			tex.rgb += attenuation*dot(dir,normal);
+		}
+	}
+
+	tex.rgb = clamp(tex.rgb,0.0,1.0);
 	FinalColor = tex;
 }

@@ -12,6 +12,8 @@ void main()
 
 #start FRAGMENT
 
+#include "attenuation.h"
+
 in vec2 POS;
 
 uniform float u_MaskStrength;
@@ -24,7 +26,6 @@ layout(location = 0) out vec4 FinalColor;
 void main()
 {
 	float d = length(POS - u_LightPos);
-	d *= 70.0f;
-	d = u_LightRadius*15.0f / (1.0 + 0.1 * d + 0.01 * d * d);
-	FinalColor = vec4(u_LightColor, u_MaskStrength*d);
+	float attenuation = u_LightRadius*Attenuate(d);
+	FinalColor = vec4(u_LightColor, u_MaskStrength*attenuation);
 }
