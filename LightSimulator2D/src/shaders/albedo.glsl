@@ -20,6 +20,7 @@ uniform int u_NumLightSources;
 uniform vec2 u_LightSources[MAX_LIGHT_SOURCES];
 
 uniform bool u_NormalEnabled;
+uniform bool u_DistanceBasedLight;
 
 uniform vec2 u_UVScale = vec2(1.0,1.0);
 uniform vec2 u_UVOffset = vec2(0.0,0.0);
@@ -38,13 +39,14 @@ void main()
 	vec4 tex = texture(u_Texture, uv);
 	if (tex.a < alphaTreshold) discard;
 
-	if (u_NormalEnabled)
+	if (u_NormalEnabled || u_DistanceBasedLight)
 	{
 		float normalMask = 0.0;
 		float lengthSum = 0.0;
 		float lengths[MAX_LIGHT_SOURCES];
 		vec2 dirs[MAX_LIGHT_SOURCES];
 		vec2 normal = 2.0 * texture(u_Normal, uv).rg - 1.0;
+		float minDist = 1000.0f;
 
 		for(int i=0;i<u_NumLightSources;i++)
 		{
@@ -53,16 +55,28 @@ void main()
 			lengths[i] = 1.0/length(dir);
 			dirs[i] = normalize(dir);
 			lengthSum += lengths[i];
+			minDist = min(lengths[i],minDist);
 		}
 
-		for(int i=0;i<u_NumLightSources;i++)
+		if(u_DistanceBasedLight)
 		{
-			float lightMask = dot(dirs[i], normal) - 0.5;
-			float lightFactor = (lengths[i]/lengthSum)*0.8;
-			normalMask += lightFactor * lightMask;
+			float lightFactor = min(minDist,10.0f);
+			lightFactor /= 12.0f;
+			tex.rgb *= lightFactor;
 		}
 
-		tex.rgb += normalMask;
+		if(u_NormalEnabled)
+		{
+			for(int i=0;i<u_NumLightSources;i++)
+			{
+				float lightMask = dot(dirs[i], normal) - 0.5;
+				float lightFactor = (lengths[i]/lengthSum)*0.8;
+				normalMask += lightFactor * lightMask;
+			}
+
+			tex.rgb += normalMask;
+		}
+
 		tex.rgb = clamp(tex.rgb,0.0,1.0);
 
 	}

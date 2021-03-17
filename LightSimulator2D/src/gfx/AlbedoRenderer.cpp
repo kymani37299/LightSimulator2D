@@ -65,6 +65,7 @@ void AlbedoRenderer::RenderBase(Scene* scene)
     m_AlbedoShader->SetUniform("u_View", scene->GetCamera().GetTransformation());
     m_AlbedoShader->SetUniform("u_UVScale", VEC2_ONE);
     m_AlbedoShader->SetUniform("u_UVOffset", VEC2_ZERO);
+    m_AlbedoShader->SetUniform("u_DistanceBasedLight", false);
 
     for (auto it = scene->Begin(); it != scene->End(); it++)
     {
@@ -88,6 +89,7 @@ void AlbedoRenderer::RenderOccluders(Scene* scene)
     m_AlbedoShader->SetUniform("u_View", scene->GetCamera().GetTransformation());
     m_AlbedoShader->SetUniform("u_UVScale", VEC2_ONE);
     m_AlbedoShader->SetUniform("u_UVOffset", VEC2_ZERO);
+    m_AlbedoShader->SetUniform("u_DistanceBasedLight", true);
 
     for (Entity* e : scene->GetOccluders())
     {
@@ -106,6 +108,7 @@ void AlbedoRenderer::RenderForeground(Scene* scene)
     m_AlbedoShader->SetUniform("u_View", scene->GetCamera().GetTransformation());
     m_AlbedoShader->SetUniform("u_UVScale", VEC2_ONE);
     m_AlbedoShader->SetUniform("u_UVOffset", VEC2_ZERO);
+    m_AlbedoShader->SetUniform("u_DistanceBasedLight", true);
 
     for (Entity* e : scene->GetForeground())
     {
