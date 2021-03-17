@@ -28,7 +28,7 @@ void LightingRenderer::CompileShaders()
     CreateShader("albedo", m_OccluderShader);
 }
 
-void LightingRenderer::RenderLighting(Scene*)
+void LightingRenderer::RenderLighting(Scene* scene)
 {
     PROFILE_SCOPE("Lighting");
 
@@ -37,6 +37,7 @@ void LightingRenderer::RenderLighting(Scene*)
     m_LightingShader->Bind();
     m_AlbedoFB->BindTexture(0, 0);
     m_OcclusionFB->BindTexture(0, 1);
+    m_LightingShader->SetUniform("u_AmbientLight", scene->GetAmbientLight());
     GLFunctions::DrawFC();
 }
 

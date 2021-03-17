@@ -1,7 +1,7 @@
 // Light attenuation constants
 const float constantAtt = 0.4;
-const float linearAtt = 0.3;
-const float quadraticAtt = 20.0;
+const float linearAtt = 1.0;
+const float quadraticAtt = 5.0;
 
 float Attenuate(float dist)
 {

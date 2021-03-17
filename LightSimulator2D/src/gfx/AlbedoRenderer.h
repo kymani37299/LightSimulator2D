@@ -25,6 +25,8 @@ private:
 	void RenderEntity(Entity* entity);
 	void SetupLightSources(Scene* scene, bool ignoreCam = true);
 
+	void SetupDefaultParams(Scene* scene);
+
 private:
 	Framebuffer* m_AlbedoFB;
 	Shader* m_AlbedoShader = nullptr;

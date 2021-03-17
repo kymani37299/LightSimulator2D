@@ -39,6 +39,8 @@ static Vec2 RandPos(float min, float max)
 
 static void Scene1(Scene* scene, PlayerControllerComponent* controller)
 {
+    scene->GetAmbientLight() = 0.2f * VEC3_ONE;
+
     // Entities
     Entity* bg = new Entity{ "res/bg.png" , "res/animals/elephant_normal.jpg" };
     bg->GetDrawFlags().background = true;
@@ -94,6 +96,8 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
     // Entities
     const std::string res_path = "res/scene2/";
 
+    scene->GetAmbientLight() = 0.05f * Vec3(0.0, 1.0, 0.0);
+
 #define P(X) res_path + X
 
     Entity* bg = new Entity{P("bg_diffuse.png"), P("bg_normal.png") };
@@ -123,6 +127,11 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
 
     Entity* bush = new Entity{ P("bush_diffuse.png") };
 
+    Entity* house = new Entity{ P("house/house_diffuse.png"),P("house/house_normal.png") };
+    house->GetDrawFlags().occluder = true;
+    house->GetOcclusionProperties().meshLod = 2;
+    house->GetOcclusionProperties().shape = OccluderShape::Mesh;
+
 #undef P
 
     scene->AddEntity(bg);
@@ -132,15 +141,17 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
     scene->AddEntity(tree2_up);
     scene->AddEntity(tree2_down);
     scene->AddEntity(bush);
+    scene->AddEntity(house);
 
     // Instances
     const Vec2 tree1Offset = Vec2(0.01, -0.2);
     const Vec2 tree2Offset = Vec2(0.0, -0.27);
     const unsigned numBushes = 100;
-    const Vec2 numTrees = VEC2_ONE * 5.0f;
+    const Vec2 numTrees = VEC2_ONE * 8.0f;
 
     bg->Instance();
     emitter->Instance()->ApplyScale(0.01f);
+    house->Instance()->ApplyScale(3.0f);
 
     for (unsigned i = 0; i < numBushes; i++)
     {
@@ -151,6 +162,10 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
     {
         for (unsigned j = 0; j < (unsigned)numTrees.y; j++)
         {
+            const Vec2 nth = numTrees / 2.0f; // Num trees half
+
+            if ((i < nth.x + 1 && i > nth.x - 1) && (j < nth.y + 2 && j > nth.y - 2)) continue;
+
             const float randVar = 0.1f;
             const Vec2 treeStep = 4.0f / numTrees;
             Vec2 treePos = Vec2(i, j) * treeStep - 2.0f;

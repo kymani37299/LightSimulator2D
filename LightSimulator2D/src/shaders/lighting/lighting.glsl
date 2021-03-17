@@ -18,18 +18,20 @@ in vec2 UV;
 layout(binding = 0) uniform sampler2D u_Albedo;
 layout(binding = 1) uniform sampler2D u_OcclusionMask;
 
+uniform vec3 u_AmbientLight;
+
 layout(location = 0) out vec4 FinalColor;
 
-const float baseLight = 0.3;
+const float baseLight = 0.1;
 
 void main()
 {
 	vec3 occlusion = texture(u_OcclusionMask, UV).rgb;
-	vec3 lightMask = baseLight + occlusion;
+	vec3 lightMask = u_AmbientLight + occlusion;
 	lightMask = clamp(lightMask,0.0,1.0);
 
-	vec3 col = texture(u_Albedo, UV).rgb*0.7;
-	col += 0.3;
+	vec3 col = texture(u_Albedo, UV).rgb;
+	col = clamp(col,0.0,1.0);
 	col *= lightMask;
 
 	FinalColor = vec4(col, 1.0);

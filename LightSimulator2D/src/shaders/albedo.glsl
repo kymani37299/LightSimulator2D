@@ -27,12 +27,11 @@ uniform vec2 u_UVScale = vec2(1.0,1.0);
 uniform vec2 u_UVOffset = vec2(0.0,0.0);
 
 uniform mat3 u_View;
+uniform vec3 u_AmbientLight;
 
 layout(location = 0) out vec4 FinalColor;
 
 const float alphaTreshold = 0.01;
-
-const vec3 ambientLight = vec3(0.0,0.05,0.0);
 
 void main()
 {
@@ -52,7 +51,8 @@ void main()
 			lightFactor += Attenuate(dist);
 		}
 		lightFactor = clamp(lightFactor,0.0,1.0);
-		tex.rgb = ambientLight + tex.rgb*lightFactor;
+		tex.rgb *= lightFactor;
+		tex.rgb += u_AmbientLight;
 	}
 
 	if (u_NormalEnabled)

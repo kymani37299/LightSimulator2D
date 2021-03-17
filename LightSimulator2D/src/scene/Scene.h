@@ -76,6 +76,7 @@ public:
     inline std::vector<Entity*>& GetForeground() { return m_Foreground; }
     inline Entity* GetBackground() { return m_Background; }
     inline Camera& GetCamera() { return m_Camera; }
+    inline Vec3& GetAmbientLight() { return m_AmbientLight; }
 
     size_t FindById(unsigned id) 
     {
@@ -104,4 +105,5 @@ private:
     std::vector<Entity*> m_Foreground;
     Entity* m_Background;
     Camera m_Camera;
+    Vec3 m_AmbientLight = VEC3_ZERO;
 };

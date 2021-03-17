@@ -38,9 +38,11 @@ void AlbedoRenderer::RenderBackground(Scene* scene)
     m_AlbedoShader->Bind();
 
     SetupLightSources(scene, false);
+    SetupDefaultParams(scene);
 
     m_AlbedoShader->SetUniform("u_View", MAT3_IDENTITY);
     m_AlbedoShader->SetUniform("u_Transform", MAT3_IDENTITY);
+    m_AlbedoShader->SetUniform("u_DistanceBasedLight", false);
 
     ASSERT(bg->GetInstances().size() == 1);
 
@@ -61,10 +63,7 @@ void AlbedoRenderer::RenderBase(Scene* scene)
     m_AlbedoShader->Bind();
 
     SetupLightSources(scene);
-
-    m_AlbedoShader->SetUniform("u_View", scene->GetCamera().GetTransformation());
-    m_AlbedoShader->SetUniform("u_UVScale", VEC2_ONE);
-    m_AlbedoShader->SetUniform("u_UVOffset", VEC2_ZERO);
+    SetupDefaultParams(scene);
     m_AlbedoShader->SetUniform("u_DistanceBasedLight", false);
 
     for (auto it = scene->Begin(); it != scene->End(); it++)
@@ -85,11 +84,7 @@ void AlbedoRenderer::RenderOccluders(Scene* scene)
     m_AlbedoShader->Bind();
 
     SetupLightSources(scene);
-
-    m_AlbedoShader->SetUniform("u_View", scene->GetCamera().GetTransformation());
-    m_AlbedoShader->SetUniform("u_UVScale", VEC2_ONE);
-    m_AlbedoShader->SetUniform("u_UVOffset", VEC2_ZERO);
-    m_AlbedoShader->SetUniform("u_DistanceBasedLight", true);
+    SetupDefaultParams(scene);
 
     for (Entity* e : scene->GetOccluders())
     {
@@ -104,11 +99,7 @@ void AlbedoRenderer::RenderForeground(Scene* scene)
     m_AlbedoShader->Bind();
 
     SetupLightSources(scene);
-
-    m_AlbedoShader->SetUniform("u_View", scene->GetCamera().GetTransformation());
-    m_AlbedoShader->SetUniform("u_UVScale", VEC2_ONE);
-    m_AlbedoShader->SetUniform("u_UVOffset", VEC2_ZERO);
-    m_AlbedoShader->SetUniform("u_DistanceBasedLight", true);
+    SetupDefaultParams(scene);
 
     for (Entity* e : scene->GetForeground())
     {
@@ -130,6 +121,15 @@ void AlbedoRenderer::RenderEntity(Entity* entity)
         if (bindTranform) m_AlbedoShader->SetUniform("u_Transform", ei->GetTransformation());
         GLFunctions::DrawPoints(1);
     }
+}
+
+void AlbedoRenderer::SetupDefaultParams(Scene* scene)
+{
+    m_AlbedoShader->SetUniform("u_View", scene->GetCamera().GetTransformation());
+    m_AlbedoShader->SetUniform("u_UVScale", VEC2_ONE);
+    m_AlbedoShader->SetUniform("u_UVOffset", VEC2_ZERO);
+    m_AlbedoShader->SetUniform("u_DistanceBasedLight", true);
+    m_AlbedoShader->SetUniform("u_AmbientLight", scene->GetAmbientLight());
 }
 
 void AlbedoRenderer::SetupLightSources(Scene* scene, bool ignoreCam)
