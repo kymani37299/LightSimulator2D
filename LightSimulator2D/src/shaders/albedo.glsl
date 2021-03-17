@@ -46,7 +46,7 @@ void main()
 		float lengths[MAX_LIGHT_SOURCES];
 		vec2 dirs[MAX_LIGHT_SOURCES];
 		vec2 normal = 2.0 * texture(u_Normal, uv).rg - 1.0;
-		float minDist = 1000.0f;
+		float minDist = 10.0f;
 
 		for(int i=0;i<u_NumLightSources;i++)
 		{
@@ -60,7 +60,7 @@ void main()
 
 		if(u_DistanceBasedLight)
 		{
-			float lightFactor = min(minDist,10.0f);
+			float lightFactor = minDist;
 			lightFactor /= 12.0f;
 			tex.rgb *= lightFactor;
 		}
