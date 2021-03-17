@@ -4,7 +4,7 @@ void main() { }
 
 #start GEOMETRY
 
-#include "point2triangle.h"
+#include "point2quad.h"
 
 #start FRAGMENT
 
