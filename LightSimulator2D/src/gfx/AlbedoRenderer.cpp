@@ -130,6 +130,7 @@ void AlbedoRenderer::SetupDefaultParams(Scene* scene)
     m_AlbedoShader->SetUniform("u_UVOffset", VEC2_ZERO);
     m_AlbedoShader->SetUniform("u_DistanceBasedLight", true);
     m_AlbedoShader->SetUniform("u_AmbientLight", scene->GetAmbientLight());
+    m_AlbedoShader->SetUniform("u_Attenuation", scene->GetLightAttenuation());
 }
 
 void AlbedoRenderer::SetupLightSources(Scene* scene, bool ignoreCam)

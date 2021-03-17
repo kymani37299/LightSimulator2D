@@ -77,6 +77,7 @@ public:
     inline Entity* GetBackground() { return m_Background; }
     inline Camera& GetCamera() { return m_Camera; }
     inline Vec3& GetAmbientLight() { return m_AmbientLight; }
+    inline Vec3& GetLightAttenuation() { return m_LightAttenuation; }
 
     size_t FindById(unsigned id) 
     {
@@ -106,4 +107,5 @@ private:
     Entity* m_Background;
     Camera m_Camera;
     Vec3 m_AmbientLight = VEC3_ZERO;
+    Vec3 m_LightAttenuation = Vec3(0.4f, 1.0f, 5.0f);
 };

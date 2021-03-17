@@ -142,7 +142,7 @@ void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
 
                 LightOcclusion(scene);
                 TriangulateMeshes();
-                RenderOcclusionMask();
+                RenderOcclusionMask(scene);
             }
         }
     }
@@ -184,7 +184,7 @@ void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
     }
 }
 
-void LightOcclusionRenderer::RenderOcclusionMask()
+void LightOcclusionRenderer::RenderOcclusionMask(Scene* scene)
 {
     PROFILE_SCOPE("Occlusion mask");
     GetCurrentOcclusionMask()->Bind();
@@ -195,6 +195,7 @@ void LightOcclusionRenderer::RenderOcclusionMask()
     m_ShadowmapShader->SetUniform("u_LightPos", m_CurrentQuery.position);
     m_ShadowmapShader->SetUniform("u_LightColor", m_CurrentQuery.color);
     m_ShadowmapShader->SetUniform("u_LightRadius", m_CurrentQuery.radius);
+    m_ShadowmapShader->SetUniform("u_Attenuation", scene->GetLightAttenuation());
     GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
     GLFunctions::Draw(numVertices);
     GLFunctions::AlphaBlending(false);

@@ -52,7 +52,7 @@ private:
 	
 	void LightOcclusion(Scene* scene);
 	void TriangulateMeshes();
-	void RenderOcclusionMask();
+	void RenderOcclusionMask(Scene* scene);
 	void MergeMasks();
 	void BlurMask();
 

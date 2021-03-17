@@ -1,9 +1,6 @@
-// Light attenuation constants
-const float constantAtt = 0.4;
-const float linearAtt = 1.0;
-const float quadraticAtt = 5.0;
+uniform vec3 u_Attenuation;
 
 float Attenuate(float dist)
 {
-	return 1.0 / (constantAtt + (linearAtt * dist) + (quadraticAtt * dist * dist));
+	return 1.0 / (u_Attenuation.x + (u_Attenuation.y * dist) + (u_Attenuation.z * dist * dist));
 }
