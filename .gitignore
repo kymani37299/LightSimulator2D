@@ -8,3 +8,4 @@
 **/*.vcxproj*
 .vs/*
 out/*
+LightSimulator2D/res/*/not_used/**
