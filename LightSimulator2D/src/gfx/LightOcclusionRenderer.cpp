@@ -5,6 +5,7 @@
 #include "util/Profiler.h"
 
 #include "gfx/GLCore.h"
+#include "gfx/SceneCuller.h"
 #include "scene/Scene.h"
 #include "scene/Entity.h"
 
@@ -107,14 +108,14 @@ void LightOcclusionRenderer::OnOccluderRemoved(Entity* e)
     m_OcclusionMeshPool[e].clear();
 }
 
-void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
+void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
 {
     PROFILE_SCOPE("Render occlusion");
 
     MergeMasks();
     BlurMask();
 
-    size_t numEmitters = scene->GetEmitters().size();
+    size_t numEmitters = scene.GetEmitters().size();
     if (numEmitters < 1) return;
 
     if (m_TimeSinceLastDraw < DRAW_INTERVAL) return;
@@ -123,11 +124,12 @@ void LightOcclusionRenderer::RenderOcclusion(Scene* scene)
     GetCurrentOcclusionMask()->Clear();
     float angleStep = 2.0f * 3.1415f / NUM_LIGHT_SAMPLES;
 
-    const Camera& cam = scene->GetCamera();
+    const Camera& cam = scene.GetCamera();
 
-    for (Entity* emitter : scene->GetEmitters())
+    for (CulledEntity* ce : scene.GetEmitters())
     {
-        for (EntityInstance* emitter_ei : emitter->GetInstances())
+        Entity* emitter = ce->GetEntity();
+        for (EntityInstance* emitter_ei : ce->GetInstances())
         {
             Vec2 emitterPos = emitter_ei->GetPosition();
             emitterPos = cam.GetViewSpacePosition(emitterPos);
@@ -158,16 +160,16 @@ unsigned LightOcclusionRenderer::SetupOcclusionMeshInput()
     return numIntersections;
 }
 
-void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
+void LightOcclusionRenderer::SetupLineSegments(CulledScene& scene)
 {
     m_OcclusionLineCount = 0;
-    const Mat3 view = scene->GetCamera().GetTransformation();
-    for (auto it = m_OcclusionMeshPool.begin(); it != m_OcclusionMeshPool.end(); it++)
+    const Mat3 view = scene.GetCamera().GetTransformation();
+    for (CulledEntity* ce : scene.GetOccluders())
     {
-        Entity* e = it->first;
-        const OcclusionMesh& mesh = it->second;
+        Entity* e = ce->GetEntity();
+        const OcclusionMesh& mesh = m_OcclusionMeshPool[e];
 
-        for (EntityInstance* ei : e->GetInstances())
+        for (EntityInstance* ei : ce->GetInstances())
         {
             const Mat3 transform = ei->GetTransformation() * view;
             for (size_t i = 0; i < mesh.size(); i++)
@@ -184,7 +186,7 @@ void LightOcclusionRenderer::SetupLineSegments(Scene* scene)
     }
 }
 
-void LightOcclusionRenderer::RenderOcclusionMask(Scene* scene)
+void LightOcclusionRenderer::RenderOcclusionMask(CulledScene& scene)
 {
     PROFILE_SCOPE("Occlusion mask");
     GetCurrentOcclusionMask()->Bind();
@@ -195,7 +197,7 @@ void LightOcclusionRenderer::RenderOcclusionMask(Scene* scene)
     m_ShadowmapShader->SetUniform("u_LightPos", m_CurrentQuery.position);
     m_ShadowmapShader->SetUniform("u_LightColor", m_CurrentQuery.color);
     m_ShadowmapShader->SetUniform("u_LightRadius", m_CurrentQuery.radius);
-    m_ShadowmapShader->SetUniform("u_Attenuation", scene->GetLightAttenuation());
+    m_ShadowmapShader->SetUniform("u_Attenuation", scene.GetLightAttenuation());
     GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
     GLFunctions::Draw(numVertices);
     GLFunctions::AlphaBlending(false);
@@ -220,7 +222,6 @@ void LightOcclusionRenderer::SetupRayQuery()
         for (Vec2 p : mesh)
         {
             m_RayQuery.push_back(p - e);
-            m_RayQuery.push_back(e); // TODO: e -> p ???
             m_RayQuery.push_back(p + e);
         }
     }
@@ -347,7 +348,7 @@ void LightOcclusionRenderer::PopulateOcclusionMesh(OcclusionMesh& mesh, int mesh
     }
 }
 
-void LightOcclusionRenderer::LightOcclusion(Scene* scene)
+void LightOcclusionRenderer::LightOcclusion(CulledScene& scene)
 {
     PROFILE_SCOPE("Light occlusion");
 

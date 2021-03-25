@@ -8,6 +8,8 @@
 #include "gfx/LightOcclusionRenderer.h"
 #include "gfx/LightingRenderer.h"
 #include "gfx/AlbedoRenderer.h"
+#include "gfx/SceneCuller.h"
+#include "gfx/DebugRenderer.h"
 
 #include "scene/Scene.h"
 #include "scene/Entity.h"
@@ -42,6 +44,8 @@ Renderer::~Renderer()
     delete m_AlbedoRenderer;
     delete m_OcclusionRenderer;
     delete m_LightingRenderer;
+    delete m_SceneCuller;
+    DebugRenderer::Delete();
 
     if (m_Scene) FreeScene();
 
@@ -55,6 +59,7 @@ void Renderer::Init(Window& window)
     m_OcclusionRenderer = new LightOcclusionRenderer();
     m_AlbedoRenderer = new AlbedoRenderer();
     m_LightingRenderer = new LightingRenderer(m_AlbedoRenderer->GetAlbedoFB(), m_OcclusionRenderer->GetOcclusionMaskFB());
+    m_SceneCuller = new SceneCuller();
 
     CompileShaders();
 }
@@ -96,15 +101,18 @@ void Renderer::RenderFrame()
 {
     PROFILE_SCOPE("RenderFrame");
 
+    CulledScene& culledScene = m_SceneCuller->GetCulledScene(m_Scene);
+
     GLFunctions::ClearScreen();
 
-    m_OcclusionRenderer->   RenderOcclusion     (m_Scene);
-    m_AlbedoRenderer->      RenderBackground    (m_Scene);
-    m_AlbedoRenderer->      RenderBase          (m_Scene);
-    m_LightingRenderer->    RenderLighting      (m_Scene);
-    m_AlbedoRenderer->      RenderOccluders     (m_Scene);
-    m_LightingRenderer->    RenderEmitters      (m_Scene);
-    m_AlbedoRenderer->      RenderForeground    (m_Scene);
+    m_OcclusionRenderer->   RenderOcclusion     (culledScene);
+    m_AlbedoRenderer->      RenderBackground    (culledScene);
+    m_AlbedoRenderer->      RenderBase          (culledScene);
+    m_LightingRenderer->    RenderLighting      (culledScene);
+    m_AlbedoRenderer->      RenderOccluders     (culledScene);
+    m_LightingRenderer->    RenderEmitters      (culledScene);
+    m_AlbedoRenderer->      RenderForeground    (culledScene);
+    DebugRenderer::Get()->  RenderDebug         (culledScene);
 }
 
 void Renderer::CompileShaders()
@@ -112,6 +120,7 @@ void Renderer::CompileShaders()
     m_AlbedoRenderer->CompileShaders();
     m_OcclusionRenderer->CompileShaders();
     m_LightingRenderer->CompileShaders();
+    DebugRenderer::Get()->CompileShaders();
 }
 
 void Renderer::InitEntityForRender(Entity* e)

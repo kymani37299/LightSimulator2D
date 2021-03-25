@@ -2,8 +2,8 @@
 
 #include "common.h"
 #include "gfx/GLCore.h"
+#include "gfx/SceneCuller.h"
 
-#include "scene/Scene.h"
 #include "scene/Entity.h"
 
 #include "util/Profiler.h"
@@ -26,12 +26,12 @@ void AlbedoRenderer::CompileShaders()
 	CreateShader("albedo", m_AlbedoShader);
 }
 
-void AlbedoRenderer::RenderBackground(Scene* scene)
+void AlbedoRenderer::RenderBackground(CulledScene& scene)
 {
-    Entity* bg = scene->GetBackground();
+    Entity* bg = scene.GetBackground();
     if (bg == nullptr) return;
 
-    const Camera& cam = scene->GetCamera();
+    const Camera& cam = scene.GetCamera();
 
     PROFILE_SCOPE("Albedo-Background");
     m_AlbedoFB->ClearAndBind();
@@ -51,12 +51,20 @@ void AlbedoRenderer::RenderBackground(Scene* scene)
     Vec2 texScale2D = Vec2(texScale * SCREEN_ASPECT_RATIO, texScale);
     m_AlbedoShader->SetUniform("u_UVScale", texScale2D);
     m_AlbedoShader->SetUniform("u_UVOffset", -(cam.position + bgi->GetPosition()) / 2.0f);
-    if (bg) RenderEntity(bg);
+
+    if (bg)
+    {
+        bg->GetTexture()->Bind(0);
+        Texture* normal = bg->GetNormalMap();
+        if (normal) normal->Bind(1);
+        m_AlbedoShader->SetUniform("u_NormalEnabled", normal != nullptr);
+        GLFunctions::DrawPoints(1);
+    }
 
     m_AlbedoFB->Unbind();
 }
 
-void AlbedoRenderer::RenderBase(Scene* scene)
+void AlbedoRenderer::RenderBase(CulledScene& scene)
 {
     PROFILE_SCOPE("Albedo-Base");
     m_AlbedoFB->Bind();
@@ -66,19 +74,19 @@ void AlbedoRenderer::RenderBase(Scene* scene)
     SetupDefaultParams(scene);
     m_AlbedoShader->SetUniform("u_DistanceBasedLight", false);
 
-    for (auto it = scene->Begin(); it != scene->End(); it++)
+    for (CulledEntity* ce : scene.GetAlbedo())
     {
-        Entity* e = (*it);
+        Entity* e = ce->GetEntity();
         DrawFlags df = e->GetDrawFlags();
         if (df.background || df.emitter || df.occluder || df.foreground) continue;
 
-        RenderEntity(e);
+        RenderEntity(ce);
     }
 
     m_AlbedoFB->Unbind();
 }
 
-void AlbedoRenderer::RenderOccluders(Scene* scene)
+void AlbedoRenderer::RenderOccluders(CulledScene& scene)
 {
     PROFILE_SCOPE("Albedo-Occluders");
     m_AlbedoShader->Bind();
@@ -86,13 +94,13 @@ void AlbedoRenderer::RenderOccluders(Scene* scene)
     SetupLightSources(scene);
     SetupDefaultParams(scene);
 
-    for (Entity* e : scene->GetOccluders())
+    for (CulledEntity* ce : scene.GetOccluders())
     {
-        RenderEntity(e);
+        RenderEntity(ce);
     }
 }
 
-void AlbedoRenderer::RenderForeground(Scene* scene)
+void AlbedoRenderer::RenderForeground(CulledScene& scene)
 {
     PROFILE_SCOPE("Albedo-Foreground");
 
@@ -101,46 +109,45 @@ void AlbedoRenderer::RenderForeground(Scene* scene)
     SetupLightSources(scene);
     SetupDefaultParams(scene);
 
-    for (Entity* e : scene->GetForeground())
+    for (CulledEntity* ce : scene.GetForeground())
     {
-        RenderEntity(e);
+        RenderEntity(ce);
     }
 }
 
-void AlbedoRenderer::RenderEntity(Entity* entity)
+void AlbedoRenderer::RenderEntity(CulledEntity* ce)
 {
-    entity->GetTexture()->Bind(0);
-    Texture* normal = entity->GetNormalMap();
+    Entity* e = ce->GetEntity();
+    e->GetTexture()->Bind(0);
+    Texture* normal = e->GetNormalMap();
     if (normal) normal->Bind(1);
     m_AlbedoShader->SetUniform("u_NormalEnabled", normal != nullptr);
 
-    const bool bindTranform = !entity->GetDrawFlags().background;
-
-    for (EntityInstance* ei : entity->GetInstances())
+    for (EntityInstance* ei : ce->GetInstances())
     {
-        if (bindTranform) m_AlbedoShader->SetUniform("u_Transform", ei->GetTransformation());
+        m_AlbedoShader->SetUniform("u_Transform", ei->GetTransformation());
         GLFunctions::DrawPoints(1);
     }
 }
 
-void AlbedoRenderer::SetupDefaultParams(Scene* scene)
+void AlbedoRenderer::SetupDefaultParams(CulledScene& scene)
 {
-    m_AlbedoShader->SetUniform("u_View", scene->GetCamera().GetTransformation());
+    m_AlbedoShader->SetUniform("u_View", scene.GetCamera().GetTransformation());
     m_AlbedoShader->SetUniform("u_UVScale", VEC2_ONE);
     m_AlbedoShader->SetUniform("u_UVOffset", VEC2_ZERO);
     m_AlbedoShader->SetUniform("u_DistanceBasedLight", true);
-    m_AlbedoShader->SetUniform("u_AmbientLight", scene->GetAmbientLight());
-    m_AlbedoShader->SetUniform("u_Attenuation", scene->GetLightAttenuation());
+    m_AlbedoShader->SetUniform("u_AmbientLight", scene.GetAmbientLight());
+    m_AlbedoShader->SetUniform("u_Attenuation", scene.GetLightAttenuation());
 }
 
-void AlbedoRenderer::SetupLightSources(Scene* scene, bool ignoreCam)
+void AlbedoRenderer::SetupLightSources(CulledScene& scene, bool ignoreCam)
 {
-	Vec2 camPos = ignoreCam ? VEC2_ZERO : scene->GetCamera().position;
+	Vec2 camPos = ignoreCam ? VEC2_ZERO : scene.GetCamera().position;
 
 	unsigned index = 0;
-	for (Entity* e : scene->GetEmitters())
+	for (CulledEntity* ce : scene.GetEmitters())
 	{
-        for (EntityInstance* ei : e->GetInstances())
+        for (EntityInstance* ei : ce->GetInstances())
         {
             m_AlbedoShader->SetUniform("u_LightSources[" + std::to_string(index) + "]", ei->GetPosition() + camPos);
             index++;

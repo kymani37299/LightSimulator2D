@@ -55,8 +55,11 @@ class EntityInstance
 public:
 	EntityInstance(Entity* parent) : m_Parent(parent) {}
 
+	inline Entity* GetEntity() {  }
+
 	inline Vec2 GetPosition() { return m_Transform.position; }
 
+	inline void SetScale(const Vec2 scale) { m_Transform.scale = scale; }
 	inline void SetPosition(const Vec2 pos) { m_Transform.position = pos; }
 
 	inline void Move(const Vec2 pos) { m_Transform.position += pos; }

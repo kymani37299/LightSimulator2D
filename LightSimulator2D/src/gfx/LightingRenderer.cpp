@@ -1,8 +1,8 @@
 #include "LightingRenderer.h"
 
 #include "gfx/GLCore.h"
+#include "gfx/SceneCuller.h"
 
-#include "scene/Scene.h"
 #include "util/Profiler.h"
 
 extern bool CreateShader(const std::string& name, Shader*& shader);
@@ -28,7 +28,7 @@ void LightingRenderer::CompileShaders()
     CreateShader("albedo", m_OccluderShader);
 }
 
-void LightingRenderer::RenderLighting(Scene* scene)
+void LightingRenderer::RenderLighting(CulledScene& scene)
 {
     PROFILE_SCOPE("Lighting");
 
@@ -37,19 +37,20 @@ void LightingRenderer::RenderLighting(Scene* scene)
     m_LightingShader->Bind();
     m_AlbedoFB->BindTexture(0, 0);
     m_OcclusionFB->BindTexture(0, 1);
-    m_LightingShader->SetUniform("u_AmbientLight", scene->GetAmbientLight());
+    m_LightingShader->SetUniform("u_AmbientLight", scene.GetAmbientLight());
     GLFunctions::DrawFC();
 }
 
-void LightingRenderer::RenderEmitters(Scene* scene)
+void LightingRenderer::RenderEmitters(CulledScene& scene)
 {
     PROFILE_SCOPE("Draw emitters");
 
     m_EmitterShader->Bind();
-    m_EmitterShader->SetUniform("u_View", scene->GetCamera().GetTransformation());
-    for (Entity* e : scene->GetEmitters())
+    m_EmitterShader->SetUniform("u_View", scene.GetCamera().GetTransformation());
+    for (CulledEntity* ce : scene.GetEmitters())
     {
-        for (EntityInstance* ei : e->GetInstances())
+        Entity* e = ce->GetEntity();
+        for (EntityInstance* ei : ce->GetInstances())
         {
             m_EmitterShader->SetUniform("u_Transform", ei->GetTransformation());
             e->GetTexture()->Bind(0);

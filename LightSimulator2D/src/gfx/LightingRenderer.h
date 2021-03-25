@@ -4,8 +4,7 @@
 
 class Framebuffer;
 class Shader;
-
-class Scene;
+class CulledScene;
 
 class LightingRenderer
 {
@@ -15,8 +14,8 @@ public:
 
 	void CompileShaders();
 
-	void RenderLighting(Scene* scene);
-	void RenderEmitters(Scene* scene);
+	void RenderLighting(CulledScene& scene);
+	void RenderEmitters(CulledScene& scene);
 
 private:
 	Framebuffer* m_AlbedoFB;

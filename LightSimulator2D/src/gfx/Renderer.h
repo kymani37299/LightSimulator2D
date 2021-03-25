@@ -11,6 +11,7 @@ class Scene;
 class LightingRenderer;
 class LightOcclusionRenderer;
 class AlbedoRenderer;
+class SceneCuller;
 
 class Renderer
 {
@@ -44,4 +45,5 @@ private:
 	AlbedoRenderer* m_AlbedoRenderer;
 	LightingRenderer* m_LightingRenderer;
 	LightOcclusionRenderer* m_OcclusionRenderer;
+	SceneCuller* m_SceneCuller;
 };

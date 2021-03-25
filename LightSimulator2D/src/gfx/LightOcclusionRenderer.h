@@ -8,7 +8,8 @@
 #include "shaders/common.h"
 
 class Entity;
-class Scene;
+
+class CulledScene;
 
 class ShaderStorageBuffer;
 class ShaderInput;
@@ -38,21 +39,21 @@ public:
 	void OnOccluderAdded(Entity* e);
 	void OnOccluderRemoved(Entity* e);
 
-	void RenderOcclusion(Scene* scene);
+	void RenderOcclusion(CulledScene& scene);
 
 	Framebuffer* GetOcclusionMaskFB() { return m_OcclusionMaskFinal; }
 
 private:
-	void SetupLineSegments(Scene* scene);
+	void SetupLineSegments(CulledScene& scene);
 	void SetupRayQuery();
 	unsigned SetupOcclusionMeshInput();
 
 	using OcclusionMesh = std::vector<Vec2>;
 	void PopulateOcclusionMesh(OcclusionMesh& mesh, int meshSize);
 	
-	void LightOcclusion(Scene* scene);
+	void LightOcclusion(CulledScene& scene);
 	void TriangulateMeshes();
-	void RenderOcclusionMask(Scene* scene);
+	void RenderOcclusionMask(CulledScene& scene);
 	void MergeMasks();
 	void BlurMask();
 

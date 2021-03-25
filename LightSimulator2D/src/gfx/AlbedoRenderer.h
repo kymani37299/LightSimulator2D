@@ -3,8 +3,8 @@
 class Framebuffer;
 class Shader;
 
-class Scene;
-class Entity;
+class CulledScene;
+class CulledEntity;
 
 class AlbedoRenderer
 {
@@ -14,18 +14,18 @@ public:
 
 	void CompileShaders();
 
-	void RenderBackground(Scene* scene);
-	void RenderBase(Scene* scene);
-	void RenderOccluders(Scene* scene);
-	void RenderForeground(Scene* scene);
+	void RenderBackground(CulledScene& scene);
+	void RenderBase(CulledScene& scene);
+	void RenderOccluders(CulledScene& scene);
+	void RenderForeground(CulledScene& scene);
 
 	inline Framebuffer* GetAlbedoFB() const { return m_AlbedoFB; }
 
 private:
-	void RenderEntity(Entity* entity);
-	void SetupLightSources(Scene* scene, bool ignoreCam = true);
+	void RenderEntity(CulledEntity* entity);
+	void SetupLightSources(CulledScene& scene, bool ignoreCam = true);
 
-	void SetupDefaultParams(Scene* scene);
+	void SetupDefaultParams(CulledScene& scene);
 
 private:
 	Framebuffer* m_AlbedoFB;

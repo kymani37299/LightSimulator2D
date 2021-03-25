@@ -9,6 +9,8 @@ class Renderer;
 struct Camera
 {
     Vec2 position = VEC2_ZERO;
+
+    // [TODO] - Not used for now
     float rotation = 0.0;
     float zoom = 1.0;
 
