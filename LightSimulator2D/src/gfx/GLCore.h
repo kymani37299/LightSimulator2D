@@ -30,6 +30,7 @@ namespace GLFunctions
 {
 	void InitGL(void* procAddressGet);
 	void DeinitGL();
+	void WaitForGpu();
 	void Draw(unsigned numVertices);
 	void DrawPoints(unsigned numPoints);
 	void DrawFC();

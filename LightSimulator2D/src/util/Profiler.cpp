@@ -2,6 +2,12 @@
 
 #include <chrono>
 
+#include "common.h"
+
+#ifdef FORCE_BARRIERS
+#include "gfx/GLCore.h"
+#endif
+
 ProfilerState Profiler::s_CurrentState;
 
 float Profiler::GetTime(const std::string& name)
@@ -20,6 +26,9 @@ Profiler::Profiler(const std::string& name):
 
 Profiler::~Profiler()
 {
+#ifdef FORCE_BARRIERS
+	GLFunctions::WaitForGpu();
+#endif
 	float duration = std::chrono::duration<float, std::milli>(std::chrono::high_resolution_clock::now() - m_StartTime).count();
 	s_CurrentState[m_Name] = duration;
 }
