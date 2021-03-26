@@ -12,9 +12,14 @@ static const std::string FToS(float v)
 	return std::to_string(v).substr(0, 4);
 }
 
-static bool diagramComparator(const ProfilerDiagram* l, const ProfilerDiagram* r) 
+static bool nameComparator(const ProfilerDiagram* l, const ProfilerDiagram* r) 
 { 
 	return l->GetLabel().compare(r->GetLabel()) < 0; 
+}
+
+static bool timeComparator(const ProfilerDiagram* l, const ProfilerDiagram* r)
+{
+	return l->GetCurrentMS() > r->GetCurrentMS();
 }
 
 void ProfilerDiagram::AddValue(float value)
@@ -46,9 +51,11 @@ void ProfilerUI::Update(float dt)
 void ProfilerUI::UpdateInternal()
 {
 	auto it = Profiler::s_CurrentState.begin();
-	bool needSort = false;
+	bool needSort = !m_SortByName || m_SortByName != m_SortByNameCB;
+	m_SortByName = m_SortByNameCB;
 	while (it != Profiler::s_CurrentState.end())
-	{		if (std::find_if(m_Diagrams.begin(), m_Diagrams.end(), [&](ProfilerDiagram* pd) { return it->first == pd->GetLabel(); }) == m_Diagrams.end())
+	{		
+		if (std::find_if(m_Diagrams.begin(), m_Diagrams.end(), [&](ProfilerDiagram* pd) { return it->first == pd->GetLabel(); }) == m_Diagrams.end())
 		{
 			m_Diagrams.push_back(new ProfilerDiagram(it->first));
 			needSort = true;
@@ -56,12 +63,12 @@ void ProfilerUI::UpdateInternal()
 		it++;
 	}
 
-	if (needSort) std::sort(m_Diagrams.begin(), m_Diagrams.end(), &diagramComparator);
-
 	for (ProfilerDiagram* pd : m_Diagrams)
 	{
 		pd->AddValue(Profiler::GetTime(pd->GetLabel()));
 	}
+
+	if (needSort) std::sort(m_Diagrams.begin(), m_Diagrams.end(), m_SortByName ? &nameComparator : &timeComparator);
 
 	m_CurrentFPS = GameEngine::Get()->GetMainWindow()->GetFps();
 }
@@ -69,6 +76,7 @@ void ProfilerUI::UpdateInternal()
 void ProfilerUI::Render()
 {
 	IM_BEGIN("Profiler");
+	ImGui::Checkbox("Sort by name:", &m_SortByNameCB);
 	ImGui::Text(("FPS: " + FToS(m_CurrentFPS)).c_str());
 	for (ProfilerDiagram* d : m_Diagrams)
 	{

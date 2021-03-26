@@ -17,6 +17,7 @@ public:
 	void Render();
 
 	const std::string GetLabel() const { return m_Label; }
+	float GetCurrentMS() const { return m_CurrentValue; }
 
 private:
 	static constexpr unsigned MAX_VALUES = 100;
@@ -38,6 +39,9 @@ private:
 
 private:
 	static constexpr unsigned UPDATE_INTERVAL = 1000;
+
+	bool m_SortByNameCB = false;
+	bool m_SortByName = false;
 
 	float m_LastUpdateAge = 0;
 
