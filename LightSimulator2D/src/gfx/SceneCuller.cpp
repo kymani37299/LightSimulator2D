@@ -17,11 +17,8 @@ inline static bool ShouldBeCulled(const Mat3& transformation, const Mat3& camera
     const Vec3 instanceA = Vec3(screenQuad.x, screenQuad.y, 1.0) * transformation;
     const Vec3 instanceB = Vec3(screenQuad.z, screenQuad.w, 1.0) * transformation;
 
-    return !(InRect(zoneA, instanceA, instanceB) || InRect(zoneB, instanceA, instanceB) 
-        || InRect(instanceA,zoneA,zoneB) || InRect(instanceB, zoneA,zoneB));
-
-    // TODO: find out why this isn't working
-    //return instanceA.x >= zoneB.x || zoneA.x >= instanceB.x || instanceA.y >= zoneB.y || zoneB.y >= instanceA.y;
+    return instanceA.x >= zoneB.x || zoneA.x >= instanceB.x 
+        || instanceA.y >= zoneB.y || zoneA.y >= instanceB.y;
 }
 
 inline static float GetSpecificOcclusionFactor(DrawFlags df)

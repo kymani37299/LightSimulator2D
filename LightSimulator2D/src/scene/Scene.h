@@ -30,7 +30,7 @@ struct Camera
             sin(angle),cos(angle),0.0,
             0.0,0.0,1.0 };
 
-        return glm::inverse(rotation * scaleTranslation);
+        return rotation * scaleTranslation;
     }
 
     inline Vec2 GetViewSpacePosition(Vec2 position) const
