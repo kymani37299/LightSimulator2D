@@ -57,14 +57,24 @@ private:
 	void MergeMasks();
 	void BlurMask();
 
+#ifdef INTERVAL_OCCLUSION
 	Framebuffer* GetCurrentOcclusionMask() { return m_OcclusionMaskPP ? m_OcclusionMaskFB1 : m_OcclusionMaskFB2; }
 	Framebuffer* GetOtherOcclusionMask() { return m_OcclusionMaskPP ? m_OcclusionMaskFB2 : m_OcclusionMaskFB1; }
+#else
+	Framebuffer* GetCurrentOcclusionMask() { return m_OcclusionMaskFB; }
+	Framebuffer* GetOtherOcclusionMask() { return m_OcclusionMaskFB; }
+#endif
 
 private:
 
 	static constexpr unsigned NUM_ANGLED_RAYS = 30;
 	static constexpr unsigned NUM_LIGHT_SAMPLES = 6;
+
+#ifdef INTERVAL_OCCLUSION
 	static constexpr float DRAW_INTERVAL = 50.0f;
+#else
+	static constexpr float DRAW_INTERVAL = 0.0f;
+#endif
 
 	OcclusionQuery m_CurrentQuery;
 
@@ -77,9 +87,12 @@ private:
 
 	float m_TimeSinceLastDraw = 0.0;
 
+#ifdef INTERVAL_OCCLUSION
 	bool m_OcclusionMaskPP = false;
 	Framebuffer* m_OcclusionMaskFB1;
 	Framebuffer* m_OcclusionMaskFB2;
+#endif
+
 	Framebuffer* m_OcclusionMaskFB;
 	Framebuffer* m_OcclusionMaskFinal;
 

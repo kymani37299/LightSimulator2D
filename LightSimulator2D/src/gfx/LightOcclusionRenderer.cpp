@@ -21,8 +21,11 @@ LightOcclusionRenderer::LightOcclusionRenderer()
 
     m_OcclusionMesh = m_TriangledIntersecitonsBuffer->AsShaderInput();
 
+#ifdef INTERVAL_OCCLUSION
     m_OcclusionMaskFB1 = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
     m_OcclusionMaskFB2 = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
+#endif
+
     m_OcclusionMaskFB = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
     m_OcclusionMaskFinal = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -34,8 +37,10 @@ LightOcclusionRenderer::~LightOcclusionRenderer()
     delete m_BlurShader;
     delete m_OcclusionMaskFinal;
     delete m_OcclusionMaskFB;
+#ifdef INTERVAL_OCCLUSION
     delete m_OcclusionMaskFB1;
     delete m_OcclusionMaskFB2;
+#endif
     delete m_OcclusionMeshGenShader;
     delete m_OcclusionMeshOutput;
     delete m_MergeShader;
@@ -149,7 +154,9 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
         }
     }
 
+#ifdef INTERVAL_OCCLUSION
     m_OcclusionMaskPP = !m_OcclusionMaskPP;
+#endif
 }
 
 unsigned LightOcclusionRenderer::SetupOcclusionMeshInput()
@@ -379,6 +386,7 @@ void LightOcclusionRenderer::TriangulateMeshes()
 
 void LightOcclusionRenderer::MergeMasks()
 {
+#ifdef INTERVAL_OCCLUSION
     PROFILE_SCOPE("Merge masks");
 
     GLFunctions::MemoryBarrier(BarrierType::Framebuffer);
@@ -388,6 +396,7 @@ void LightOcclusionRenderer::MergeMasks()
     GetOtherOcclusionMask()->BindTexture(0,0);
     GetCurrentOcclusionMask()->BindTexture(0,1);
     GLFunctions::DrawFC();
+#endif
 }
 
 void LightOcclusionRenderer::BlurMask()
