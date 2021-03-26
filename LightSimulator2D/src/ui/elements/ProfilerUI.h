@@ -3,7 +3,6 @@
 #include "ui/UIElement.h"
 
 #include <vector>
-#include <map>
 #include <string>
 
 class ProfilerDiagram : public UIElement
@@ -16,6 +15,8 @@ public:
 	void Init() {}
 	void Update(float dt) {}
 	void Render();
+
+	const std::string GetLabel() const { return m_Label; }
 
 private:
 	static constexpr unsigned MAX_VALUES = 100;
@@ -41,6 +42,6 @@ private:
 	float m_LastUpdateAge = 0;
 
 	float m_CurrentFPS = 0.0f;
-	std::map<std::string, ProfilerDiagram*> m_DiagramMap;
+	std::vector<ProfilerDiagram*> m_Diagrams;
 };
 

@@ -5,10 +5,16 @@
 #include "core/Window.h"
 
 #include <imgui.h>
+#include <algorithm>
 
 static const std::string FToS(float v)
 {
 	return std::to_string(v).substr(0, 4);
+}
+
+static bool diagramComparator(const ProfilerDiagram* l, const ProfilerDiagram* r) 
+{ 
+	return l->GetLabel().compare(r->GetLabel()) < 0; 
 }
 
 void ProfilerDiagram::AddValue(float value)
@@ -40,15 +46,21 @@ void ProfilerUI::Update(float dt)
 void ProfilerUI::UpdateInternal()
 {
 	auto it = Profiler::s_CurrentState.begin();
+	bool needSort = false;
 	while (it != Profiler::s_CurrentState.end())
-	{
-		const std::string& profile = it->first;
-		if (m_DiagramMap.find(profile) == m_DiagramMap.end())
+	{		if (std::find_if(m_Diagrams.begin(), m_Diagrams.end(), [&](ProfilerDiagram* pd) { return it->first == pd->GetLabel(); }) == m_Diagrams.end())
 		{
-			m_DiagramMap[profile] = new ProfilerDiagram(profile);
+			m_Diagrams.push_back(new ProfilerDiagram(it->first));
+			needSort = true;
 		}
-		m_DiagramMap[profile]->AddValue(Profiler::GetTime(profile));
 		it++;
+	}
+
+	if (needSort) std::sort(m_Diagrams.begin(), m_Diagrams.end(), &diagramComparator);
+
+	for (ProfilerDiagram* pd : m_Diagrams)
+	{
+		pd->AddValue(Profiler::GetTime(pd->GetLabel()));
 	}
 
 	m_CurrentFPS = GameEngine::Get()->GetMainWindow()->GetFps();
@@ -58,9 +70,9 @@ void ProfilerUI::Render()
 {
 	IM_BEGIN("Profiler");
 	ImGui::Text(("FPS: " + FToS(m_CurrentFPS)).c_str());
-	for (auto it = m_DiagramMap.begin(); it != m_DiagramMap.end(); it++)
+	for (ProfilerDiagram* d : m_Diagrams)
 	{
-		(*it).second->Render();
+		d->Render();
 	}
 	IM_END();
 }
