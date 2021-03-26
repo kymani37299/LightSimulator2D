@@ -1,5 +1,7 @@
 #include "Scene.h"
 
+#include "util/Profiler.h"
+
 #include "gfx/Renderer.h"
 
 void RemoveEntityFromVector(Entity* e, std::vector<Entity*>& v)
@@ -29,6 +31,8 @@ void Scene::Init(Renderer* renderer)
 
 void Scene::Update(float dt)
 {
+	PROFILE_SCOPE("Scene - Update");
+
 	for (Entity* e : m_Entites)
 	{
 		e->Update(dt);

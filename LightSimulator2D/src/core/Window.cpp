@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "input/Input.h"
+#include "util/Profiler.h"
 
 static float timeAccumulator = 0.0001f;
 
@@ -39,6 +40,8 @@ bool Window::Active()
 
 void Window::UpdateGraphic()
 {
+	PROFILE_SCOPE("Window - Present");
+
 	m_Fps = 1.0f / timeAccumulator * 1000.0f;
 	timeAccumulator = 0.0001f;
 	glfwSwapBuffers(m_Window);
@@ -46,6 +49,8 @@ void Window::UpdateGraphic()
 
 void Window::Update(float dt)
 {
+	PROFILE_SCOPE("Window - Update");
+
 	timeAccumulator += dt;
 	glfwPollEvents();
 }

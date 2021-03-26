@@ -47,13 +47,14 @@ void calcIntersection(out vec3 intersection, vec4 ray, vec4 segment)
     }
 }
 
-// TODO: Optimize this
+const float areaSize = 2.0;
+
 void intersectScreen(out vec3 intersection, vec4 ray)
 {
-    calcIntersection(intersection, ray, vec4(-1.0, -1.0, 1.0, -1.0));
-    calcIntersection(intersection, ray, vec4(1.0, -1.0, 1.0, 1.0));
-    calcIntersection(intersection, ray, vec4(1.0, 1.0, -1.0, 1.0));
-    calcIntersection(intersection, ray, vec4(-1.0, 1.0, -1.0, -1.0));
+    calcIntersection(intersection, ray, areaSize * vec4(-1.0, -1.0, 1.0, -1.0));
+    calcIntersection(intersection, ray, areaSize * vec4(1.0, -1.0, 1.0, 1.0));
+    calcIntersection(intersection, ray, areaSize * vec4(1.0, 1.0, -1.0, 1.0));
+    calcIntersection(intersection, ray, areaSize * vec4(-1.0, 1.0, -1.0, -1.0));
 }
 
 void main()

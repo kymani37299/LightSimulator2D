@@ -4,6 +4,7 @@
 #include "ImGUI_impl.h"
 
 #include "core/Window.h"
+#include "util/Profiler.h"
 
 #include "elements/ProfilerUI.h"
 
@@ -37,6 +38,8 @@ void UIEngine::Init(Window* window)
 
 void UIEngine::Update(float dt)
 {
+    PROFILE_SCOPE("UIEngine - Update");
+
     for (size_t i=0;i<m_Elements.size();i++)
     {
         UIElement* e = m_Elements[i];
@@ -52,6 +55,7 @@ void UIEngine::Update(float dt)
 
 void UIEngine::Render()
 {
+    PROFILE_SCOPE("UIEngine - Render");
     BeginFrame();
     for (UIElement* e : m_Elements) e->Render();
     EndFrame();

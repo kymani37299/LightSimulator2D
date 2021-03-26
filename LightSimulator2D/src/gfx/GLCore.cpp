@@ -70,28 +70,48 @@ void GLFunctions::DeinitGL()
 void GLFunctions::Draw(unsigned numVertices)
 {
 	GL_CALL(glDrawArrays(GL_TRIANGLES, 0, numVertices));
+
+#ifdef FORCE_BARRIERS
+	GLFunctions::MemoryBarrier(BarrierType::All);
+#endif
 }
 
 void GLFunctions::DrawPoints(unsigned numPoints)
 {
 	GL_CALL(glDrawArrays(GL_POINTS, 0, numPoints));
+
+#ifdef FORCE_BARRIERS
+	GLFunctions::MemoryBarrier(BarrierType::All);
+#endif
 }
 
 void GLFunctions::DrawFC()
 {
 	GLConstants::QuadInput->Bind();
 	GL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
+
+#ifdef FORCE_BARRIERS
+	GLFunctions::MemoryBarrier(BarrierType::All);
+#endif
 }
 
 void GLFunctions::Dispatch(unsigned groupX, unsigned groupY, unsigned groupZ)
 {
 	GL_CALL(glDispatchCompute(groupX, groupY, groupZ));
+
+#ifdef FORCE_BARRIERS
+	GLFunctions::MemoryBarrier(BarrierType::All);
+#endif
 }
 
 void GLFunctions::ClearScreen(Vec3 clearColor)
 {
 	GL_CALL(glClearColor(clearColor.r, clearColor.g, clearColor.b, 1));
 	GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+
+#ifdef FORCE_BARRIERS
+	GLFunctions::MemoryBarrier(BarrierType::All);
+#endif
 }
 
 void GLFunctions::MemoryBarrier(BarrierType barrier)

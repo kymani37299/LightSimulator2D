@@ -11,6 +11,7 @@
 #define ASSERT(X) if(!(X)) __debugbreak()
 #define ASSERT_RUN(X) ASSERT(X)
 #define NOT_IMPLEMENTED ASSERT(0)
+#define FORCE_BARRIERS
 #else
 #define ASSERT(X)
 #define ASSERT_RUN(X) X
