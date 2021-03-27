@@ -13,6 +13,8 @@ void main()
 
 #start FRAGMENT
 
+#include "common.h"
+
 #define PI2 6.28318530718
 
 in vec2 UV;
@@ -21,13 +23,15 @@ layout(binding = 0) uniform sampler2D u_Input;
 
 layout(location = 0) out vec4 FinalColor;
 
+// Source: https://www.shadertoy.com/view/Xltfzj
+
 const float directions = 16.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
-const float quality = 4.0; // BLUR QUALITY (Default 3.0 - More is better but slower)
+const float quality = 2.0; // BLUR QUALITY (Default 3.0 - More is better but slower)
 const float size = 16.0; // BLUR SIZE (Radius)
 
 void main()
 {
-    vec2 screen_size = vec2(1600, 900); // TODO: Get this from common params
+    vec2 screen_size = vec2(SCREEN_WIDTH, SCREEN_HEIGHT);
     vec2 radius = size / screen_size;
     vec4 color = texture(u_Input, UV);
 
