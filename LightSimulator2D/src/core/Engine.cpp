@@ -67,7 +67,12 @@ void GameEngine::EngineLoop()
 void GameEngine::Run()
 {
     m_Running = true;
-    while (m_Running) EngineLoop();
+    while (m_Running)
+    {
+        Profiler::BeginFrame();
+        EngineLoop();
+        Profiler::EndFrame();
+    }
 }
 
 void GameEngine::UpdateDT()

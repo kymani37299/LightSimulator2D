@@ -1,7 +1,6 @@
 #include "ProfilerUI.h"
 
 #include "util/Profiler.h"
-#include "core/Engine.h"
 #include "core/Window.h"
 
 #include <imgui.h>
@@ -50,10 +49,11 @@ void ProfilerUI::Update(float dt)
 
 void ProfilerUI::UpdateInternal()
 {
-	auto it = Profiler::s_CurrentState.begin();
+	ProfilerState& profilerState = Profiler::GetCurrentState();
+	auto it = profilerState.begin();
 	bool needSort = !m_SortByName || m_SortByName != m_SortByNameCB;
 	m_SortByName = m_SortByNameCB;
-	while (it != Profiler::s_CurrentState.end())
+	while (it != profilerState.end())
 	{		
 		if (std::find_if(m_Diagrams.begin(), m_Diagrams.end(), [&](ProfilerDiagram* pd) { return it->first == pd->GetLabel(); }) == m_Diagrams.end())
 		{
@@ -70,7 +70,7 @@ void ProfilerUI::UpdateInternal()
 
 	if (needSort) std::sort(m_Diagrams.begin(), m_Diagrams.end(), m_SortByName ? &nameComparator : &timeComparator);
 
-	m_CurrentFPS = GameEngine::Get()->GetMainWindow()->GetFps();
+	m_CurrentFPS = Profiler::GetFPS();
 }
 
 void ProfilerUI::Render()
