@@ -30,7 +30,7 @@ public:
 	~Profiler();
 
 	static float GetTime(const std::string& name);
-	static inline float GetFPS() { return s_FPS; }
+	static float GetFPS();
 	static void BeginFrame();
 	static void EndFrame();
 	static ProfilerState& GetCurrentState() { return s_PP ? s_CurrentStatePP1 : s_CurrentStatePP2; }

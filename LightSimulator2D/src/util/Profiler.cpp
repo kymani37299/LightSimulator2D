@@ -6,6 +6,9 @@
 #include "gfx/GLCore.h"
 #endif
 
+#include "core/Engine.h"
+#include "core/Window.h"
+
 ProfilerState Profiler::s_CurrentStatePP1;
 ProfilerState Profiler::s_CurrentStatePP2;
 bool Profiler::s_PP = false;
@@ -19,6 +22,15 @@ float Profiler::GetTime(const std::string& name)
 	auto res = state.find(name);
 	if (res == state.end()) return -1.0f;
 	return res->second;
+}
+
+float Profiler::GetFPS()
+{
+#ifdef DEBUG
+	return s_FPS;
+#else
+	return GameEngine::Get()->GetMainWindow()->GetFps();
+#endif
 }
 
 void Profiler::BeginFrame()

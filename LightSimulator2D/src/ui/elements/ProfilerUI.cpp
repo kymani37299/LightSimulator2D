@@ -37,6 +37,15 @@ void ProfilerDiagram::Render()
 	ImGui::PlotLines("", m_Values.data(), m_Values.size());
 }
 
+ProfilerUI::~ProfilerUI()
+{
+	for (ProfilerDiagram* pd : m_Diagrams)
+	{
+		delete pd;
+	}
+	m_Diagrams.clear();
+}
+
 void ProfilerUI::Update(float dt)
 {
 	m_LastUpdateAge += dt;

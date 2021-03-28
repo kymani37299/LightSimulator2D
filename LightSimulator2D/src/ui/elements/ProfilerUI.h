@@ -30,6 +30,8 @@ private:
 class ProfilerUI : public UIElement
 {
 public:
+	virtual ~ProfilerUI();
+
 	void Init() {}
 	void Update(float dt);
 	void Render();
