@@ -75,8 +75,6 @@ void Renderer::Update(float dt)
         timeUntilLastRender = 0;
     }
 
-    m_OcclusionRenderer->Update(dt);
-
     // Reload shaders if needed
     if (m_ShouldReloadShaders)
     {

@@ -21,11 +21,6 @@ LightOcclusionRenderer::LightOcclusionRenderer()
 
     m_OcclusionMesh = m_TriangledIntersecitonsBuffer->AsShaderInput();
 
-#ifdef INTERVAL_OCCLUSION
-    m_OcclusionMaskFB1 = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
-    m_OcclusionMaskFB2 = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
-#endif
-
     m_OcclusionMaskFB = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
     m_OcclusionMaskFinal = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -37,13 +32,8 @@ LightOcclusionRenderer::~LightOcclusionRenderer()
     delete m_BlurShader;
     delete m_OcclusionMaskFinal;
     delete m_OcclusionMaskFB;
-#ifdef INTERVAL_OCCLUSION
-    delete m_OcclusionMaskFB1;
-    delete m_OcclusionMaskFB2;
-#endif
     delete m_OcclusionMeshGenShader;
     delete m_OcclusionMeshOutput;
-    delete m_MergeShader;
     delete m_ShadowmapShader;
     delete m_OcclusionMesh;
     delete m_RayQueryBuffer;
@@ -62,7 +52,6 @@ void LightOcclusionRenderer::CompileShaders()
     CreateShader(shader_path + "triangulate_intersections", m_TriangulationShader);
     CreateShader(shader_path + "occlusion_mesh_gen", m_OcclusionMeshGenShader);
     CreateShader(shader_path + "shadowmap",m_ShadowmapShader);
-    CreateShader(shader_path + "merge", m_MergeShader);
     CreateShader(shader_path + "blur", m_BlurShader);
 }
 
@@ -117,22 +106,16 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
 {
     PROFILE_SCOPE("Render occlusion");
 
-    MergeMasks();
-    BlurMask();
-
     size_t numEmitters = scene.GetEmitters().size();
     if (numEmitters < 1) return;
 
-    if (m_TimeSinceLastDraw < DRAW_INTERVAL) return;
-
-    m_TimeSinceLastDraw = 0.0f;
-    GetCurrentOcclusionMask()->Clear();
-    float angleStep = 2.0f * 3.1415f / NUM_LIGHT_SAMPLES;
-
+    constexpr float angleStep = 2.0f * 3.1415f / NUM_LIGHT_SAMPLES;
     const Camera& cam = scene.GetCamera();
 
     SetupLineSegments(scene);
     SetupRayQuery();
+
+    m_OcclusionMaskFB->Clear();
 
     for (CulledEntity* ce : scene.GetEmitters())
     {
@@ -157,22 +140,13 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
         }
     }
 
-#ifdef INTERVAL_OCCLUSION
-    m_OcclusionMaskPP = !m_OcclusionMaskPP;
-#endif
-}
-
-unsigned LightOcclusionRenderer::SetupOcclusionMeshInput()
-{
-    unsigned numIntersections = m_RayCount*3;
-    m_OcclusionMesh->Bind();
-
-    return numIntersections;
+    BlurMask();
 }
 
 void LightOcclusionRenderer::SetupLineSegments(CulledScene& scene)
 {
     PROFILE_SCOPE("Setup line segments");
+
     m_OcclusionLineCount = 0;
     const Mat3 view = scene.GetCamera().GetTransformation();
     for (CulledEntity* ce : scene.GetOccluders())
@@ -200,9 +174,10 @@ void LightOcclusionRenderer::SetupLineSegments(CulledScene& scene)
 void LightOcclusionRenderer::RenderOcclusionMask(CulledScene& scene)
 {
     PROFILE_SCOPE("Occlusion mask");
-    GetCurrentOcclusionMask()->Bind();
+
+    m_OcclusionMaskFB->Bind();
     m_ShadowmapShader->Bind();
-    unsigned numVertices = SetupOcclusionMeshInput();
+    m_OcclusionMesh->Bind();
     GLFunctions::AlphaBlending(true);
     m_ShadowmapShader->SetUniform("u_MaskStrength", m_CurrentQuery.strength);
     m_ShadowmapShader->SetUniform("u_LightPos", m_CurrentQuery.position);
@@ -210,9 +185,9 @@ void LightOcclusionRenderer::RenderOcclusionMask(CulledScene& scene)
     m_ShadowmapShader->SetUniform("u_LightRadius", m_CurrentQuery.radius);
     m_ShadowmapShader->SetUniform("u_Attenuation", scene.GetLightAttenuation());
     GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
-    GLFunctions::Draw(numVertices);
+    GLFunctions::Draw(m_RayCount * 3);
     GLFunctions::AlphaBlending(false);
-    GetCurrentOcclusionMask()->Unbind();
+    m_OcclusionMaskFB->Unbind();
 }
 
 bool angleComparator(const Vec2& l, const Vec2& r) { return glm::atan(l.y, l.x) < glm::atan(r.y, r.x); }
@@ -220,6 +195,8 @@ bool angleComparator(const Vec2& l, const Vec2& r) { return glm::atan(l.y, l.x) 
 void LightOcclusionRenderer::SetupRayQuery()
 {
     PROFILE_SCOPE("Setup ray query");
+
+    // TODO: Skip when not needed
 
     for (size_t i = 0; i < NUM_ANGLED_RAYS; i++)
     {
@@ -275,6 +252,7 @@ bool intersect(Vec2& intersection, Vec2 a1, Vec2 a2, Vec2 b1, Vec2 b2)
 bool findIntersecton(Vec2& intersection, std::vector<Vec2> a, std::vector<Vec2> b)
 {
     // TODO: Optimize this
+
     for (size_t i = 1; i < a.size(); i++)
     {
         for (size_t j = 1; j < b.size(); j++)
@@ -379,21 +357,6 @@ void LightOcclusionRenderer::TriangulateMeshes()
     m_IntersectionBuffer->Bind(1);
     m_TriangledIntersecitonsBuffer->Bind(2);
     GLFunctions::Dispatch(m_RayCount*3);
-}
-
-void LightOcclusionRenderer::MergeMasks()
-{
-#ifdef INTERVAL_OCCLUSION
-    PROFILE_SCOPE("Merge masks");
-
-    GLFunctions::MemoryBarrier(BarrierType::Framebuffer);
-    m_OcclusionMaskFB->ClearAndBind();
-    m_MergeShader->Bind();
-    m_MergeShader->SetUniform("u_Weight", m_TimeSinceLastDraw / DRAW_INTERVAL);
-    GetOtherOcclusionMask()->BindTexture(0,0);
-    GetCurrentOcclusionMask()->BindTexture(0,1);
-    GLFunctions::DrawFC();
-#endif
 }
 
 void LightOcclusionRenderer::BlurMask()
