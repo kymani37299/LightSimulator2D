@@ -25,6 +25,8 @@ layout(location = 0) out vec4 FinalColor;
 
 // Source: https://www.shadertoy.com/view/Xltfzj
 
+// TODO: Blur size based on distance from light source
+
 const float directions = 16.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
 const float quality = 2.0; // BLUR QUALITY (Default 3.0 - More is better but slower)
 const float size = 16.0; // BLUR SIZE (Radius)

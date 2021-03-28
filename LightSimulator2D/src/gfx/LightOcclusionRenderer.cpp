@@ -131,6 +131,9 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
 
     const Camera& cam = scene.GetCamera();
 
+    SetupLineSegments(scene);
+    SetupRayQuery();
+
     for (CulledEntity* ce : scene.GetEmitters())
     {
         Entity* emitter = ce->GetEntity();
@@ -169,6 +172,7 @@ unsigned LightOcclusionRenderer::SetupOcclusionMeshInput()
 
 void LightOcclusionRenderer::SetupLineSegments(CulledScene& scene)
 {
+    PROFILE_SCOPE("Setup line segments");
     m_OcclusionLineCount = 0;
     const Mat3 view = scene.GetCamera().GetTransformation();
     for (CulledEntity* ce : scene.GetOccluders())
@@ -215,10 +219,12 @@ bool angleComparator(const Vec2& l, const Vec2& r) { return glm::atan(l.y, l.x) 
 
 void LightOcclusionRenderer::SetupRayQuery()
 {
+    PROFILE_SCOPE("Setup ray query");
+
     for (size_t i = 0; i < NUM_ANGLED_RAYS; i++)
     {
         float angle = i * (2.0f * 6.283f / NUM_ANGLED_RAYS);
-        Vec2 dir = Vec2(cos(angle), sin(angle));
+        Vec4 dir = Vec4(cos(angle), sin(angle),0.0f,0.0f);
         m_RayQuery.push_back(dir);
     }
 
@@ -228,8 +234,8 @@ void LightOcclusionRenderer::SetupRayQuery()
         OcclusionMesh& mesh = it->second;
         for (Vec2 p : mesh)
         {
-            m_RayQuery.push_back(p - e);
-            m_RayQuery.push_back(p + e);
+            m_RayQuery.push_back(Vec4(p - e,0.0,0.0));
+            m_RayQuery.push_back(Vec4(p + e,0.0,0.0));
         }
     }
 
@@ -237,13 +243,7 @@ void LightOcclusionRenderer::SetupRayQuery()
 
     m_RayCount = m_RayQuery.size();
 
-    for (size_t i = 0; i < m_RayCount; i++)
-    {
-        m_RayQueryBuffer->UploadData(&m_RayQuery[i], i);
-    }
-
-    // TODO: Use this instead, right now multielement upload do not work like it should
-    //m_RayQueryBuffer->UploadData(m_RayQuery.data(), 0, m_RayCount);
+    m_RayQueryBuffer->UploadData(m_RayQuery.data(), 0, m_RayCount);
 
     m_RayQuery.clear();
 }
@@ -358,9 +358,6 @@ void LightOcclusionRenderer::PopulateOcclusionMesh(OcclusionMesh& mesh, int mesh
 void LightOcclusionRenderer::LightOcclusion(CulledScene& scene)
 {
     PROFILE_SCOPE("Light occlusion");
-
-    SetupLineSegments(scene);
-    SetupRayQuery();
 
     m_OcclusionShader->Bind();
     m_OcclusionShader->SetUniform("u_LightPosition", m_CurrentQuery.position);

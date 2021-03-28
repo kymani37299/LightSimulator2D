@@ -96,7 +96,7 @@ private:
 	Framebuffer* m_OcclusionMaskFB;
 	Framebuffer* m_OcclusionMaskFinal;
 
-	std::vector<Vec2> m_RayQuery;
+	std::vector<Vec4> m_RayQuery;
 
 	Shader* m_OcclusionMeshGenShader = nullptr;
 	Shader* m_ShadowmapShader = nullptr;
