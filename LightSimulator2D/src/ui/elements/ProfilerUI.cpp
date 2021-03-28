@@ -85,11 +85,16 @@ void ProfilerUI::UpdateInternal()
 void ProfilerUI::Render()
 {
 	IM_BEGIN("Profiler");
+#ifdef DEBUG
 	ImGui::Checkbox("Sort by name:", &m_SortByNameCB);
+#endif
 	ImGui::Text(("FPS: " + FToS(m_CurrentFPS)).c_str());
+
+#ifdef DEBUG // TODO: Hide diagrams until is fixed bug with release
 	for (ProfilerDiagram* d : m_Diagrams)
 	{
 		d->Render();
 	}
+#endif
 	IM_END();
 }

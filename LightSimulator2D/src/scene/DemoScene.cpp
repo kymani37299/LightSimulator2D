@@ -104,12 +104,17 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
     bg->GetDrawFlags().background = true;
     bg->GetBackgroundProperties().textureScale = 2.0f;
 
-    Entity* emitter = new Entity{ P("bg_diffuse.png"), P("bg_normal.png") };
+    Entity* emitter = new Entity{ P("bg_diffuse.png") };
     emitter->AddComponent(new FollowMouseComponent());
     emitter->AddComponent(controller);
     emitter->GetDrawFlags().emitter = true;
     emitter->GetEmissionProperties().color = Vec3(1.0, 1.0, 0.0);
     emitter->GetEmissionProperties().radius = 0.15f;
+
+    Entity* torchEmitter = new Entity{ P("bg_diffuse.png") };
+    torchEmitter->GetDrawFlags().emitter = true;
+    torchEmitter->GetEmissionProperties().color = Vec3(0.62, 0.51, 0.0);
+    torchEmitter->GetEmissionProperties().radius = 0.15f;
 
     Entity* tree1_up = new Entity{ P("tree1/tree1_up.png") };
     tree1_up->GetDrawFlags().foreground = true;
@@ -126,6 +131,13 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
     tree2_down->GetOcclusionProperties().shape = OccluderShape::Rect;
 
     Entity* bush = new Entity{ P("bush_diffuse.png") };
+    
+    Entity* fence = new Entity{ P("fence.png") };
+    fence->GetDrawFlags().foreground = true;
+
+    Entity* fenceOccluder = new Entity{ P("fence.png") };
+    fenceOccluder->GetDrawFlags().occluder = true;
+    fenceOccluder->GetOcclusionProperties().shape = OccluderShape::Rect;
 
     Entity* house = new Entity{ P("house/house_diffuse.png"),P("house/house_normal.png") };
     house->GetDrawFlags().occluder = true;
@@ -136,18 +148,23 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
 
     scene->AddEntity(bg);
     scene->AddEntity(emitter);
+    scene->AddEntity(torchEmitter);
     scene->AddEntity(tree1_up);
     scene->AddEntity(tree1_down);
     scene->AddEntity(tree2_up);
     scene->AddEntity(tree2_down);
     scene->AddEntity(bush);
     scene->AddEntity(house);
+    scene->AddEntity(fence);
+    scene->AddEntity(fenceOccluder);
 
     // Instances
     const Vec2 tree1Offset = Vec2(0.01, -0.2);
     const Vec2 tree2Offset = Vec2(0.0, -0.27);
+    const Vec2 torchOffest = Vec2(-0.27, 0.0);
     const unsigned numBushes = 100;
-    const Vec2 numTrees = VEC2_ONE * 8.0f;
+    const Vec2 numTrees = VEC2_ONE * 20.0f;
+    const Vec2 treeArea = numTrees / 2.0f;
 
     bg->Instance();
     emitter->Instance()->ApplyScale(0.01f);
@@ -155,7 +172,9 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
 
     for (unsigned i = 0; i < numBushes; i++)
     {
-        bush->Instance()->SetPosition(RandPos(-2.0f,2.0f));
+        const Vec2 tah = treeArea / (VEC2_ONE * 2.0f);
+        Vec2 pos = Vec2(RandFloat(-tah.x, tah.x), RandFloat(-tah.y, tah.y));
+        bush->Instance()->SetPosition(pos);
     }
 
     for (unsigned i = 0; i < (unsigned) numTrees.x; i++)
@@ -163,12 +182,13 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
         for (unsigned j = 0; j < (unsigned)numTrees.y; j++)
         {
             const Vec2 nth = numTrees / 2.0f; // Num trees half
+            const Vec2 gapSize = VEC2_ONE * 3.0f;
 
-            if ((i < nth.x + 1 && i > nth.x - 1) && (j < nth.y + 2 && j > nth.y - 2)) continue;
+            if ((i < nth.x + gapSize.x && i > nth.x - gapSize.x) && (j < nth.y + gapSize.y && j > nth.y - gapSize.y)) continue;
 
             const float randVar = 0.1f;
-            const Vec2 treeStep = 4.0f / numTrees;
-            Vec2 treePos = Vec2(i, j) * treeStep - 2.0f;
+            const Vec2 treeStep = treeArea / numTrees;
+            Vec2 treePos = Vec2(i, j) * treeStep - treeArea/2.0f;
             treePos += Vec2(RandFloat(-randVar, randVar), RandFloat(-randVar, randVar));
             float treeDecider = RandFloat(0.0f, 1.0f);
 
@@ -183,8 +203,44 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
                 tree2_down->Instance()->SetPosition(treePos + tree2Offset);
             }
 
+            if (i % 4 == 0 && j % 4 == 2)
+            {
+                EntityInstance* ei = torchEmitter->Instance();
+                ei->SetPosition(treePos + torchOffest);
+                ei->ApplyScale(0.01f);
+            }
+        
         }
     }
 
+    constexpr float PI = 3.1415f;
+    constexpr unsigned numFences = 10;
+    constexpr Vec2 fenceSize = Vec2(0.15f,0.2f);
+    constexpr Vec2 halfSide = fenceSize * (float)numFences / 2.0f;
+    constexpr Vec2 startPositions[] = { Vec2(-1.0f,-1.0f), Vec2(-1.0f,1.0f), Vec2(-1.0f,-1.0f), Vec2(1.0f,-1.0f) };
+    constexpr Vec2 increments[] = { Vec2(1.0f,0.0f), Vec2(1.0f,0.0f), Vec2(0.0f,1.0f), Vec2(0.0f,1.0f)};
+    constexpr float rotations[] = { 0.0f,0.0f,PI / 2.0f,PI / 2.0f };
+    constexpr Vec2 scales[] = {VEC2_ONE, VEC2_ONE, Vec2(0.8,1.0), Vec2(0.8,1.0) };
+    for (unsigned side = 0; side < 4; side++)
+    {
+        for (unsigned i = 1; i < numFences; i++)
+        {
+            Vec2 fencePos = startPositions[side]*halfSide + (float) i * increments[side] * fenceSize;
+            EntityInstance* ei = fence->Instance();
+            ei->SetPosition(fencePos);
+            ei->ApplyRotation(rotations[side]);
+            ei->ApplyScale(scales[side]);
 
+            Vec2 occluderOffset = side >= 2 ? Vec2(0.04,0.08) : Vec2(0.04, 0.04);
+            EntityInstance* o1 = fenceOccluder->Instance();
+            o1->SetPosition(fencePos + occluderOffset * scales[side]);
+            o1->ApplyRotation(rotations[side]);
+            o1->ApplyScale(0.1f);
+
+            EntityInstance* o2 = fenceOccluder->Instance();
+            o2->SetPosition(fencePos + occluderOffset * Vec2(1.0f,-1.0f) * scales[side]);
+            o2->ApplyScale(0.1f);
+            o2->ApplyRotation(rotations[side]);
+        }
+    }
 }

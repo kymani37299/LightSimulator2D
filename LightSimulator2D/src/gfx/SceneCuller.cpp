@@ -11,14 +11,19 @@ inline static bool InRect(Vec2 x, Vec2 a, Vec2 b)
 
 inline static bool ShouldBeCulled(const Mat3& transformation, const Mat3& cameraTransform, float occlusionFactor)
 {
-    static const Vec4 screenQuad = { -1.0,-1.0,1.0,1.0 };
+    constexpr Vec4 screenQuad = { -1.0,-1.0,1.0,1.0 };
     const Vec3 zoneA = (Vec3(screenQuad.x, screenQuad.y,1.0/occlusionFactor) * occlusionFactor) * cameraTransform;
     const Vec3 zoneB = (Vec3(screenQuad.z, screenQuad.w,1.0/occlusionFactor) * occlusionFactor) * cameraTransform;
     const Vec3 instanceA = Vec3(screenQuad.x, screenQuad.y, 1.0) * transformation;
     const Vec3 instanceB = Vec3(screenQuad.z, screenQuad.w, 1.0) * transformation;
 
-    return instanceA.x >= zoneB.x || zoneA.x >= instanceB.x 
-        || instanceA.y >= zoneB.y || zoneA.y >= instanceB.y;
+    const float minX = MIN(instanceA.x, instanceB.x);
+    const float minY = MIN(instanceA.y, instanceB.y);
+    const float maxX = MAX(instanceA.x, instanceB.x);
+    const float maxY = MAX(instanceA.y, instanceB.y);
+
+    return minX >= zoneB.x || zoneA.x >= maxX 
+        || minY >= zoneB.y || zoneA.y >= maxY;
 }
 
 inline static float GetSpecificOcclusionFactor(DrawFlags df)
