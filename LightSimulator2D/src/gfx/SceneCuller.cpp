@@ -2,7 +2,7 @@
 
 #include "util/Profiler.h"
 
-#include "gfx/DebugRenderer.h"
+#include "ui/elements/SceneUI.h"
 
 inline static bool InRect(Vec2 x, Vec2 a, Vec2 b)
 {
@@ -42,8 +42,12 @@ void SceneCuller::CullEntity(Entity* e)
     CulledEntity* ceSpecific = new CulledEntity(e);
     float occlusionFactor = GetSpecificOcclusionFactor(e->GetDrawFlags());
 
+
+
     for (EntityInstance* ei : e->GetInstances())
     {
+        m_CulledScene.m_TotalInstances++;
+
         if (!ShouldBeCulled(ei->GetTransformation(), camTrans, 1.0f))
         {
             ce->m_Instances.push_back(ei);
@@ -59,10 +63,40 @@ void SceneCuller::CullEntity(Entity* e)
     if (!ceSpecific->m_Instances.empty())
     {
         DrawFlags df = e->GetDrawFlags();
-        if (df.occluder)            m_CulledScene.m_Occluders.push_back(ce);
-        else if (df.emitter)        m_CulledScene.m_Emitters.push_back(ce);
-        else if (df.foreground)     m_CulledScene.m_Foreground.push_back(ce);
+        if (df.occluder)        m_CulledScene.m_Occluders.push_back(ce);
+        else if (df.emitter)    m_CulledScene.m_Emitters.push_back(ce);
+        else if (df.foreground) m_CulledScene.m_Foreground.push_back(ce);
     }
+
+    // Scene stats
+
+    DrawFlags df = e->GetDrawFlags();
+    if (df.occluder) m_CulledScene.m_TotalOccluders += e->GetInstances().size();
+    if (df.emitter) m_CulledScene.m_TotalEmitters += e->GetInstances().size();
+    m_CulledScene.m_TotalInstances += e->GetInstances().size();
+    
+    if (!ce->m_Instances.empty()) m_CulledScene.m_DrawnInstances += ce->GetInstances().size();
+    if (!ceSpecific->m_Instances.empty())
+    {
+        DrawFlags df = e->GetDrawFlags();
+        if (df.occluder)        m_CulledScene.m_DrawnOccluders += ce->GetInstances().size();
+        else if (df.emitter)    m_CulledScene.m_DrawnEmitters += ce->GetInstances().size();
+    }
+
+    //
+}
+
+void UpdateSceneUI(Scene* scene, CulledScene* culledScene)
+{
+    SceneUI* s = SceneUI::Get();
+    if (!s) return;
+    s->SetTotalEntities(scene->Size());
+    s->SetTotalInstances(culledScene->GetTotalInstances());
+    s->SetDrawnInstances(culledScene->GetDrawnInstances());
+    s->SetTotalEmitters(culledScene->GetTotalEmitters());
+    s->SetDrawnEmitters(culledScene->GetDrawnEmitters());
+    s->SetTotalOccluders(culledScene->GetTotalOccluders());
+    s->SetDrawnOccluders(culledScene->GetDrawnOccluders());
 }
 
 CulledScene& SceneCuller::GetCulledScene(Scene* scene)
@@ -76,6 +110,8 @@ CulledScene& SceneCuller::GetCulledScene(Scene* scene)
     {
         CullEntity((*it));
     }
+
+    UpdateSceneUI(scene, &m_CulledScene);
 
     return m_CulledScene;
 }

@@ -45,6 +45,13 @@ public:
         m_Albedo.clear();
 
         m_Scene = nullptr;
+
+        m_TotalInstances = 0;
+        m_DrawnInstances = 0;
+        m_TotalEmitters = 0;
+        m_DrawnEmitters = 0;
+        m_TotalOccluders = 0;
+        m_DrawnOccluders = 0;
     }
 
     inline std::vector<CulledEntity*>& GetOccluders() { return m_Occluders; }
@@ -56,11 +63,31 @@ public:
     inline Vec3& GetAmbientLight() { return m_Scene->GetAmbientLight(); }
     inline Vec3& GetLightAttenuation() { return m_Scene->GetLightAttenuation(); }
 
+    inline unsigned GetTotalInstances() { return m_TotalInstances; }
+    inline unsigned GetDrawnInstances() { return m_DrawnInstances; }
+
+    inline unsigned GetTotalEmitters() { return m_TotalEmitters; }
+    inline unsigned GetDrawnEmitters() { return m_DrawnEmitters; }
+
+    inline unsigned GetTotalOccluders() { return m_TotalOccluders; }
+    inline unsigned GetDrawnOccluders() { return m_DrawnOccluders; }
+
+
 private:
+
     std::vector<CulledEntity*> m_Occluders;
     std::vector<CulledEntity*> m_Emitters;
     std::vector<CulledEntity*> m_Foreground;
     std::vector<CulledEntity*> m_Albedo;
+
+    unsigned m_TotalInstances;
+    unsigned m_DrawnInstances;
+
+    unsigned m_TotalEmitters;
+    unsigned m_DrawnEmitters;
+
+    unsigned m_TotalOccluders;
+    unsigned m_DrawnOccluders;
 
     Scene* m_Scene;
 };

@@ -7,10 +7,12 @@
 #include "util/Profiler.h"
 
 #include "elements/ProfilerUI.h"
+#include "elements/SceneUI.h"
 
 void UIEngine::SetupElements()
 {
     AddElement(new ProfilerUI());
+    AddElement(SceneUI::Get());
 }
 
 UIEngine::~UIEngine()
