@@ -24,8 +24,8 @@ inline static bool ShouldBeCulled(const Mat3& transformation, const Mat3& camera
 
 inline static float GetSpecificOcclusionFactor(DrawFlags df)
 {
-    if (df.occluder)            return 1.5f;
-    else if (df.emitter)        return 1.5f;
+    if (df.occluder)            return 1.2f;
+    else if (df.emitter)        return EMITTER_AREA;
     else if (df.foreground)     return 1.0f;
     return -1.0f;
 }

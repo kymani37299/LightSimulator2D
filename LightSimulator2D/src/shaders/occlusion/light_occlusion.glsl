@@ -47,7 +47,7 @@ void calcIntersection(out vec3 intersection, vec4 ray, vec4 segment)
     }
 }
 
-const float areaSize = 1.5;
+const float areaSize = EMITTER_AREA;
 
 void intersectScreen(out vec3 intersection, vec4 ray)
 {
