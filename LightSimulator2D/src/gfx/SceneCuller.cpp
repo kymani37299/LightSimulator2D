@@ -7,8 +7,9 @@
 inline static bool ShouldBeCulled(const Mat3& transformation, const Mat3& cameraTransform, float occlusionFactor)
 {
     constexpr Vec4 screenQuad = { -1.0,-1.0,1.0,1.0 };
-    const Vec3 zoneA = (Vec3(screenQuad.x, screenQuad.y,1.0/occlusionFactor) * occlusionFactor) * cameraTransform;
-    const Vec3 zoneB = (Vec3(screenQuad.z, screenQuad.w,1.0/occlusionFactor) * occlusionFactor) * cameraTransform;
+    const Vec4 scaledQuad = screenQuad * occlusionFactor;
+    const Vec3 zoneA = Vec3(scaledQuad.x, scaledQuad.y,1.0) * cameraTransform;
+    const Vec3 zoneB = Vec3(scaledQuad.z, scaledQuad.w,1.0) * cameraTransform;
     const Vec3 instanceA = Vec3(screenQuad.x, screenQuad.y, 1.0) * transformation;
     const Vec3 instanceB = Vec3(screenQuad.z, screenQuad.w, 1.0) * transformation;
 
@@ -24,7 +25,7 @@ inline static bool ShouldBeCulled(const Mat3& transformation, const Mat3& camera
 inline static float GetSpecificOcclusionFactor(DrawFlags df)
 {
     if (df.occluder)            return 1.5f;
-    else if (df.emitter)        return 2.0f;
+    else if (df.emitter)        return 1.5f;
     else if (df.foreground)     return 1.0f;
     return -1.0f;
 }
@@ -56,9 +57,9 @@ void SceneCuller::CullEntity(Entity* e)
     if (!ceSpecific->m_Instances.empty())
     {
         DrawFlags df = e->GetDrawFlags();
-        if (df.occluder)        m_CulledScene.m_Occluders.push_back(ce);
-        else if (df.emitter)    m_CulledScene.m_Emitters.push_back(ce);
-        else if (df.foreground) m_CulledScene.m_Foreground.push_back(ce);
+        if (df.occluder)        m_CulledScene.m_Occluders.push_back(ceSpecific);
+        else if (df.emitter)    m_CulledScene.m_Emitters.push_back(ceSpecific);
+        else if (df.foreground) m_CulledScene.m_Foreground.push_back(ceSpecific);
     }
 
     // Scene stats
