@@ -73,8 +73,8 @@ void SceneCuller::CullEntity(Entity* e)
     if (!ceSpecific->m_Instances.empty())
     {
         DrawFlags df = e->GetDrawFlags();
-        if (df.occluder)        m_CulledScene.m_DrawnOccluders += ce->GetInstances().size();
-        else if (df.emitter)    m_CulledScene.m_DrawnEmitters += ce->GetInstances().size();
+        if (df.occluder)        m_CulledScene.m_DrawnOccluders += ceSpecific->GetInstances().size();
+        else if (df.emitter)    m_CulledScene.m_DrawnEmitters += ceSpecific->GetInstances().size();
     }
 
     //
