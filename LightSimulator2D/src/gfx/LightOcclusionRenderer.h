@@ -42,8 +42,7 @@ public:
 	Framebuffer* GetOcclusionMaskFB() { return m_OcclusionMaskFinal; }
 
 private:
-	void SetupLineSegments(CulledScene& scene);
-	void SetupRayQuery();
+	void SetupBuffers(CulledScene& scene);
 
 	using OcclusionMesh = std::vector<Vec2>;
 	void PopulateOcclusionMesh(OcclusionMesh& mesh, int meshSize);
@@ -63,7 +62,6 @@ private:
 
 	unsigned m_RayCount = 0;
 	std::vector<Vec4> m_RayQuery;
-	bool m_UpdateRayQuery = true;
 
 	unsigned m_OcclusionLineCount = 0;
 	ShaderInput* m_OcclusionMesh = nullptr;

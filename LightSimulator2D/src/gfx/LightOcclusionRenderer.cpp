@@ -59,8 +59,6 @@ void LightOcclusionRenderer::OnOccluderAdded(Entity* e)
 {
     ASSERT(e->GetDrawFlags().occluder);
 
-    m_UpdateRayQuery = true;
-
     OcclusionProperties& props = e->GetOcclusionProperties();
 
     switch (props.shape)
@@ -114,8 +112,7 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
     constexpr float angleStep = 2.0f * 3.1415f / NUM_LIGHT_SAMPLES;
     const Camera& cam = scene.GetCamera();
 
-    SetupLineSegments(scene);
-    SetupRayQuery();
+    SetupBuffers(scene);
 
     m_OcclusionMaskFB->Clear();
 
@@ -145,12 +142,27 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
     BlurMask();
 }
 
-void LightOcclusionRenderer::SetupLineSegments(CulledScene& scene)
-{
-    PROFILE_SCOPE("Setup line segments");
+bool angleComparator(const Vec2& l, const Vec2& r) { return glm::atan(l.y, l.x) < glm::atan(r.y, r.x); }
 
-    m_OcclusionLineCount = 0;
+void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
+{
+    PROFILE_SCOPE("Setup buffers");
+
+    const Vec2 epsilon = Vec2(0.01f);
     const Mat3 view = scene.GetCamera().GetTransformation();
+
+    std::vector<Vec4> lines;
+    lines.reserve(m_OcclusionLineCount);
+    m_OcclusionLineCount = 0;
+
+    // Angled rays
+    for (size_t i = 0; i < NUM_ANGLED_RAYS; i++)
+    {
+        float angle = i * (2.0f * 6.283f / NUM_ANGLED_RAYS);
+        Vec4 dir = Vec4(cos(angle), sin(angle), 0.0f, 0.0f);
+        m_RayQuery.push_back(dir);
+    }
+
     for (CulledEntity* ce : scene.GetOccluders())
     {
         Entity* e = ce->GetEntity();
@@ -161,16 +173,33 @@ void LightOcclusionRenderer::SetupLineSegments(CulledScene& scene)
             const Mat3 transform = ei->GetTransformation() * view;
             for (size_t i = 0; i < mesh.size(); i++)
             {
-                Vec3 a = Vec3(mesh[i], 1.0) * transform;
-                size_t next_i = i + 1 == mesh.size() ? 0 : i + 1;
-                Vec3 b = Vec3(mesh[next_i], 1.0) * transform;
-                Vec4 lineSegment = Vec4(a.x, a.y, b.x, b.y);
-
-                m_OcclusionLines->UploadData(&lineSegment, m_OcclusionLineCount);
                 m_OcclusionLineCount++;
+
+                const size_t next_i = i + 1 == mesh.size() ? 0 : i + 1;
+                const Vec2 p = mesh[i];
+                const Vec2 next_p = mesh[next_i];
+
+                // Line
+                Vec3 a = Vec3(p, 1.0) * transform;
+                Vec3 b = Vec3(next_p, 1.0) * transform;
+                Vec4 lineSegment = Vec4(a.x, a.y, b.x, b.y);
+                lines.push_back(lineSegment);
+
+                // Ray
+                m_RayQuery.push_back(Vec4(p - epsilon, 0.0, 0.0));
+                m_RayQuery.push_back(Vec4(p + epsilon, 0.0, 0.0));
             }
         }
     }
+
+    // Upload rays
+    std::sort(m_RayQuery.begin(), m_RayQuery.end(), &angleComparator);
+    m_RayCount = m_RayQuery.size();
+    m_RayQueryBuffer->UploadData(m_RayQuery.data(), 0, m_RayCount);
+    m_RayQuery.clear();
+
+    // Upload lines
+    m_OcclusionLines->UploadData(lines.data(), 0, m_OcclusionLineCount);
 }
 
 void LightOcclusionRenderer::RenderOcclusionMask(CulledScene& scene)
@@ -190,42 +219,6 @@ void LightOcclusionRenderer::RenderOcclusionMask(CulledScene& scene)
     GLFunctions::Draw(m_RayCount * 3);
     GLFunctions::AlphaBlending(false);
     m_OcclusionMaskFB->Unbind();
-}
-
-bool angleComparator(const Vec2& l, const Vec2& r) { return glm::atan(l.y, l.x) < glm::atan(r.y, r.x); }
-
-void LightOcclusionRenderer::SetupRayQuery()
-{
-    PROFILE_SCOPE("Setup ray query");
-
-    if (!m_UpdateRayQuery) return;
-    m_UpdateRayQuery = false;
-
-    for (size_t i = 0; i < NUM_ANGLED_RAYS; i++)
-    {
-        float angle = i * (2.0f * 6.283f / NUM_ANGLED_RAYS);
-        Vec4 dir = Vec4(cos(angle), sin(angle),0.0f,0.0f);
-        m_RayQuery.push_back(dir);
-    }
-
-    const Vec2 e = Vec2(0.01f);
-    for (auto it = m_OcclusionMeshPool.begin(); it != m_OcclusionMeshPool.end(); it++)
-    {
-        OcclusionMesh& mesh = it->second;
-        for (Vec2 p : mesh)
-        {
-            m_RayQuery.push_back(Vec4(p - e,0.0,0.0));
-            m_RayQuery.push_back(Vec4(p + e,0.0,0.0));
-        }
-    }
-
-    std::sort(m_RayQuery.begin(), m_RayQuery.end(), &angleComparator);
-
-    m_RayCount = m_RayQuery.size();
-
-    m_RayQueryBuffer->UploadData(m_RayQuery.data(), 0, m_RayCount);
-
-    m_RayQuery.clear();
 }
 
 bool intersect(Vec2& intersection, Vec2 a1, Vec2 a2, Vec2 b1, Vec2 b2)
