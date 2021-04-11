@@ -20,10 +20,10 @@ class Framebuffer;
 
 struct OcclusionQuery
 {
-	Vec2 position;
-	Vec3 color;
-	float radius;
-	float strength;
+	Vec2 position = VEC2_ZERO;
+	Vec3 color = VEC3_ZERO;
+	float radius = 0.0f;
+	float strength = 0.0f;
 };
 
 class LightOcclusionRenderer
@@ -63,6 +63,7 @@ private:
 
 	unsigned m_RayCount = 0;
 	std::vector<Vec4> m_RayQuery;
+	bool m_UpdateRayQuery = true;
 
 	unsigned m_OcclusionLineCount = 0;
 	ShaderInput* m_OcclusionMesh = nullptr;

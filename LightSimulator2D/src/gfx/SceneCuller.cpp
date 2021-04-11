@@ -4,11 +4,6 @@
 
 #include "ui/elements/SceneUI.h"
 
-inline static bool InRect(Vec2 x, Vec2 a, Vec2 b)
-{
-    return x.x > a.x && x.x < b.x && x.y > a.y&& x.y < b.y;
-}
-
 inline static bool ShouldBeCulled(const Mat3& transformation, const Mat3& cameraTransform, float occlusionFactor)
 {
     constexpr Vec4 screenQuad = { -1.0,-1.0,1.0,1.0 };
@@ -41,8 +36,6 @@ void SceneCuller::CullEntity(Entity* e)
     CulledEntity* ce = new CulledEntity(e);
     CulledEntity* ceSpecific = new CulledEntity(e);
     float occlusionFactor = GetSpecificOcclusionFactor(e->GetDrawFlags());
-
-
 
     for (EntityInstance* ei : e->GetInstances())
     {

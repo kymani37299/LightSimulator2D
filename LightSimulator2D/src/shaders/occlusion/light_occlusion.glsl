@@ -19,7 +19,7 @@ layout(std140, binding = 2) uniform readonly LineSegmentsBuffer
     vec4 r_LineSegments[MAX_LINE_SEGMENTS];
 };
 
-layout(std140, binding = 3) uniform readonly RayQueryBuffer // Can this be "in" ?
+layout(std140, binding = 3) uniform readonly RayQueryBuffer
 {
     vec4 r_Rays[MAX_RAY_QUERIES];
 };
@@ -47,7 +47,7 @@ void calcIntersection(out vec3 intersection, vec4 ray, vec4 segment)
     }
 }
 
-const float areaSize = 2.0;
+const float areaSize = 1.0;
 
 void intersectScreen(out vec3 intersection, vec4 ray)
 {

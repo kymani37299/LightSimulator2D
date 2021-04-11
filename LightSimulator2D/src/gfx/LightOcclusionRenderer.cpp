@@ -59,6 +59,8 @@ void LightOcclusionRenderer::OnOccluderAdded(Entity* e)
 {
     ASSERT(e->GetDrawFlags().occluder);
 
+    m_UpdateRayQuery = true;
+
     OcclusionProperties& props = e->GetOcclusionProperties();
 
     switch (props.shape)
@@ -196,7 +198,8 @@ void LightOcclusionRenderer::SetupRayQuery()
 {
     PROFILE_SCOPE("Setup ray query");
 
-    // TODO: Skip when not needed
+    if (!m_UpdateRayQuery) return;
+    m_UpdateRayQuery = false;
 
     for (size_t i = 0; i < NUM_ANGLED_RAYS; i++)
     {
