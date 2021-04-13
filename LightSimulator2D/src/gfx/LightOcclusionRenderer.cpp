@@ -109,10 +109,10 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
     size_t numEmitters = scene.GetEmitters().size();
     if (numEmitters < 1) return;
 
-    constexpr float angleStep = 2.0f * 3.1415f / NUM_LIGHT_SAMPLES;
     const Camera& cam = scene.GetCamera();
 
     SetupBuffers(scene);
+    std::map<EntityInstance*, unsigned> lightSampleMap = DivideSamples(scene);
 
     m_OcclusionMaskFB->Clear();
 
@@ -121,15 +121,16 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
         Entity* emitter = ce->GetEntity();
         for (EntityInstance* emitter_ei : ce->GetInstances())
         {
+            unsigned numLightSamples = lightSampleMap[emitter_ei];
             Vec2 emitterPos = emitter_ei->GetPosition();
             emitterPos = cam.GetViewSpacePosition(emitterPos);
             m_CurrentQuery.color = emitter->GetEmissionProperties().color;
             m_CurrentQuery.radius = emitter->GetEmissionProperties().radius;
-            m_CurrentQuery.strength = (1.0f / NUM_LIGHT_SAMPLES * 1.3f);
+            m_CurrentQuery.strength = (1.0f / numLightSamples * 1.3f);
 
-            for (int i = 0; i < NUM_LIGHT_SAMPLES; i++)
+            for (unsigned i = 0; i < numLightSamples; i++)
             {
-                float angle = i * angleStep;
+                float angle = i * 2.0f * 3.1415f / numLightSamples;
                 m_CurrentQuery.position = emitterPos + Vec2(cos(angle), sin(angle)) * m_CurrentQuery.radius;
 
                 LightOcclusion(scene);
@@ -200,6 +201,31 @@ void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
 
     // Upload lines
     m_OcclusionLines->UploadData(lines.data(), 0, m_OcclusionLineCount);
+}
+
+std::map<EntityInstance*, unsigned> LightOcclusionRenderer::DivideSamples(CulledScene& scene)
+{
+    std::map<EntityInstance*, unsigned> result;
+    std::map<EntityInstance*, float> distancesInv;
+    float sumDistanceInv = 0.0f;
+    const Vec2 camPos = scene.GetCamera().position;
+    for (CulledEntity* e : scene.GetEmitters())
+    {
+        for (EntityInstance* ei : e->GetInstances())
+        {
+            float d_inv = 1.0f/glm::length(camPos - ei->GetPosition());
+            distancesInv[ei] = d_inv;
+            result[ei] = OPTIMAL_LIGHT_SAMPLES;
+            sumDistanceInv += d_inv;
+        }
+    }
+
+    for (auto it = distancesInv.begin(); it != distancesInv.end(); ++it)
+    {
+        unsigned num = (unsigned) floor(it->second / sumDistanceInv * (float) MAX_LIGHT_SAMPLES);
+        result[it->first] = MIN(num, OPTIMAL_LIGHT_SAMPLES);
+    }
+    return result;
 }
 
 void LightOcclusionRenderer::RenderOcclusionMask(CulledScene& scene)

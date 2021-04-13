@@ -8,6 +8,7 @@
 #include "shaders/common.h"
 
 class Entity;
+class EntityInstance;
 
 class CulledScene;
 
@@ -43,6 +44,7 @@ public:
 
 private:
 	void SetupBuffers(CulledScene& scene);
+	std::map<EntityInstance*,unsigned> DivideSamples(CulledScene& scene);
 
 	using OcclusionMesh = std::vector<Vec2>;
 	void PopulateOcclusionMesh(OcclusionMesh& mesh, int meshSize);
@@ -55,7 +57,9 @@ private:
 private:
 
 	static constexpr unsigned NUM_ANGLED_RAYS = 30;
-	static constexpr unsigned NUM_LIGHT_SAMPLES = 6;
+
+	static constexpr unsigned OPTIMAL_LIGHT_SAMPLES = 6;
+	static constexpr unsigned MAX_LIGHT_SAMPLES = 12;
 
 	OcclusionQuery m_CurrentQuery;
 	std::map<Entity*, OcclusionMesh> m_OcclusionMeshPool;

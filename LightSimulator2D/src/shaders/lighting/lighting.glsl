@@ -22,8 +22,6 @@ uniform vec3 u_AmbientLight;
 
 layout(location = 0) out vec4 FinalColor;
 
-const float baseLight = 0.1;
-
 void main()
 {
 	vec3 occlusion = texture(u_OcclusionMask, UV).rgb;
