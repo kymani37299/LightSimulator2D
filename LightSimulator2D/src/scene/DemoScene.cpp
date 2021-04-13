@@ -8,6 +8,7 @@
 
 static void Scene1(Scene* scene, PlayerControllerComponent* controller);
 static void Scene2(Scene* scene, PlayerControllerComponent* controller);
+static void Scene3(Scene* scene, PlayerControllerComponent* controller);
 
 PlayerControllerComponent* Demo::SetupDemoScene(Scene* scene, unsigned index)
 {
@@ -17,6 +18,7 @@ PlayerControllerComponent* Demo::SetupDemoScene(Scene* scene, unsigned index)
     {
     case 1: Scene1(scene, controller); break;
     case 2: Scene2(scene, controller); break;
+    case 3: Scene3(scene, controller); break;
     default: Scene1(scene, controller); break;
     }
 
@@ -164,7 +166,7 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
     const Vec2 torchOffest = Vec2(-0.27, 0.0);
     const unsigned numBushes = 100;
     const Vec2 numTrees = VEC2_ONE * 20.0f;
-    const Vec2 treeArea = numTrees / 2.0f;
+    const Vec2 treeArea = numTrees / 1.6f;
 
     bg->Instance();
     emitter->Instance()->ApplyScale(0.01f);
@@ -203,7 +205,7 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
                 tree2_down->Instance()->SetPosition(treePos + tree2Offset);
             }
 
-            if (i % 4 == 0 && j % 4 == 2)
+            if (i % 3 == 0 && j % 3 == 2)
             {
                 EntityInstance* ei = torchEmitter->Instance();
                 ei->SetPosition(treePos + torchOffest);
@@ -243,4 +245,53 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
             o2->ApplyRotation(rotations[side]);
         }
     }
+}
+
+static void Scene3(Scene* scene, PlayerControllerComponent* controller)
+{
+    const std::string res_path = "res/demo/";
+
+#define P(X) res_path + X
+    Entity* bg = new Entity{ P("bg.png") };
+    bg->GetDrawFlags().background = true;
+    bg->GetBackgroundProperties().textureScale = 2.0f;
+
+    Entity* krug = new Entity{ P("krug.png") };
+    krug->AddComponent(new FollowMouseComponent());
+    krug->AddComponent(controller);
+    krug->GetDrawFlags().emitter = true;
+    krug->GetEmissionProperties().color = Vec3(1.0, 1.0, 0.0);
+    krug->GetEmissionProperties().radius = 0.15f;
+
+    Entity* kvadrat = new Entity{ P("kvadrat.png") };
+    kvadrat->GetDrawFlags().occluder = true;
+
+    Entity* pravugaonik = new Entity(P("pravugaonik.png"));
+    pravugaonik->GetDrawFlags().occluder = true;
+
+    Entity* oblik1 = new Entity(P("oblik.png"));
+    oblik1->GetDrawFlags().occluder = true;
+    oblik1->GetOcclusionProperties().shape = OccluderShape::Mesh;
+    oblik1->GetOcclusionProperties().meshLod = 2;
+
+    Entity* oblik2 = new Entity(P("oblik2.png"));
+    oblik2->GetDrawFlags().occluder = true;
+    oblik2->GetOcclusionProperties().shape = OccluderShape::Mesh;
+    oblik2->GetOcclusionProperties().meshLod = 2;
+
+#undef P
+
+    scene->AddEntity(bg);
+    scene->AddEntity(krug);
+    scene->AddEntity(kvadrat);
+    scene->AddEntity(pravugaonik);
+    scene->AddEntity(oblik1);
+    scene->AddEntity(oblik2);
+
+    bg->Instance();
+    krug->Instance();
+    kvadrat->Instance()->SetPosition({ 0.4,0.4 });
+    pravugaonik->Instance()->SetPosition({ -0.3, 0.2 });
+    oblik1->Instance()->SetPosition({ -0.5,-0.8 });
+    oblik2->Instance()->SetPosition({ 0.3,-0.5 });
 }
