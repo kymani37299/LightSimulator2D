@@ -50,10 +50,11 @@ void LightingRenderer::RenderEmitters(CulledScene& scene)
     for (CulledEntity* ce : scene.GetEmitters())
     {
         Entity* e = ce->GetEntity();
+        m_EmitterShader->SetUniform("u_EmitterColor", e->GetEmissionProperties().color);
+        e->GetTexture()->Bind(0);
         for (EntityInstance* ei : ce->GetInstances())
         {
             m_EmitterShader->SetUniform("u_Transform", ei->GetTransformation());
-            e->GetTexture()->Bind(0);
             GLFunctions::DrawPoints(1);
         }
     }
