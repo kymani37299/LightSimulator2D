@@ -206,25 +206,47 @@ void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
 std::map<EntityInstance*, unsigned> LightOcclusionRenderer::DivideSamples(CulledScene& scene)
 {
     std::map<EntityInstance*, unsigned> result;
-    std::map<EntityInstance*, float> distancesInv;
-    float sumDistanceInv = 0.0f;
-    const Vec2 camPos = scene.GetCamera().position;
+    std::vector<EntityInstance*> emitters;
+
+    const Vec2 camPos = -scene.GetCamera().position;
+
     for (CulledEntity* e : scene.GetEmitters())
     {
         for (EntityInstance* ei : e->GetInstances())
         {
-            float d_inv = 1.0f/glm::length(camPos - ei->GetPosition());
-            distancesInv[ei] = d_inv;
-            result[ei] = OPTIMAL_LIGHT_SAMPLES;
-            sumDistanceInv += d_inv;
+            emitters.push_back(ei);
         }
     }
-
-    for (auto it = distancesInv.begin(); it != distancesInv.end(); ++it)
+    
+    bool calculateAgain = false;
+    do
     {
-        unsigned num = (unsigned) floor(it->second / sumDistanceInv * (float) MAX_LIGHT_SAMPLES);
-        result[it->first] = MIN(num, OPTIMAL_LIGHT_SAMPLES);
-    }
+        calculateAgain = false;
+        std::map<EntityInstance*, float> distancesInv;
+        float sumDistanceInv = 0.0f;
+        for (EntityInstance* ei : emitters)
+        {
+            float d_inv = 1.0f / glm::length(camPos - ei->GetPosition());
+            distancesInv[ei] = d_inv;
+            sumDistanceInv += d_inv;
+        }
+
+        for (auto it = distancesInv.begin(); it != distancesInv.end(); ++it)
+        {
+            unsigned num = (unsigned)floor(it->second / sumDistanceInv * (float)MAX_LIGHT_SAMPLES);
+            result[it->first] = MIN(num, OPTIMAL_LIGHT_SAMPLES);
+            if (num > OPTIMAL_LIGHT_SAMPLES)
+            {
+                auto f = std::find(emitters.begin(), emitters.end(), it->first);
+                ASSERT(f != emitters.end());
+                emitters.erase(f);
+                calculateAgain = true;
+                break;
+            }
+        }
+
+    } while (calculateAgain);
+
     return result;
 }
 
