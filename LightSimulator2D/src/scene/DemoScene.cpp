@@ -254,7 +254,7 @@ static void Scene3(Scene* scene, PlayerControllerComponent* controller)
     scene->GetAmbientLight() = 0.2f * Vec3(0.2, 0.8, 1.0);
 
 #define P(X) res_path + X
-    Entity* bg = new Entity{ P("bg.png") };
+    Entity* bg = new Entity{ P("bg.png") , P("bg_normal2.jpg") };
     bg->GetDrawFlags().background = true;
     bg->GetBackgroundProperties().textureScale = 8.f;
 
@@ -265,7 +265,7 @@ static void Scene3(Scene* scene, PlayerControllerComponent* controller)
     krug->GetEmissionProperties().color = Vec3(1.0, 1.0, 0.0);
     krug->GetEmissionProperties().radius = 0.15f;
 
-    Entity* kvadrat = new Entity{ P("kvadrat.png") };
+    Entity* kvadrat = new Entity{ P("kvadrat.png") , P("bg_normal3.jpg") };
     kvadrat->GetDrawFlags().occluder = true;
 
     Entity* pravugaonik = new Entity(P("pravugaonik.png"));
