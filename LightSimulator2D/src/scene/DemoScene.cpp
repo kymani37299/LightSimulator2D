@@ -19,7 +19,7 @@ PlayerControllerComponent* Demo::SetupDemoScene(Scene* scene, unsigned index)
     case 1: Scene1(scene, controller); break;
     case 2: Scene2(scene, controller); break;
     case 3: Scene3(scene, controller); break;
-    default: Scene1(scene, controller); break;
+    default: Scene2(scene, controller); break;
     }
 
     return controller;
@@ -251,10 +251,12 @@ static void Scene3(Scene* scene, PlayerControllerComponent* controller)
 {
     const std::string res_path = "res/demo/";
 
+    scene->GetAmbientLight() = 0.2f * Vec3(0.2, 0.8, 1.0);
+
 #define P(X) res_path + X
     Entity* bg = new Entity{ P("bg.png") };
     bg->GetDrawFlags().background = true;
-    bg->GetBackgroundProperties().textureScale = 2.0f;
+    bg->GetBackgroundProperties().textureScale = 8.f;
 
     Entity* krug = new Entity{ P("krug.png") };
     krug->AddComponent(new FollowMouseComponent());
@@ -291,7 +293,7 @@ static void Scene3(Scene* scene, PlayerControllerComponent* controller)
     bg->Instance();
     krug->Instance();
     kvadrat->Instance()->SetPosition({ 0.4,0.4 });
-    pravugaonik->Instance()->SetPosition({ -0.3, 0.2 });
-    oblik1->Instance()->SetPosition({ -0.5,-0.8 });
+    pravugaonik->Instance()->SetPosition({ -0.6, 0.2 });
+    oblik1->Instance()->SetPosition({ -0.6,-0.7 });
     oblik2->Instance()->SetPosition({ 0.3,-0.5 });
 }

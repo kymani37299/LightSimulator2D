@@ -10,6 +10,7 @@ DebugRenderer::~DebugRenderer()
 {
 	SAFE_DELETE(m_PointShader);
 	SAFE_DELETE(m_LineShader);
+	SAFE_DELETE(m_ScreenShader);
 }
 
 DebugRenderer* DebugRenderer::Get()
@@ -30,12 +31,24 @@ void DebugRenderer::CompileShaders()
 {
 	CreateShader("debug/point", m_PointShader);
 	CreateShader("debug/line", m_LineShader);
+	CreateShader("debug/screen", m_ScreenShader);
+
 }
 
 void DebugRenderer::RenderDebug(CulledScene& scene)
 {
 	static Entity e{ "" };
 	static EntityInstance* ei = e.Instance();
+
+	// Screen
+	if (m_Framebuffer != nullptr)
+	{
+		m_ScreenShader->Bind();
+		m_Framebuffer->BindTexture(m_FramebufferSlot, 0);
+		GLFunctions::DrawFC();
+		m_Framebuffer->UnbindTexture(m_FramebufferSlot);
+		m_Framebuffer = nullptr;
+	}
 
 	// Lines
 	m_LineShader->Bind();
