@@ -9,17 +9,17 @@ layout(local_size_x = 1) in;
 uniform vec2 u_LightPosition;
 uniform int u_NumSegments;
 
-layout(std140, binding = 1) buffer writeonly IntersectionsBuffer
+layout(std140, binding = 1) writeonly buffer IntersectionsBuffer
 {
     vec4 w_Intersections[MAX_RAY_QUERIES];
 };
 
-layout(std140, binding = 2) uniform readonly LineSegmentsBuffer
+layout(std140, binding = 2) uniform LineSegmentsBuffer
 {
     vec4 r_LineSegments[MAX_LINE_SEGMENTS];
 };
 
-layout(std140, binding = 3) uniform readonly RayQueryBuffer
+layout(std140, binding = 3) uniform RayQueryBuffer
 {
     vec4 r_Rays[MAX_RAY_QUERIES];
 };

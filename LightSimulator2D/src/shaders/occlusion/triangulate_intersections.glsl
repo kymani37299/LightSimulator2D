@@ -7,12 +7,12 @@ layout(local_size_x = 1) in;
 uniform vec2 u_LightPosition;
 uniform int u_NumIntersections;
 
-layout(std140, binding = 1) buffer readonly IntersectionsBuffer
+layout(std140, binding = 1) readonly buffer IntersectionsBuffer
 {
     vec4 r_Intersections[MAX_RAY_QUERIES];
 };
 
-layout(std140, binding = 2) buffer writeonly TriangledIntersectionsBuffer
+layout(std140, binding = 2) writeonly buffer TriangledIntersectionsBuffer
 {
     vec4 w_TriangledIntersections[MAX_RAY_QUERIES*3];
 };

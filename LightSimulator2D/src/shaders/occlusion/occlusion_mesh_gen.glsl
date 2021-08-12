@@ -8,7 +8,7 @@ layout(binding = 0) uniform sampler2D u_Texture;
 
 uniform int u_MeshSize;
 
-layout(std140, binding = 1) buffer writeonly OcclusionMeshOutput
+layout(std140, binding = 1) writeonly buffer OcclusionMeshOutput
 {
     vec4 w_OcclusionMesh[MAX_OCCLUSION_MESH_SIZE];
 };

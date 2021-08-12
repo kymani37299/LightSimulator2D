@@ -112,7 +112,10 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
     const Camera& cam = scene.GetCamera();
 
     SetupBuffers(scene);
+
+#ifdef ENABLE_SAMPLE_MAP
     std::map<EntityInstance*, unsigned> lightSampleMap = DivideSamples(scene);
+#endif // ENABLE_SAMPLE_MAP
 
     m_OcclusionMaskFB->Clear();
 
@@ -121,7 +124,12 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
         Entity* emitter = ce->GetEntity();
         for (EntityInstance* emitter_ei : ce->GetInstances())
         {
+#ifdef ENABLE_SAMPLE_MAP
             unsigned numLightSamples = lightSampleMap[emitter_ei];
+#else
+            unsigned numLightSamples = 6;
+#endif // ENABLE_SAMPLE_MAP
+
             Vec2 emitterPos = emitter_ei->GetPosition();
             emitterPos = cam.GetViewSpacePosition(emitterPos);
             m_CurrentQuery.color = emitter->GetEmissionProperties().color;
