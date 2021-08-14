@@ -64,7 +64,7 @@ private:
 	void TriangulateMeshes();
 	void RenderOcclusionMask(CulledScene& scene);
 	void BlurMask();
-	void DrawDebug();
+	void DrawDebug(CulledScene& scene);
 
 private:
 

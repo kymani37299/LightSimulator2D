@@ -249,7 +249,19 @@ void UniformBuffer::Unbind()
 		GL_CALL(glBindBufferBase(GL_UNIFORM_BUFFER, m_CurrentSlot, 0));
 		m_CurrentSlot = -1;
 	}
+}
 
+void* UniformBuffer::Map()
+{
+	GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, m_Handle));
+	GL_CALL(void* ptr = glMapBuffer(GL_UNIFORM_BUFFER, GL_READ_ONLY));
+	return ptr;
+}
+
+void UniformBuffer::Unmap()
+{
+	GL_CALL(glUnmapBuffer(GL_UNIFORM_BUFFER));
+	GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
 }
 
 void UniformBuffer::UploadData(void* data, unsigned index, unsigned count)

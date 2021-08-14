@@ -144,8 +144,11 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
 
             for (unsigned i = 0; i < numLightSamples; i++)
             {
-                float angle = i * 2.0f * 3.1415f / numLightSamples;
-                m_CurrentQuery.position = emitterPos + Vec2(cos(angle), sin(angle)) * m_CurrentQuery.radius;
+                const float angle = i * 2.0f * 3.1415f / numLightSamples;
+                if (numLightSamples == 1)
+                    m_CurrentQuery.position = emitterPos;
+                else
+                    m_CurrentQuery.position = emitterPos + Vec2(cos(angle), sin(angle)) * m_CurrentQuery.radius;
 
                 LightOcclusion(scene);
                 TriangulateMeshes();
@@ -154,8 +157,12 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
         }
     }
 
+#ifdef DEBUG
+    if(!(m_DebugOptions & OcclusionDebug_SimpleLightMask))
+#endif // DEBUG
     BlurMask();
-    DrawDebug();
+
+    DrawDebug(scene);
 }
 
 bool angleComparator(const Vec2& l, const Vec2& r) { return glm::atan(l.y, l.x) < glm::atan(r.y, r.x); }
@@ -209,8 +216,9 @@ void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
                 lines.push_back(lineSegment);
 
                 // Ray
-                m_RayQuery.push_back(Vec4(p - epsilon, 0.0, 0.0));
-                m_RayQuery.push_back(Vec4(p + epsilon, 0.0, 0.0));
+                Vec2 a2D = { a.x,a.y };
+                m_RayQuery.push_back(Vec4(a2D - epsilon, 0.0, 0.0));
+                m_RayQuery.push_back(Vec4(a2D + epsilon, 0.0, 0.0));
             }
         }
     }
@@ -275,7 +283,18 @@ void LightOcclusionRenderer::RenderOcclusionMask(CulledScene& scene)
 {
     PROFILE_SCOPE("Occlusion mask");
 
-    m_OcclusionMaskFB->Bind();
+    Vec3 attenuation = scene.GetLightAttenuation();
+
+#ifdef DEBUG
+    if (m_DebugOptions & OcclusionDebug_SimpleLightMask)
+    {
+        m_OcclusionMaskFinal->ClearAndBind();
+        attenuation = { 1.0,0.0,0.0 };
+    }
+    else
+#endif // DEBUG
+        m_OcclusionMaskFB->Bind();
+
     m_ShadowmapShader->Bind();
     m_OcclusionMesh->Bind();
     GLFunctions::AlphaBlending(true);
@@ -283,7 +302,7 @@ void LightOcclusionRenderer::RenderOcclusionMask(CulledScene& scene)
     m_ShadowmapShader->SetUniform("u_LightPos", m_CurrentQuery.position);
     m_ShadowmapShader->SetUniform("u_LightColor", m_CurrentQuery.color);
     m_ShadowmapShader->SetUniform("u_LightRadius", m_CurrentQuery.radius);
-    m_ShadowmapShader->SetUniform("u_Attenuation", scene.GetLightAttenuation());
+    m_ShadowmapShader->SetUniform("u_Attenuation", attenuation);
     GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
     GLFunctions::Draw(m_RayCount * 3);
     GLFunctions::AlphaBlending(false);
@@ -435,10 +454,12 @@ void LightOcclusionRenderer::BlurMask()
     GLFunctions::DrawFC();
 }
 
-void LightOcclusionRenderer::DrawDebug()
+void LightOcclusionRenderer::DrawDebug(CulledScene& scene)
 {
 #ifdef DEBUG
     if (m_DebugOptions == 0) return;
+
+    Camera& cam = scene.GetCamera();
 
     if (m_DebugOptions & OcclusionDebug_Intersections)
     {
@@ -447,7 +468,7 @@ void LightOcclusionRenderer::DrawDebug()
         for (size_t i = 0; i < m_RayCount; i++)
         {
             Vec4 intersection = intersectionBuffer[i];
-            DebugRenderer::Get()->DrawPoint({ intersection.x, intersection.y }, { 1.0,0.0,0.0 });
+            DebugRenderer::Get()->DrawPoint(Vec2(intersection.x, intersection.y)-cam.position, { 1.0,0.0,0.0 });
         }
         m_IntersectionBuffer->Unmap();
     }
@@ -456,24 +477,21 @@ void LightOcclusionRenderer::DrawDebug()
     {
         for (const Vec4& ray : m_RayQuery)
         {
-            DebugRenderer::Get()->DrawLine(m_CurrentQuery.position, { ray.x,ray.y }, { 0.0,1.0,0.0 });
+            DebugRenderer::Get()->DrawLine(m_CurrentQuery.position - cam.position, Vec2(ray.x,ray.y) - cam.position, { 0.0,1.0,0.0 });
         }
     }
 
     if (m_DebugOptions & OcclusionDebug_Mesh)
     {
-        auto it = m_OcclusionMeshPool.begin();
-        while (it != m_OcclusionMeshPool.end())
+        GLFunctions::MemoryBarrier(BarrierType::UniformBuffer);
+        Vec4* linesBuffer = (Vec4*) m_OcclusionLines->Map();
+        for (size_t i = 0; i < m_OcclusionLineCount; i++)
         {
-            OcclusionMesh& mesh = it->second;
-            for (size_t i = 0; i < mesh.size(); i++)
-            {
-                DebugRenderer::Get()->DrawPoint(mesh[i], { 0.0,0.3,0.8 });
-                size_t next_i = i == mesh.size() - 1 ? 0 : i + 1;
-                DebugRenderer::Get()->DrawLine(mesh[i], mesh[next_i], { 0.0,0.0,1.0 });
-            }
-            it++;
+            Vec4 ls = linesBuffer[i] - Vec4(cam.position,cam.position);
+            DebugRenderer::Get()->DrawLine({ ls.x,ls.y }, { ls.z, ls.w}, {0.0,0.0,1.0});
+            DebugRenderer::Get()->DrawPoint({ ls.x,ls.y }, { 0.0,0.0,1.0 });
         }
+        m_OcclusionLines->Unmap();
     }
 #endif // DEBUG
 }
