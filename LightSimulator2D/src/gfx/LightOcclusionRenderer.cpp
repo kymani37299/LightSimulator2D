@@ -12,8 +12,17 @@
 #include "gfx/DebugRenderer.h"
 
 #define ENABLE_SAMPLE_MAP
+//#define SORT_RAYS
 
 extern bool CreateShader(const std::string& name, Shader*& shader);
+
+static Vec2 angleComparatorRef = VEC2_ZERO;
+bool angleComparator(const Vec4& l, const Vec4& r)
+{
+    Vec2 a = Vec2(l.x, l.y) - angleComparatorRef;
+    Vec2 b = Vec2(r.x, r.y) - angleComparatorRef;
+    return glm::atan(a.y, a.x) < glm::atan(b.y, b.x);
+}
 
 LightOcclusionRenderer::LightOcclusionRenderer()
 {
@@ -151,6 +160,13 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
             m_CurrentQuery.color = emitter->GetEmissionProperties().color;
             m_CurrentQuery.radius = emitter->GetEmissionProperties().radius;
             m_CurrentQuery.strength = (1.0f / numLightSamples * 1.3f);
+
+#ifdef SORT_RAYS
+            Vec4* rayQueryBuffer = (Vec4*)m_RayQueryBuffer->Map(true);
+            angleComparatorRef = emitterPos;
+            std::sort(rayQueryBuffer, rayQueryBuffer + m_RayCount, angleComparator);
+            m_RayQueryBuffer->Unmap();
+#endif // SORT_RAYS
 
             for (unsigned i = 0; i < numLightSamples; i++)
             {
@@ -439,21 +455,15 @@ void LightOcclusionRenderer::LightOcclusion(CulledScene& scene)
     GLFunctions::Dispatch(m_RayCount);
 }
 
-static Vec2 angleComparatorRef = VEC2_ZERO;
-bool angleComparator(const Vec4& l, const Vec4& r) 
-{
-    Vec2 a = Vec2(l.x,l.y) - angleComparatorRef;
-    Vec2 b = Vec2(r.x, r.y) - angleComparatorRef;
-    return glm::atan(a.y, a.x) < glm::atan(b.y, b.x); 
-}
-
 void LightOcclusionRenderer::SortIntersections()
 {
     PROFILE_SCOPE("Sort intersections");
 
     Vec4* intersectionBuffer = (Vec4*)m_IntersectionBuffer->Map(true);
+#ifndef SORT_RAYS
     angleComparatorRef = m_CurrentQuery.position;
     std::sort(intersectionBuffer, intersectionBuffer + m_RayCount, angleComparator);
+#endif // SORT_RAYS
     intersectionBuffer[m_RayCount] = intersectionBuffer[0];
     intersectionBuffer[MAX_RAY_QUERIES] = { m_CurrentQuery.position, 0.0 ,0.0 };
     m_IntersectionBuffer->Unmap();

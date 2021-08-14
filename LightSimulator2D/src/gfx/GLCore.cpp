@@ -283,10 +283,10 @@ void UniformBuffer::Unbind()
 	}
 }
 
-void* UniformBuffer::Map()
+void* UniformBuffer::Map(bool write)
 {
 	GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, m_Handle));
-	GL_CALL(void* ptr = glMapBuffer(GL_UNIFORM_BUFFER, GL_READ_ONLY));
+	GL_CALL(void* ptr = glMapBuffer(GL_UNIFORM_BUFFER, write ? GL_READ_WRITE : GL_READ_ONLY));
 	return ptr;
 }
 
