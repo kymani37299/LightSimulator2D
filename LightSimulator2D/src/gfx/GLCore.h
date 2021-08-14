@@ -101,6 +101,8 @@ public:
 	void* Map();
 	void Unmap();
 
+	void UploadData(void* data, unsigned index = 0, unsigned count = 1);
+
 private:
 	GLHandle m_Handle;
 

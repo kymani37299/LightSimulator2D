@@ -165,8 +165,6 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
     DrawDebug(scene);
 }
 
-bool angleComparator(const Vec2& l, const Vec2& r) { return glm::atan(l.y, l.x) < glm::atan(r.y, r.x); }
-
 void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
 {
     PROFILE_SCOPE("Setup buffers");
@@ -214,8 +212,8 @@ void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
                 lines.push_back(lineSegment);
 
                 // Ray
-                const Vec2 r1 = glm::normalize(Vec2(a.x, a.y) - epsilon);
-                const Vec2 r2 = glm::normalize(Vec2(a.y, a.y) + epsilon);
+                const Vec2 r1 = Vec2(a.x, a.y) - epsilon;
+                const Vec2 r2 = Vec2(a.y, a.y) + epsilon;
                 m_RayQuery.push_back({r1.x, r1.y, 0.0, 0.0});
                 m_RayQuery.push_back({r2.x, r2.y, 0.0, 0.0});
             }
@@ -223,7 +221,6 @@ void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
     }
 
     // Upload rays
-    std::sort(m_RayQuery.begin(), m_RayQuery.end(), &angleComparator);
     m_RayCount = m_RayQuery.size();
     m_RayQueryBuffer->UploadData(m_RayQuery.data(), 0, m_RayCount);
     m_RayQuery.clear();
@@ -430,9 +427,27 @@ void LightOcclusionRenderer::LightOcclusion(CulledScene& scene)
     GLFunctions::Dispatch(m_RayCount);
 }
 
+static Vec2 angleComparatorRef = VEC2_ZERO;
+bool angleComparator(const Vec4& l, const Vec4& r) 
+{
+    Vec2 a = Vec2(l.x,l.y) - angleComparatorRef;
+    Vec2 b = Vec2(r.x, r.y) - angleComparatorRef;
+    return glm::atan(a.y, a.x) < glm::atan(b.y, b.x); 
+}
+
 void LightOcclusionRenderer::TriangulateMeshes()
 {
     PROFILE_SCOPE("Triangulate intersections");
+
+    std::vector<Vec4> intersectionVector;
+    intersectionVector.resize(m_RayCount);
+    Vec4* intersectionBuffer = (Vec4*)m_IntersectionBuffer->Map();
+    for (size_t i = 0; i < m_RayCount; i++) intersectionVector[i] = intersectionBuffer[i];
+    m_IntersectionBuffer->Unmap();
+
+    angleComparatorRef = m_CurrentQuery.position;
+    std::sort(intersectionVector.begin(), intersectionVector.end(), angleComparator);
+    m_IntersectionBuffer->UploadData(intersectionVector.data(), 0, m_RayCount);
 
     GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
     m_TriangulationShader->Bind();

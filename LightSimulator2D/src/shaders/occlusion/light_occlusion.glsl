@@ -33,11 +33,11 @@ void calcIntersection(out vec3 intersection, vec4 ray, vec4 segment)
     if (dy / dx != (y2 - y1) / (x2 - x1))
     {
         d = ((dx * (y2 - y1)) - dy * (x2 - x1));
-        if (d != 0)
+        if (d != 0.0)
         {
             r = (((y - y1) * (x2 - x1)) - (x - x1) * (y2 - y1)) / d;
             s = (((y - y1) * dx) - (x - x1) * dy) / d;
-            if (r >= 0 && s >= 0 && s <= 1 && r < intersection.z)
+            if (r >= 0.0 && s >= 0.0 && s <= 1.0 && r < intersection.z)
             {
                 intersection.x = x + r * dx;
                 intersection.y = y + r * dy;
@@ -59,7 +59,8 @@ void intersectScreen(out vec3 intersection, vec4 ray)
 
 void main()
 {
-    vec4 ray = vec4(u_LightPosition, r_Rays[gl_GlobalInvocationID.x].xy);
+    vec2 rayDir = normalize(r_Rays[gl_GlobalInvocationID.x].xy - u_LightPosition);
+    vec4 ray = vec4(u_LightPosition, rayDir);
     vec3 closestIntersect = vec3(1000.0f);
 
     for (int i = 0; i < u_NumSegments; i++)

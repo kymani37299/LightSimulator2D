@@ -326,6 +326,15 @@ void ShaderStorageBuffer::Unmap()
 	GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0));
 }
 
+void ShaderStorageBuffer::UploadData(void* data, unsigned index, unsigned count)
+{
+	ASSERT(index + count <= m_Count);
+
+	GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_Handle));
+	GL_CALL(glBufferSubData(GL_SHADER_STORAGE_BUFFER, index * m_Stride, count * m_Stride, data));
+	GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0));
+}
+
 // -------------------------------------------
 // ---------- Texture ------------------------
 // -------------------------------------------
