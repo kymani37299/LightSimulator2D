@@ -11,6 +11,8 @@
 
 #include "gfx/DebugRenderer.h"
 
+#define ENABLE_SAMPLE_MAP
+
 extern bool CreateShader(const std::string& name, Shader*& shader);
 
 LightOcclusionRenderer::LightOcclusionRenderer()
@@ -239,6 +241,8 @@ void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
 
 std::map<EntityInstance*, unsigned> LightOcclusionRenderer::DivideSamples(CulledScene& scene)
 {
+    PROFILE_SCOPE("Divide samples");
+
     std::map<EntityInstance*, unsigned> result;
     std::vector<EntityInstance*> emitters;
 
