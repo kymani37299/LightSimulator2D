@@ -27,6 +27,15 @@ struct OcclusionQuery
 	float strength = 0.0f;
 };
 
+enum OcclusionDebugOption
+{
+	OcclusionDebug_Intersections = 1,
+	OcclusionDebug_Rays = 2,
+	OcclusionDebug_Mesh = 4,
+	OcclusionDebug_DisableAngledRays = 8
+	// 16
+};
+
 class LightOcclusionRenderer
 {
 public:
@@ -40,7 +49,8 @@ public:
 
 	void RenderOcclusion(CulledScene& scene);
 
-	Framebuffer* GetOcclusionMaskFB() { return m_OcclusionMaskFinal; }
+	inline Framebuffer* GetOcclusionMaskFB() const { return m_OcclusionMaskFinal; }
+	inline void SetDebugOptions(unsigned int debugOptions) { m_DebugOptions = debugOptions; }
 
 private:
 	void SetupBuffers(CulledScene& scene);
@@ -53,6 +63,7 @@ private:
 	void TriangulateMeshes();
 	void RenderOcclusionMask(CulledScene& scene);
 	void BlurMask();
+	void DrawDebug();
 
 private:
 
@@ -85,4 +96,6 @@ private:
 
 	Framebuffer* m_OcclusionMaskFB;
 	Framebuffer* m_OcclusionMaskFinal;
+
+	unsigned int m_DebugOptions = 0;
 };

@@ -9,6 +9,8 @@
 #include "scene/Scene.h"
 #include "scene/Entity.h"
 
+#include "gfx/DebugRenderer.h"
+
 extern bool CreateShader(const std::string& name, Shader*& shader);
 
 LightOcclusionRenderer::LightOcclusionRenderer()
@@ -149,6 +151,7 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
     }
 
     BlurMask();
+    DrawDebug();
 }
 
 bool angleComparator(const Vec2& l, const Vec2& r) { return glm::atan(l.y, l.x) < glm::atan(r.y, r.x); }
@@ -157,6 +160,8 @@ void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
 {
     PROFILE_SCOPE("Setup buffers");
 
+    m_RayQuery.clear();
+
     const Vec2 epsilon = Vec2(0.01f);
     const Mat3 view = scene.GetCamera().GetTransformation();
 
@@ -164,12 +169,17 @@ void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
     lines.reserve(m_OcclusionLineCount);
     m_OcclusionLineCount = 0;
 
-    // Angled rays
-    for (size_t i = 0; i < NUM_ANGLED_RAYS; i++)
+#ifdef DEBUG
+    if (!(m_DebugOptions & OcclusionDebug_DisableAngledRays))
+#endif // DEBUG
     {
-        float angle = i * (2.0f * 6.283f / NUM_ANGLED_RAYS);
-        Vec4 dir = Vec4(cos(angle), sin(angle), 0.0f, 0.0f);
-        m_RayQuery.push_back(dir);
+        // Angled rays
+        for (size_t i = 0; i < NUM_ANGLED_RAYS; i++)
+        {
+            float angle = i * (2.0f * 6.283f / NUM_ANGLED_RAYS);
+            Vec4 dir = Vec4(cos(angle), sin(angle), 0.0f, 0.0f);
+            m_RayQuery.push_back(dir);
+        }
     }
 
     for (CulledEntity* ce : scene.GetOccluders())
@@ -205,7 +215,6 @@ void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
     std::sort(m_RayQuery.begin(), m_RayQuery.end(), &angleComparator);
     m_RayCount = m_RayQuery.size();
     m_RayQueryBuffer->UploadData(m_RayQuery.data(), 0, m_RayCount);
-    m_RayQuery.clear();
 
     // Upload lines
     m_OcclusionLines->UploadData(lines.data(), 0, m_OcclusionLineCount);
@@ -420,4 +429,47 @@ void LightOcclusionRenderer::BlurMask()
     m_BlurShader->Bind();
     m_OcclusionMaskFB->BindTexture(0, 0);
     GLFunctions::DrawFC();
+}
+
+void LightOcclusionRenderer::DrawDebug()
+{
+#ifdef DEBUG
+    if (m_DebugOptions == 0) return;
+
+    if (m_DebugOptions & OcclusionDebug_Intersections)
+    {
+        GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
+        Vec4* intersectionBuffer = (Vec4*) m_IntersectionBuffer->Map();
+        for (size_t i = 0; i < m_RayCount; i++)
+        {
+            Vec4 intersection = intersectionBuffer[i];
+            DebugRenderer::Get()->DrawPoint({ intersection.x, intersection.y }, { 1.0,0.0,0.0 });
+        }
+        m_IntersectionBuffer->Unmap();
+    }
+
+    if (m_DebugOptions & OcclusionDebug_Rays)
+    {
+        for (const Vec4& ray : m_RayQuery)
+        {
+            DebugRenderer::Get()->DrawLine(m_CurrentQuery.position, { ray.x,ray.y }, { 0.0,1.0,0.0 });
+        }
+    }
+
+    if (m_DebugOptions & OcclusionDebug_Mesh)
+    {
+        auto it = m_OcclusionMeshPool.begin();
+        while (it != m_OcclusionMeshPool.end())
+        {
+            OcclusionMesh& mesh = it->second;
+            for (size_t i = 0; i < mesh.size(); i++)
+            {
+                DebugRenderer::Get()->DrawPoint(mesh[i], { 0.0,0.3,0.8 });
+                size_t next_i = i == mesh.size() - 1 ? 0 : i + 1;
+                DebugRenderer::Get()->DrawLine(mesh[i], mesh[next_i], { 0.0,0.0,1.0 });
+            }
+            it++;
+        }
+    }
+#endif // DEBUG
 }

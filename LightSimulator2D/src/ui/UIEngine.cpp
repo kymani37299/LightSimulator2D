@@ -8,11 +8,15 @@
 
 #include "elements/ProfilerUI.h"
 #include "elements/SceneUI.h"
+#include "elements/LightOcclusionUI.h"
 
 void UIEngine::SetupElements()
 {
     AddElement(new ProfilerUI());
     AddElement(SceneUI::Get());
+#ifdef DEBUG
+    AddElement(new LightOcclusionUI());
+#endif // DEBUG
 }
 
 UIEngine::~UIEngine()

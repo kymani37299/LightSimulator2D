@@ -37,7 +37,7 @@ float line_mask(vec2 P, vec2 A, vec2 B, float r)
 	return smoothstep(r, 0.5*r, d);
 }
 
-const float line_thickness = 0.01;
+const float line_thickness = 0.001;
 
 void main()
 {

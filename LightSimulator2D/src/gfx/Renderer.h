@@ -30,6 +30,9 @@ public:
 
 	void ReloadShaders() { m_ShouldReloadShaders = true; }
 
+public:
+	inline LightOcclusionRenderer* GetLightOcclusionRenderer() const { return m_OcclusionRenderer; }
+
 private:
 	void CompileShaders();
 	void InitEntityForRender(Entity* e);
