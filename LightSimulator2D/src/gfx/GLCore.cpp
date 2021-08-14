@@ -81,6 +81,15 @@ void GLFunctions::Draw(unsigned numVertices)
 #endif
 }
 
+void GLFunctions::DrawIndexed(unsigned numIndices)
+{
+	GL_CALL(glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, 0));
+
+#ifdef FORCE_BARRIERS
+	GL_CALL(glFinish());
+#endif
+}
+
 void GLFunctions::DrawPoints(unsigned numPoints)
 {
 	GL_CALL(glDrawArrays(GL_POINTS, 0, numPoints));
@@ -191,7 +200,25 @@ ShaderInput::ShaderInput(GLHandle buffer):
 	GL_CALL(glGenVertexArrays(1, &m_VertexArray));
 	GL_CALL(glBindVertexArray(m_VertexArray));
 
-	// TOOD: Parametrize this
+	// TODO: Parametrize this
+	GL_CALL(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vec4), (void*)0));
+	GL_CALL(glEnableVertexAttribArray(0));
+}
+
+ShaderInput::ShaderInput(GLHandle buffer, std::vector<unsigned int> indices):
+	m_VertexBuffer(buffer),
+	m_BufferOwner(false)
+{
+	GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer));
+
+	GL_CALL(glGenBuffers(1, &m_IndexBuffer));
+	GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer));
+	GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW));
+
+	GL_CALL(glGenVertexArrays(1, &m_VertexArray));
+	GL_CALL(glBindVertexArray(m_VertexArray));
+
+	// TODO: Parametrize this
 	GL_CALL(glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vec4), (void*)0));
 	GL_CALL(glEnableVertexAttribArray(0));
 }
@@ -202,15 +229,20 @@ ShaderInput::~ShaderInput()
 		GL_CALL(glDeleteBuffers(1, &m_VertexBuffer));
 
 	GL_CALL(glDeleteVertexArrays(1, &m_VertexArray));
+
+	if (m_IndexBuffer != 0)
+		GL_CALL(glDeleteBuffers(1, &m_IndexBuffer));
 }
 
 void ShaderInput::Bind()
 {
+	GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer));
 	GL_CALL(glBindVertexArray(m_VertexArray));
 }
 
 void ShaderInput::Unbind()
 {
+	GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 	GL_CALL(glBindVertexArray(0));
 }
 

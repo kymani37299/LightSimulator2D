@@ -61,7 +61,7 @@ private:
 	void PopulateOcclusionMesh(OcclusionMesh& mesh, int meshSize);
 	
 	void LightOcclusion(CulledScene& scene);
-	void TriangulateMeshes();
+	void SortIntersections();
 	void RenderOcclusionMask(CulledScene& scene);
 	void BlurMask();
 	void DrawDebug(CulledScene& scene);
@@ -89,7 +89,6 @@ private:
 	Shader* m_TriangulationShader = nullptr;
 
 	ShaderStorageBuffer* m_IntersectionBuffer;
-	ShaderStorageBuffer* m_TriangledIntersecitonsBuffer;
 	ShaderStorageBuffer* m_OcclusionMeshOutput;
 
 	UniformBuffer* m_OcclusionLines;

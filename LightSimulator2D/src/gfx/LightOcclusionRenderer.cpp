@@ -18,10 +18,19 @@ LightOcclusionRenderer::LightOcclusionRenderer()
     m_OcclusionLines = new UniformBuffer(sizeof(Vec4), MAX_LINE_SEGMENTS);
     m_RayQueryBuffer = new UniformBuffer(sizeof(Vec4), MAX_RAY_QUERIES);
 
-    m_IntersectionBuffer = new ShaderStorageBuffer(sizeof(Vec4), MAX_RAY_QUERIES);
-    m_TriangledIntersecitonsBuffer = new ShaderStorageBuffer(sizeof(Vec4), MAX_RAY_QUERIES * 3);
+    m_IntersectionBuffer = new ShaderStorageBuffer(sizeof(Vec4), MAX_RAY_QUERIES+1);
 
-    m_OcclusionMesh = m_TriangledIntersecitonsBuffer->AsShaderInput();
+    std::vector<unsigned int> occlusionIndices;
+    occlusionIndices.resize(3 * MAX_RAY_QUERIES);
+    unsigned int currVert = 0;
+    for (size_t i = 0; i < 3 * MAX_RAY_QUERIES; i+=3,currVert++)
+    {
+        occlusionIndices[i] = currVert;
+        occlusionIndices[i + 1] = currVert + 1;
+        occlusionIndices[i + 2] = MAX_RAY_QUERIES;
+    }
+
+    m_OcclusionMesh = new ShaderInput(m_IntersectionBuffer->GetBuffer(), occlusionIndices);
 
     m_OcclusionMaskFB = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
     m_OcclusionMaskFinal = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -43,7 +52,6 @@ LightOcclusionRenderer::~LightOcclusionRenderer()
     delete m_OcclusionShader;
     delete m_OcclusionLines;
     delete m_IntersectionBuffer;
-    delete m_TriangledIntersecitonsBuffer;
 }
 
 void LightOcclusionRenderer::CompileShaders()
@@ -151,7 +159,7 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
                     m_CurrentQuery.position = emitterPos + Vec2(cos(angle), sin(angle)) * m_CurrentQuery.radius;
 
                 LightOcclusion(scene);
-                TriangulateMeshes();
+                SortIntersections();
                 RenderOcclusionMask(scene);
             }
         }
@@ -300,8 +308,8 @@ void LightOcclusionRenderer::RenderOcclusionMask(CulledScene& scene)
     m_ShadowmapShader->SetUniform("u_LightColor", m_CurrentQuery.color);
     m_ShadowmapShader->SetUniform("u_LightRadius", m_CurrentQuery.radius);
     m_ShadowmapShader->SetUniform("u_Attenuation", attenuation);
-    GLFunctions::MemoryBarrier(BarrierType::VertexBuffer);
-    GLFunctions::Draw(m_RayCount * 3);
+    m_OcclusionMesh->Bind(); // HACK: For some reason at first draw call something is bound inbetween
+    GLFunctions::DrawIndexed(m_RayCount * 3);
     GLFunctions::AlphaBlending(false);
     m_OcclusionMaskFB->Unbind();
 }
@@ -435,22 +443,16 @@ bool angleComparator(const Vec4& l, const Vec4& r)
     return glm::atan(a.y, a.x) < glm::atan(b.y, b.x); 
 }
 
-void LightOcclusionRenderer::TriangulateMeshes()
+void LightOcclusionRenderer::SortIntersections()
 {
-    PROFILE_SCOPE("Triangulate intersections");
+    PROFILE_SCOPE("Sort intersections");
 
     Vec4* intersectionBuffer = (Vec4*)m_IntersectionBuffer->Map(true);
     angleComparatorRef = m_CurrentQuery.position;
     std::sort(intersectionBuffer, intersectionBuffer + m_RayCount, angleComparator);
+    intersectionBuffer[m_RayCount] = intersectionBuffer[0];
+    intersectionBuffer[MAX_RAY_QUERIES] = { m_CurrentQuery.position, 0.0 ,0.0 };
     m_IntersectionBuffer->Unmap();
-
-    GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
-    m_TriangulationShader->Bind();
-    m_TriangulationShader->SetUniform("u_LightPosition", m_CurrentQuery.position);
-    m_TriangulationShader->SetUniform("u_NumIntersections", (int) m_RayCount);
-    m_IntersectionBuffer->Bind(1);
-    m_TriangledIntersecitonsBuffer->Bind(2);
-    GLFunctions::Dispatch(m_RayCount*3);
 }
 
 void LightOcclusionRenderer::BlurMask()

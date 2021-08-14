@@ -32,6 +32,7 @@ namespace GLFunctions
 	void DeinitGL();
 	void WaitForGpu();
 	void Draw(unsigned numVertices);
+	void DrawIndexed(unsigned numIndices);
 	void DrawPoints(unsigned numPoints);
 	void DrawFC();
 	void Dispatch(unsigned groupX = 1, unsigned groupY = 1, unsigned groupZ = 1);
@@ -44,6 +45,7 @@ class ShaderInput
 {
 	DELETE_COPY_CONSTRUCTOR(ShaderInput);
 public:
+	ShaderInput(GLHandle buffer, std::vector<unsigned int> indices);
 	ShaderInput(std::vector<Vertex> vertices);
 	ShaderInput(std::vector<Vec2> vertices);
 	ShaderInput(GLHandle buffer);
@@ -60,6 +62,7 @@ private:
 
 	bool m_BufferOwner = true;
 	GLHandle m_VertexBuffer;
+	GLHandle m_IndexBuffer = 0;
 	GLHandle m_VertexArray;
 };
 
@@ -102,6 +105,8 @@ public:
 	void Unmap();
 
 	void UploadData(void* data, unsigned index = 0, unsigned count = 1);
+
+	inline GLHandle GetBuffer() const { return m_Handle; }
 
 private:
 	GLHandle m_Handle;
