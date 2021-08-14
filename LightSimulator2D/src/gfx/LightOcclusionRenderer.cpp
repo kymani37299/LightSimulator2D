@@ -439,15 +439,10 @@ void LightOcclusionRenderer::TriangulateMeshes()
 {
     PROFILE_SCOPE("Triangulate intersections");
 
-    std::vector<Vec4> intersectionVector;
-    intersectionVector.resize(m_RayCount);
-    Vec4* intersectionBuffer = (Vec4*)m_IntersectionBuffer->Map();
-    for (size_t i = 0; i < m_RayCount; i++) intersectionVector[i] = intersectionBuffer[i];
-    m_IntersectionBuffer->Unmap();
-
+    Vec4* intersectionBuffer = (Vec4*)m_IntersectionBuffer->Map(true);
     angleComparatorRef = m_CurrentQuery.position;
-    std::sort(intersectionVector.begin(), intersectionVector.end(), angleComparator);
-    m_IntersectionBuffer->UploadData(intersectionVector.data(), 0, m_RayCount);
+    std::sort(intersectionBuffer, intersectionBuffer + m_RayCount, angleComparator);
+    m_IntersectionBuffer->Unmap();
 
     GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
     m_TriangulationShader->Bind();

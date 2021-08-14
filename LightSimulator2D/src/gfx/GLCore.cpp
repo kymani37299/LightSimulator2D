@@ -313,10 +313,10 @@ void ShaderStorageBuffer::Unbind()
 	}
 }
 
-void* ShaderStorageBuffer::Map()
+void* ShaderStorageBuffer::Map(bool write)
 {
 	GL_CALL(glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_Handle));
-	GL_CALL(void* ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY));
+	GL_CALL(void* ptr = glMapBuffer(GL_SHADER_STORAGE_BUFFER, write ? GL_READ_WRITE : GL_READ_ONLY));
 	return ptr;
 }
 

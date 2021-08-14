@@ -98,7 +98,7 @@ public:
 	void Bind(unsigned slot);
 	void Unbind();
 
-	void* Map();
+	void* Map(bool write = false);
 	void Unmap();
 
 	void UploadData(void* data, unsigned index = 0, unsigned count = 1);
