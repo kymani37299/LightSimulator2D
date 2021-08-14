@@ -215,7 +215,7 @@ void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
 
                 // Ray
                 const Vec2 r1 = glm::normalize(Vec2(a.x, a.y) - epsilon);
-                const Vec2 r2 = glm::normalize(Vec2(a.y, a.y) - epsilon);
+                const Vec2 r2 = glm::normalize(Vec2(a.y, a.y) + epsilon);
                 m_RayQuery.push_back({r1.x, r1.y, 0.0, 0.0});
                 m_RayQuery.push_back({r2.x, r2.y, 0.0, 0.0});
             }
