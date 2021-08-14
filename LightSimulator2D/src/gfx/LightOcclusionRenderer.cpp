@@ -129,7 +129,11 @@ void LightOcclusionRenderer::RenderOcclusion(CulledScene& scene)
 #ifdef ENABLE_SAMPLE_MAP
             unsigned numLightSamples = lightSampleMap[emitter_ei];
 #else
+    #ifdef DEBUG
+            unsigned numLightSamples = m_DebugOptions & OcclusionDebug_SimpleLightMask ? 1 : 6;
+    #else
             unsigned numLightSamples = 6;
+    #endif // DEBUG
 #endif // ENABLE_SAMPLE_MAP
 
             Vec2 emitterPos = emitter_ei->GetPosition();

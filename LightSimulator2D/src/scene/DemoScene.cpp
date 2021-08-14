@@ -9,6 +9,7 @@
 static void Scene1(Scene* scene, PlayerControllerComponent* controller);
 static void Scene2(Scene* scene, PlayerControllerComponent* controller);
 static void Scene3(Scene* scene, PlayerControllerComponent* controller);
+static void Scene4(Scene* scene, PlayerControllerComponent* controller);
 
 PlayerControllerComponent* Demo::SetupDemoScene(Scene* scene, unsigned index)
 {
@@ -19,6 +20,7 @@ PlayerControllerComponent* Demo::SetupDemoScene(Scene* scene, unsigned index)
     case 1: Scene1(scene, controller); break;
     case 2: Scene2(scene, controller); break;
     case 3: Scene3(scene, controller); break;
+    case 4: Scene4(scene, controller); break;
     default: Scene2(scene, controller); break;
     }
 
@@ -296,4 +298,41 @@ static void Scene3(Scene* scene, PlayerControllerComponent* controller)
     pravugaonik->Instance()->SetPosition({ -0.6, 0.2 });
     oblik1->Instance()->SetPosition({ -0.6,-0.7 });
     oblik2->Instance()->SetPosition({ 0.3,-0.5 });
+}
+
+static void Scene4(Scene* scene, PlayerControllerComponent* controller)
+{
+    const std::string res_path = "res/demo/";
+
+    scene->GetAmbientLight() = 0.2f * Vec3(0.2, 0.8, 1.0);
+
+#define P(X) res_path + X
+    Entity* bg = new Entity{ P("bg.png") };
+    bg->GetDrawFlags().background = true;
+    bg->GetBackgroundProperties().textureScale = 8.f;
+
+    Entity* kvadrat = new Entity{ P("kvadrat.png") };
+    kvadrat->GetDrawFlags().occluder = true;
+
+    Entity* pravugaonik = new Entity(P("pravugaonik.png"));
+    pravugaonik->GetDrawFlags().occluder = true;
+
+    Entity* krug = new Entity{ P("krug.png") };
+    krug->AddComponent(new FollowMouseComponent());
+    krug->AddComponent(controller);
+    krug->GetDrawFlags().emitter = true;
+    krug->GetEmissionProperties().color = Vec3(1.0, 1.0, 0.0);
+    krug->GetEmissionProperties().radius = 0.15f;
+
+#undef P
+
+    scene->AddEntity(bg);
+    scene->AddEntity(kvadrat);
+    scene->AddEntity(pravugaonik);
+    scene->AddEntity(krug);
+
+    krug->Instance();
+    bg->Instance();
+    kvadrat->Instance()->SetPosition({ 0.4,0.4 });
+    pravugaonik->Instance()->SetPosition({ -0.6, 0.2 });
 }

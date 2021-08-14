@@ -32,8 +32,9 @@ enum OcclusionDebugOption
 	OcclusionDebug_Intersections = 1,
 	OcclusionDebug_Rays = 2,
 	OcclusionDebug_Mesh = 4,
-	OcclusionDebug_DisableAngledRays = 8
-	// 16
+	OcclusionDebug_DisableAngledRays = 8,
+	OcclusionDebug_SimpleLightMask = 16
+	// 32
 };
 
 class LightOcclusionRenderer

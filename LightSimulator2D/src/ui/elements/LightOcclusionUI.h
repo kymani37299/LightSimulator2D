@@ -14,4 +14,5 @@ private:
 	bool m_DebugIntersections = false;
 	bool m_DebugRays = false;
 	bool m_DebugMeshes = false;
+	bool m_SimpleLightMask = false;
 };
