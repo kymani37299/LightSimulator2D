@@ -86,7 +86,6 @@ private:
 	Shader* m_ShadowmapShader = nullptr;
 	Shader* m_BlurShader = nullptr;
 	Shader* m_OcclusionShader = nullptr;
-	Shader* m_TriangulationShader = nullptr;
 
 	ShaderStorageBuffer* m_IntersectionBuffer;
 	ShaderStorageBuffer* m_OcclusionMeshOutput;

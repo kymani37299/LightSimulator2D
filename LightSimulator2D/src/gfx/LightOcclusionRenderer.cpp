@@ -59,7 +59,6 @@ LightOcclusionRenderer::~LightOcclusionRenderer()
     delete m_ShadowmapShader;
     delete m_OcclusionMesh;
     delete m_RayQueryBuffer;
-    delete m_TriangulationShader;
     delete m_OcclusionShader;
     delete m_OcclusionLines;
     delete m_IntersectionBuffer;
@@ -70,7 +69,6 @@ void LightOcclusionRenderer::CompileShaders()
     static std::string shader_path = "occlusion/";
 
     CreateShader(shader_path + "light_occlusion", m_OcclusionShader);
-    CreateShader(shader_path + "triangulate_intersections", m_TriangulationShader);
     CreateShader(shader_path + "occlusion_mesh_gen", m_OcclusionMeshGenShader);
     CreateShader(shader_path + "shadowmap", m_ShadowmapShader);
     CreateShader(shader_path + "blur", m_BlurShader);
