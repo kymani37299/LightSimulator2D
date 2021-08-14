@@ -41,7 +41,7 @@ public:
 
 private:
 
-	static constexpr float POINT_SIZE = 0.01f;
+	static constexpr float POINT_SIZE = 0.005f;
 
 	Shader* m_PointShader = nullptr;
 	Shader* m_LineShader = nullptr;

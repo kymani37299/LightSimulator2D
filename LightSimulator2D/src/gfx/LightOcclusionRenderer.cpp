@@ -53,7 +53,7 @@ void LightOcclusionRenderer::CompileShaders()
     CreateShader(shader_path + "light_occlusion", m_OcclusionShader);
     CreateShader(shader_path + "triangulate_intersections", m_TriangulationShader);
     CreateShader(shader_path + "occlusion_mesh_gen", m_OcclusionMeshGenShader);
-    CreateShader(shader_path + "shadowmap",m_ShadowmapShader);
+    CreateShader(shader_path + "shadowmap", m_ShadowmapShader);
     CreateShader(shader_path + "blur", m_BlurShader);
 }
 
@@ -171,8 +171,6 @@ void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
 {
     PROFILE_SCOPE("Setup buffers");
 
-    m_RayQuery.clear();
-
     const Vec2 epsilon = Vec2(0.01f);
     const Mat3 view = scene.GetCamera().GetTransformation();
 
@@ -227,6 +225,7 @@ void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
     std::sort(m_RayQuery.begin(), m_RayQuery.end(), &angleComparator);
     m_RayCount = m_RayQuery.size();
     m_RayQueryBuffer->UploadData(m_RayQuery.data(), 0, m_RayCount);
+    m_RayQuery.clear();
 
     // Upload lines
     m_OcclusionLines->UploadData(lines.data(), 0, m_OcclusionLineCount);
@@ -461,24 +460,16 @@ void LightOcclusionRenderer::DrawDebug(CulledScene& scene)
 
     Camera& cam = scene.GetCamera();
 
-    if (m_DebugOptions & OcclusionDebug_Intersections)
-    {
-        GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
-        Vec4* intersectionBuffer = (Vec4*) m_IntersectionBuffer->Map();
-        for (size_t i = 0; i < m_RayCount; i++)
-        {
-            Vec4 intersection = intersectionBuffer[i];
-            DebugRenderer::Get()->DrawPoint(Vec2(intersection.x, intersection.y)-cam.position, { 1.0,0.0,0.0 });
-        }
-        m_IntersectionBuffer->Unmap();
-    }
-
     if (m_DebugOptions & OcclusionDebug_Rays)
     {
-        for (const Vec4& ray : m_RayQuery)
+        GLFunctions::MemoryBarrier(BarrierType::UniformBuffer);
+        Vec4* rayBuffer = (Vec4*) m_RayQueryBuffer->Map();
+        for (size_t i=0; i<m_RayCount;i++)
         {
+            Vec4 ray = rayBuffer[i];
             DebugRenderer::Get()->DrawLine(m_CurrentQuery.position - cam.position, Vec2(ray.x,ray.y) - cam.position, { 0.0,1.0,0.0 });
         }
+        m_RayQueryBuffer->Unmap();
     }
 
     if (m_DebugOptions & OcclusionDebug_Mesh)
@@ -492,6 +483,18 @@ void LightOcclusionRenderer::DrawDebug(CulledScene& scene)
             DebugRenderer::Get()->DrawPoint({ ls.x,ls.y }, { 0.0,0.0,1.0 });
         }
         m_OcclusionLines->Unmap();
+    }
+
+    if (m_DebugOptions & OcclusionDebug_Intersections)
+    {
+        GLFunctions::MemoryBarrier(BarrierType::ShaderStorage);
+        Vec4* intersectionBuffer = (Vec4*)m_IntersectionBuffer->Map();
+        for (size_t i = 0; i < m_RayCount; i++)
+        {
+            Vec4 intersection = intersectionBuffer[i];
+            DebugRenderer::Get()->DrawPoint(Vec2(intersection.x, intersection.y) - cam.position, { 1.0,0.0,0.0 });
+        }
+        m_IntersectionBuffer->Unmap();
     }
 #endif // DEBUG
 }
