@@ -276,12 +276,12 @@ static void Scene3(Scene* scene, PlayerControllerComponent* controller)
     Entity* oblik1 = new Entity(P("oblik.png"));
     oblik1->GetDrawFlags().occluder = true;
     oblik1->GetOcclusionProperties().shape = OccluderShape::Mesh;
-    oblik1->GetOcclusionProperties().meshLod = 2;
+    oblik1->GetOcclusionProperties().meshLod = 1;
 
     Entity* oblik2 = new Entity(P("oblik2.png"));
     oblik2->GetDrawFlags().occluder = true;
     oblik2->GetOcclusionProperties().shape = OccluderShape::Mesh;
-    oblik2->GetOcclusionProperties().meshLod = 2;
+    oblik2->GetOcclusionProperties().meshLod = 1;
 
 #undef P
 
