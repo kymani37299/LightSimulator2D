@@ -25,17 +25,16 @@ layout(location = 0) out vec4 FinalColor;
 
 // Source: https://www.shadertoy.com/view/Xltfzj
 
-// TODO: Blur size based on distance from light source
-
 const float directions = 8.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
 const float quality = 2.0; // BLUR QUALITY (Default 3.0 - More is better but slower)
-const float size = 16.0; // BLUR SIZE (Radius)
+const float size = 32.0; // BLUR SIZE (Radius)
+const float distance_falloff = 15.0;
 
 void main()
 {
-    vec2 screen_size = vec2(SCREEN_WIDTH, SCREEN_HEIGHT);
-    vec2 radius = size / screen_size;
     vec4 color = texture(u_Input, UV);
+    float blur_size = size - distance_falloff * length(color);
+    vec2 radius = blur_size / vec2(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     for (float d = 0.0; d < PI2; d += PI2 / directions)
     {
