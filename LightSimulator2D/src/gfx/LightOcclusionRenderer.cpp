@@ -208,15 +208,16 @@ void LightOcclusionRenderer::SetupBuffers(CulledScene& scene)
                 const Vec2 next_p = mesh[next_i];
 
                 // Line
-                Vec3 a = Vec3(p, 1.0) * transform;
-                Vec3 b = Vec3(next_p, 1.0) * transform;
-                Vec4 lineSegment = Vec4(a.x, a.y, b.x, b.y);
+                const Vec3 a = Vec3(p, 1.0) * transform;
+                const Vec3 b = Vec3(next_p, 1.0) * transform;
+                const Vec4 lineSegment = Vec4(a.x, a.y, b.x, b.y);
                 lines.push_back(lineSegment);
 
                 // Ray
-                Vec2 a2D = { a.x,a.y };
-                m_RayQuery.push_back(Vec4(a2D - epsilon, 0.0, 0.0));
-                m_RayQuery.push_back(Vec4(a2D + epsilon, 0.0, 0.0));
+                const Vec2 r1 = glm::normalize(Vec2(a.x, a.y) - epsilon);
+                const Vec2 r2 = glm::normalize(Vec2(a.y, a.y) - epsilon);
+                m_RayQuery.push_back({r1.x, r1.y, 0.0, 0.0});
+                m_RayQuery.push_back({r2.x, r2.y, 0.0, 0.0});
             }
         }
     }
