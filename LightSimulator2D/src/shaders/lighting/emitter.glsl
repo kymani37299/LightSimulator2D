@@ -21,7 +21,6 @@ const float alphaTreshold = 0.01;
 
 void main()
 {
-	vec4 tex = texture(u_Texture, UV);
-	if (tex.a < alphaTreshold) discard;
-	FinalColor = vec4(u_EmitterColor, 1.0);
+	FinalColor = texture(u_Texture, UV);
+	FinalColor.rgb = min(u_EmitterColor, FinalColor.rgb);
 }

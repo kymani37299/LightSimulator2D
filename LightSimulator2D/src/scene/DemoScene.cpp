@@ -108,16 +108,16 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
     bg->GetDrawFlags().background = true;
     bg->GetBackgroundProperties().textureScale = 2.0f;
 
-    Entity* emitter = new Entity{ P("bg_diffuse.png") };
+    Entity* emitter = new Entity{ P("lantern_yellow.png") };
     emitter->AddComponent(new FollowMouseComponent());
     emitter->AddComponent(controller);
     emitter->GetDrawFlags().emitter = true;
     emitter->GetEmissionProperties().color = Vec3(1.0, 1.0, 0.0);
     emitter->GetEmissionProperties().radius = 0.15f;
 
-    Entity* torchEmitter = new Entity{ P("bg_diffuse.png") };
+    Entity* torchEmitter = new Entity{ P("lantern.png") };
     torchEmitter->GetDrawFlags().emitter = true;
-    torchEmitter->GetEmissionProperties().color = Vec3(0.62, 0.51, 0.0);
+    torchEmitter->GetEmissionProperties().color = Vec3(0.92, 0.51, 0.2);
     torchEmitter->GetEmissionProperties().radius = 0.15f;
 
     Entity* tree1_up = new Entity{ P("tree1/tree1_up.png") };
@@ -158,7 +158,7 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
     scene->AddEntity(tree2_up);
     scene->AddEntity(tree2_down);
     scene->AddEntity(bush);
-    scene->AddEntity(house);
+    //scene->AddEntity(house);
     scene->AddEntity(fence);
     scene->AddEntity(fenceOccluder);
 
@@ -172,7 +172,7 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
 
     bg->Instance();
     emitter->Instance()->ApplyScale(0.01f);
-    house->Instance()->ApplyScale(3.0f);
+    //house->Instance()->ApplyScale(3.0f);
 
     for (unsigned i = 0; i < numBushes; i++)
     {
@@ -211,7 +211,7 @@ static void Scene2(Scene* scene, PlayerControllerComponent* controller)
             {
                 EntityInstance* ei = torchEmitter->Instance();
                 ei->SetPosition(treePos + torchOffest);
-                ei->ApplyScale(0.01f);
+                ei->ApplyScale(0.03f);
             }
         
         }

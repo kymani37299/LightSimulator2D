@@ -45,6 +45,7 @@ void LightingRenderer::RenderEmitters(CulledScene& scene)
 {
     PROFILE_SCOPE("Draw emitters");
 
+    GLFunctions::AlphaBlending(true); // Adding blurred textures
     m_EmitterShader->Bind();
     m_EmitterShader->SetUniform("u_View", scene.GetCamera().GetTransformation());
     for (CulledEntity* ce : scene.GetEmitters())
@@ -58,4 +59,5 @@ void LightingRenderer::RenderEmitters(CulledScene& scene)
             GLFunctions::DrawPoints(1);
         }
     }
+    GLFunctions::AlphaBlending(false);
 }
