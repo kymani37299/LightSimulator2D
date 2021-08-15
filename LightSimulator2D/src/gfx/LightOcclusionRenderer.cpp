@@ -71,7 +71,7 @@ void LightOcclusionRenderer::CompileShaders()
     CreateShader(shader_path + "light_occlusion", m_OcclusionShader);
     CreateShader(shader_path + "occlusion_mesh_gen", m_OcclusionMeshGenShader);
     CreateShader(shader_path + "shadowmap", m_ShadowmapShader);
-    CreateShader(shader_path + "blur", m_BlurShader);
+    CreateShader("blur", m_BlurShader);
 }
 
 void LightOcclusionRenderer::OnOccluderAdded(Entity* e)

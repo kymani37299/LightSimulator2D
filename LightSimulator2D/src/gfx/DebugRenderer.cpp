@@ -31,7 +31,7 @@ void DebugRenderer::CompileShaders()
 {
 	CreateShader("debug/point", m_PointShader);
 	CreateShader("debug/line", m_LineShader);
-	CreateShader("debug/screen", m_ScreenShader);
+	CreateShader("screen", m_ScreenShader);
 
 }
 
