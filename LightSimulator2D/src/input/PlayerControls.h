@@ -38,6 +38,12 @@ PLAYER_KEY_CALLBACK_BEGIN(ReloadShadersCallback)
 GameEngine::Get()->GetRenderer()->ReloadShaders();
 PLAYER_KEY_CALLBACK_END()
 
+PLAYER_KEY_CALLBACK_BEGIN(EnableMouseCallback)
+static bool s_CursorEnabled = false;
+s_CursorEnabled = !s_CursorEnabled;
+GameEngine::Get()->GetMainWindow()->SetCursorEnabled(s_CursorEnabled);
+PLAYER_KEY_CALLBACK_END()
+
 PLAYER_KEY_SCALLBACK_BEGIN(CamBackCallback)
 const float factor = state == KeyState::Pressed ? 1.0f : -1.0f;
 c.GetCameraDir() += factor * Vec2(0.0f, 1.0f);
