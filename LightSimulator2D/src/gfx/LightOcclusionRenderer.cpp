@@ -30,11 +30,11 @@ unsigned GetQuart(Vec2 x)
     }
 }
 
-static Vec2 angleComparatorRef = VEC2_ZERO;
+static std::vector<Vec2> normalizedIntersections;
 bool angleComparator(const Vec4& l, const Vec4& r)
 {
-    Vec2 a = glm::normalize(Vec2(l.x, l.y) - angleComparatorRef);
-    Vec2 b = glm::normalize(Vec2(r.x, r.y) - angleComparatorRef);
+    const Vec2 a = normalizedIntersections[(unsigned)l.z];
+    const Vec2 b = normalizedIntersections[(unsigned)r.z];
 
     unsigned aQuart = GetQuart(a);
     unsigned bQuart = GetQuart(b);
@@ -482,7 +482,16 @@ void LightOcclusionRenderer::SortIntersections()
 
     Vec4* intersectionBuffer = (Vec4*)m_IntersectionBuffer->Map(true);
 #ifndef SORT_RAYS
-    angleComparatorRef = m_CurrentQuery.position;
+
+    //angleComparatorRef = m_CurrentQuery.position;
+    normalizedIntersections.resize(m_RayCount);
+    for (size_t i = 0; i < m_RayCount; i++)
+    {
+        intersectionBuffer[i].z = i;
+        Vec2 x = Vec2(intersectionBuffer[i].x, intersectionBuffer[i].y);
+        normalizedIntersections[i] = glm::normalize(x-m_CurrentQuery.position);
+    }
+    
     std::sort(intersectionBuffer, intersectionBuffer + m_RayCount, angleComparator);
 #endif // SORT_RAYS
     intersectionBuffer[m_RayCount] = intersectionBuffer[0];
