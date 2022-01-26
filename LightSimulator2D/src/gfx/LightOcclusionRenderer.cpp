@@ -481,18 +481,22 @@ void LightOcclusionRenderer::SortIntersections()
     PROFILE_SCOPE("Sort intersections");
 
     Vec4* intersectionBuffer = (Vec4*)m_IntersectionBuffer->Map(true);
+    std::vector<Vec4> _intersectionBuffer;
+    _intersectionBuffer.resize(m_RayCount);
+    memcpy(_intersectionBuffer.data(), intersectionBuffer, sizeof(Vec4) * m_RayCount);
 #ifndef SORT_RAYS
 
     //angleComparatorRef = m_CurrentQuery.position;
     normalizedIntersections.resize(m_RayCount);
     for (size_t i = 0; i < m_RayCount; i++)
     {
-        intersectionBuffer[i].z = i;
-        Vec2 x = Vec2(intersectionBuffer[i].x, intersectionBuffer[i].y);
+        _intersectionBuffer[i].z = i;
+        Vec2 x = Vec2(_intersectionBuffer[i].x, _intersectionBuffer[i].y);
         normalizedIntersections[i] = glm::normalize(x-m_CurrentQuery.position);
     }
     
-    std::sort(intersectionBuffer, intersectionBuffer + m_RayCount, angleComparator);
+    std::sort(_intersectionBuffer.data(), _intersectionBuffer.data() + m_RayCount, angleComparator);
+    memcpy(intersectionBuffer, _intersectionBuffer.data(), sizeof(Vec4) * m_RayCount);
 #endif // SORT_RAYS
     intersectionBuffer[m_RayCount] = intersectionBuffer[0];
     intersectionBuffer[MAX_RAY_QUERIES] = { m_CurrentQuery.position, 0.0 ,0.0 };
