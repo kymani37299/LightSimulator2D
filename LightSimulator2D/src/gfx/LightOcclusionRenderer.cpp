@@ -11,17 +11,40 @@
 
 #include "gfx/DebugRenderer.h"
 
-#define ENABLE_SAMPLE_MAP
+//#define ENABLE_SAMPLE_MAP
 //#define SORT_RAYS
 
 extern bool CreateShader(const std::string& name, Shader*& shader);
 
+unsigned GetQuart(Vec2 x)
+{
+    if (x.x >= 0.0f)
+    {
+        if (x.y >= 0.0f) return 0;
+        else return 1;
+    }
+    else
+    {
+        if (x.y < 0.0f) return 2;
+        else return 3;
+    }
+}
+
 static Vec2 angleComparatorRef = VEC2_ZERO;
 bool angleComparator(const Vec4& l, const Vec4& r)
 {
-    Vec2 a = Vec2(l.x, l.y) - angleComparatorRef;
-    Vec2 b = Vec2(r.x, r.y) - angleComparatorRef;
-    return glm::atan(a.y, a.x) < glm::atan(b.y, b.x);
+    Vec2 a = glm::normalize(Vec2(l.x, l.y) - angleComparatorRef);
+    Vec2 b = glm::normalize(Vec2(r.x, r.y) - angleComparatorRef);
+
+    unsigned aQuart = GetQuart(a);
+    unsigned bQuart = GetQuart(b);
+
+    if (aQuart != bQuart) return aQuart < bQuart;
+    else
+    {
+        if (aQuart == 0 || aQuart == 2) return fabs(a.x) < fabs(b.x);
+        else return fabs(a.y) < fabs(b.y);
+    }
 }
 
 LightOcclusionRenderer::LightOcclusionRenderer()
